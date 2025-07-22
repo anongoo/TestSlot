@@ -257,7 +257,7 @@ async def get_videos(
     
     sort_criteria = sort_options.get(sort_by, sort_options["newest"])
     
-    videos = await db.videos.find(query).sort(sort_criteria).skip(offset).limit(limit).to_list(limit)
+    videos = await db.videos.find(query, {"_id": 0}).sort(sort_criteria).skip(offset).limit(limit).to_list(limit)
     total_count = await db.videos.count_documents(query)
     
     return {
