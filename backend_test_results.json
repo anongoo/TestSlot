@@ -1,14 +1,14 @@
 {
   "total": 21,
-  "passed": 20,
-  "failed": 1,
-  "success_rate": 95.23809523809523,
+  "passed": 21,
+  "failed": 0,
+  "success_rate": 100.0,
   "results": [
     {
       "test": "GET /api/videos - Basic Retrieval",
       "success": true,
       "message": "Retrieved 5 videos successfully",
-      "timestamp": "2025-07-22T08:19:57.642648",
+      "timestamp": "2025-07-22T08:21:00.366192",
       "details": {
         "total_count": 5,
         "returned_count": 5
@@ -18,7 +18,7 @@
       "test": "Sample Data Validation",
       "success": true,
       "message": "All 5 sample videos have valid structure",
-      "timestamp": "2025-07-22T08:19:57.642951",
+      "timestamp": "2025-07-22T08:21:00.366521",
       "details": {
         "video_count": 5
       }
@@ -27,7 +27,7 @@
       "test": "Video Filter - level",
       "success": true,
       "message": "Filter returned 1 videos",
-      "timestamp": "2025-07-22T08:19:57.668996",
+      "timestamp": "2025-07-22T08:21:00.390189",
       "details": {
         "filter": {
           "level": "Beginner"
@@ -39,7 +39,7 @@
       "test": "Video Filter - category",
       "success": true,
       "message": "Filter returned 1 videos",
-      "timestamp": "2025-07-22T08:19:57.728297",
+      "timestamp": "2025-07-22T08:21:00.452446",
       "details": {
         "filter": {
           "category": "Grammar"
@@ -51,7 +51,7 @@
       "test": "Video Filter - accent",
       "success": true,
       "message": "Filter returned 2 videos",
-      "timestamp": "2025-07-22T08:19:57.752478",
+      "timestamp": "2025-07-22T08:21:00.477956",
       "details": {
         "filter": {
           "accent": "American"
@@ -63,7 +63,7 @@
       "test": "Video Filter - guide",
       "success": true,
       "message": "Filter returned 2 videos",
-      "timestamp": "2025-07-22T08:19:57.777085",
+      "timestamp": "2025-07-22T08:21:00.501056",
       "details": {
         "filter": {
           "guide": "Native Speaker"
@@ -75,7 +75,7 @@
       "test": "Video Filter - country",
       "success": true,
       "message": "Filter returned 2 videos",
-      "timestamp": "2025-07-22T08:19:57.840619",
+      "timestamp": "2025-07-22T08:21:00.526498",
       "details": {
         "filter": {
           "country": "United States"
@@ -87,7 +87,7 @@
       "test": "Video Filter - is_premium",
       "success": true,
       "message": "Filter returned 4 videos",
-      "timestamp": "2025-07-22T08:19:57.862978",
+      "timestamp": "2025-07-22T08:21:00.548393",
       "details": {
         "filter": {
           "is_premium": false
@@ -99,7 +99,7 @@
       "test": "Video Filter - is_premium",
       "success": true,
       "message": "Filter returned 1 videos",
-      "timestamp": "2025-07-22T08:19:57.888782",
+      "timestamp": "2025-07-22T08:21:00.574827",
       "details": {
         "filter": {
           "is_premium": true
@@ -111,7 +111,7 @@
       "test": "Video Filter - search",
       "success": true,
       "message": "Filter returned 4 videos",
-      "timestamp": "2025-07-22T08:19:57.910697",
+      "timestamp": "2025-07-22T08:21:00.599482",
       "details": {
         "filter": {
           "search": "English"
@@ -123,7 +123,7 @@
       "test": "Video Filter - max_duration",
       "success": true,
       "message": "Filter returned 1 videos",
-      "timestamp": "2025-07-22T08:19:57.933626",
+      "timestamp": "2025-07-22T08:21:00.657887",
       "details": {
         "filter": {
           "max_duration": 10
@@ -135,7 +135,7 @@
       "test": "Video Filter - sort_by",
       "success": true,
       "message": "Filter returned 5 videos",
-      "timestamp": "2025-07-22T08:19:57.954494",
+      "timestamp": "2025-07-22T08:21:00.679116",
       "details": {
         "filter": {
           "sort_by": "shortest"
@@ -147,7 +147,7 @@
       "test": "Video Filter - sort_by",
       "success": true,
       "message": "Filter returned 5 videos",
-      "timestamp": "2025-07-22T08:19:57.979900",
+      "timestamp": "2025-07-22T08:21:00.701114",
       "details": {
         "filter": {
           "sort_by": "longest"
@@ -159,7 +159,7 @@
       "test": "GET /api/videos/{video_id}",
       "success": true,
       "message": "Retrieved video 'Basic English Greetings' successfully",
-      "timestamp": "2025-07-22T08:19:57.995111",
+      "timestamp": "2025-07-22T08:21:00.718766",
       "details": {
         "video_id": "08d17401-8b09-4b35-a3a9-732339b382c5",
         "title": "Basic English Greetings"
@@ -169,7 +169,7 @@
       "test": "GET /api/videos/{invalid_id} - Error Handling",
       "success": true,
       "message": "Correctly returned 404 for invalid video ID",
-      "timestamp": "2025-07-22T08:19:58.012250",
+      "timestamp": "2025-07-22T08:21:00.737932",
       "details": {
         "invalid_id": "invalid-video-id-123"
       }
@@ -178,7 +178,7 @@
       "test": "GET /api/filters/options",
       "success": true,
       "message": "Retrieved all filter options successfully",
-      "timestamp": "2025-07-22T08:19:58.030384",
+      "timestamp": "2025-07-22T08:21:00.755714",
       "details": {
         "levels_count": 4,
         "categories_count": 6,
@@ -191,10 +191,10 @@
       "test": "POST /api/videos/{video_id}/watch",
       "success": true,
       "message": "Successfully recorded 5 minutes of watch progress",
-      "timestamp": "2025-07-22T08:19:58.097164",
+      "timestamp": "2025-07-22T08:21:00.781713",
       "details": {
         "video_id": "08d17401-8b09-4b35-a3a9-732339b382c5",
-        "session_id": "602299ce-078e-4c59-a6cf-103a1860e4f6",
+        "session_id": "e2de2812-9d36-486e-9393-a4e908cfc397",
         "watched_minutes": 5
       }
     },
@@ -202,7 +202,7 @@
       "test": "POST /api/videos/{invalid_id}/watch - Error Handling",
       "success": true,
       "message": "Correctly returned 404 for invalid video ID",
-      "timestamp": "2025-07-22T08:19:58.117970",
+      "timestamp": "2025-07-22T08:21:00.840674",
       "details": {
         "invalid_id": "invalid-video-id-123"
       }
@@ -211,7 +211,7 @@
       "test": "Multiple Watch Sessions",
       "success": true,
       "message": "Successfully recorded 3 watch sessions",
-      "timestamp": "2025-07-22T08:19:59.698509",
+      "timestamp": "2025-07-22T08:21:02.418435",
       "details": {
         "sessions": [
           {
@@ -227,23 +227,26 @@
             "minutes": 15
           }
         ],
-        "session_id": "602299ce-078e-4c59-a6cf-103a1860e4f6"
+        "session_id": "e2de2812-9d36-486e-9393-a4e908cfc397"
       }
     },
     {
       "test": "GET /api/progress/{session_id}",
-      "success": false,
-      "message": "HTTP 500: Internal Server Error",
-      "timestamp": "2025-07-22T08:19:59.715855",
+      "success": true,
+      "message": "Retrieved progress stats: 38 minutes watched",
+      "timestamp": "2025-07-22T08:21:02.438554",
       "details": {
-        "session_id": "602299ce-078e-4c59-a6cf-103a1860e4f6"
+        "total_minutes": 38,
+        "current_streak": 1,
+        "total_videos": 3,
+        "milestones": []
       }
     },
     {
       "test": "GET /api/progress/{invalid_session} - Error Handling",
       "success": true,
       "message": "Correctly returned empty stats for invalid session",
-      "timestamp": "2025-07-22T08:19:59.741849",
+      "timestamp": "2025-07-22T08:21:02.461453",
       "details": {
         "invalid_session": "invalid-session-id-123",
         "stats": {
