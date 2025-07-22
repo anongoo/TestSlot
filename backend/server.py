@@ -481,6 +481,96 @@ async def get_filter_options():
         "countries": ["United States", "United Kingdom", "Australia", "Canada"]
     }
 
+@api_router.post("/email/subscribe")
+async def subscribe_email(request: EmailSubscribeRequest):
+    """Subscribe email to Kit (ConvertKit) for motivational messages and updates"""
+    try:
+        # Get ConvertKit credentials
+        api_key = os.environ.get('CONVERTKIT_API_KEY')
+        form_id = os.environ.get('CONVERTKIT_FORM_ID')
+        
+        if not api_key or not form_id:
+            raise HTTPException(status_code=500, detail="Email service configuration missing")
+        
+        # Store subscription in MongoDB first
+        subscription_data = {
+            "id": str(uuid.uuid4()),
+            "email": request.email,
+            "name": request.name,
+            "source": request.source,
+            "subscribed_at": datetime.utcnow(),
+            "active": True
+        }
+        
+        # Check if email already exists
+        existing_subscription = await db.email_subscriptions.find_one({"email": request.email})
+        if existing_subscription:
+            return {"message": "Email already subscribed", "status": "existing"}
+        
+        # Save to MongoDB
+        await db.email_subscriptions.insert_one(subscription_data)
+        
+        # Subscribe to ConvertKit
+        convertkit_url = f"https://api.convertkit.com/v3/forms/{form_id}/subscribe"
+        convertkit_data = {
+            "api_key": api_key,
+            "email": request.email
+        }
+        
+        if request.name:
+            convertkit_data["first_name"] = request.name
+        
+        # Add custom fields for segmentation
+        convertkit_data["fields"] = {
+            "source": request.source,
+            "signup_date": datetime.utcnow().isoformat(),
+            "platform": "English Fiesta"
+        }
+        
+        response = requests.post(convertkit_url, json=convertkit_data, timeout=10)
+        
+        if response.status_code == 200:
+            # Update MongoDB record with ConvertKit subscriber ID
+            convertkit_response = response.json()
+            convertkit_subscriber_id = convertkit_response.get("subscription", {}).get("subscriber", {}).get("id")
+            
+            if convertkit_subscriber_id:
+                await db.email_subscriptions.update_one(
+                    {"email": request.email},
+                    {"$set": {"convertkit_subscriber_id": convertkit_subscriber_id}}
+                )
+            
+            return {
+                "message": "Successfully subscribed to English Fiesta updates!",
+                "status": "success"
+            }
+        else:
+            # Log error but don't fail completely since we saved to MongoDB
+            logger.error(f"ConvertKit API error: {response.status_code} - {response.text}")
+            return {
+                "message": "Subscription saved locally, email service temporarily unavailable",
+                "status": "partial_success"
+            }
+            
+    except requests.RequestException as e:
+        logger.error(f"ConvertKit request error: {str(e)}")
+        # Still return success since we saved to MongoDB
+        return {
+            "message": "Subscription saved, email service will sync later",
+            "status": "partial_success"
+        }
+    except Exception as e:
+        logger.error(f"Email subscription error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to process email subscription")
+
+@api_router.get("/email/subscriptions/{email}")
+async def check_subscription_status(email: str):
+    """Check if an email is already subscribed"""
+    subscription = await db.email_subscriptions.find_one({"email": email}, {"_id": 0})
+    if subscription:
+        return {"subscribed": True, "subscription": subscription}
+    return {"subscribed": False}
+
 # Initialize sample data on startup
 @app.on_event("startup")
 async def startup_event():
