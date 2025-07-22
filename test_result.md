@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Test the English Fiesta language learning platform backend thoroughly. The platform includes video management APIs, progress tracking APIs, and sample data initialization."
+user_problem_statement: "Test the English Fiesta language learning platform backend thoroughly. The platform includes video management APIs, progress tracking APIs, sample data initialization, and NEW email subscription endpoints for ConvertKit integration."
 
 backend:
   - task: "Video Management - GET /api/videos with filtering"
@@ -212,6 +212,30 @@ backend:
         - working: true
           agent: "testing"
           comment: "Proper error handling implemented: 404 for invalid video IDs, 422 for malformed requests, empty stats for invalid sessions. All edge cases handled correctly."
+
+  - task: "Email Subscription - POST /api/email/subscribe"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "Successfully implemented email subscription with ConvertKit integration. Tested with valid email+name, email-only, invalid email format (422 error), and duplicate email handling. MongoDB storage working correctly. ConvertKit API gracefully handles timeout/failure with partial_success status. Pydantic EmailStr validation working properly."
+
+  - task: "Email Subscription Status - GET /api/email/subscriptions/{email}"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "Successfully retrieves subscription status from MongoDB. Correctly identifies subscribed vs non-subscribed emails. Handles invalid email formats gracefully by returning subscribed: false. All test cases passing."
 
 frontend:
   - task: "Frontend Integration Testing"
