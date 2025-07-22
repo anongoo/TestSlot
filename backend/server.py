@@ -278,7 +278,7 @@ async def get_video(video_id: str):
 @api_router.post("/videos/{video_id}/watch")
 async def record_watch_progress(video_id: str, watched_minutes: int, session_id: str = Query(...)):
     """Record video watch progress"""
-    video = await db.videos.find_one({"id": video_id})
+    video = await db.videos.find_one({"id": video_id}, {"_id": 0})
     if not video:
         raise HTTPException(status_code=404, detail="Video not found")
     
