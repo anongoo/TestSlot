@@ -485,10 +485,22 @@ const App = () => {
   const [filters, setFilters] = useState({});
   const [sessionId] = useState(getSessionId());
   const [refreshProgress, setRefreshProgress] = useState(0);
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [hasWatchedVideo, setHasWatchedVideo] = useState(false);
 
   useEffect(() => {
     fetchVideos();
   }, [filters]);
+
+  // Show email modal after user has watched a video for engagement
+  useEffect(() => {
+    if (hasWatchedVideo && !localStorage.getItem('email_subscribed')) {
+      const timer = setTimeout(() => {
+        setShowEmailModal(true);
+      }, 3000); // Show modal 3 seconds after watching a video
+      return () => clearTimeout(timer);
+    }
+  }, [hasWatchedVideo]);
 
   const fetchVideos = async () => {
     setLoading(true);
@@ -524,8 +536,14 @@ const App = () => {
   };
 
   const handleWatchProgress = () => {
-    // Trigger progress refresh
+    // Trigger progress refresh and mark that user has watched a video
     setRefreshProgress(prev => prev + 1);
+    setHasWatchedVideo(true);
+  };
+
+  const handleEmailSubscriptionSuccess = () => {
+    localStorage.setItem('email_subscribed', 'true');
+    setShowEmailModal(false);
   };
 
   return (
@@ -553,6 +571,9 @@ const App = () => {
       </div>
 
       <div className="container mx-auto px-4 py-8">
+        {/* Email Subscription Banner */}
+        <EmailSubscriptionBanner onSubscribe={() => setShowEmailModal(true)} />
+        
         {/* Progress Tracker */}
         <ProgressTracker sessionId={sessionId} key={refreshProgress} />
         
@@ -600,6 +621,13 @@ const App = () => {
           )}
         </div>
       </div>
+
+      {/* Email Subscription Modal */}
+      <EmailSubscriptionModal 
+        isOpen={showEmailModal}
+        onClose={() => setShowEmailModal(false)}
+        onSuccess={handleEmailSubscriptionSuccess}
+      />
     </div>
   );
 };
