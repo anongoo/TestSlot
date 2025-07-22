@@ -265,3 +265,5 @@ test_plan:
 agent_communication:
     - agent: "testing"
       message: "Completed comprehensive backend testing of English Fiesta language learning platform. Fixed critical MongoDB ObjectId serialization issues that were causing HTTP 500 errors. All 21 test cases now pass with 100% success rate. Backend APIs are fully functional including video management, filtering, progress tracking, and session-based guest user support."
+    - agent: "testing"
+      message: "NEW EMAIL SUBSCRIPTION TESTING COMPLETED: Successfully tested both email subscription endpoints (POST /api/email/subscribe and GET /api/email/subscriptions/{email}). All 7 email-related test cases passed with 100% success rate. Key findings: (1) MongoDB storage working correctly - verified 2 subscriptions stored, (2) ConvertKit API integration handles failures gracefully with partial_success status, (3) Pydantic EmailStr validation properly rejects invalid emails with 422 status, (4) Duplicate email detection working, (5) Subscription status checking accurate. Total test suite now has 28 tests with 100% pass rate."
