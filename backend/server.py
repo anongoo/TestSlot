@@ -430,7 +430,7 @@ async def update_user_stats(session_id: str):
 @api_router.get("/progress/{session_id}")
 async def get_user_progress(session_id: str):
     """Get comprehensive user progress and statistics"""
-    stats = await db.user_stats.find_one({"session_id": session_id})
+    stats = await db.user_stats.find_one({"session_id": session_id}, {"_id": 0})
     
     if not stats:
         # Initialize empty stats if none exist
@@ -445,7 +445,7 @@ async def get_user_progress(session_id: str):
     
     # Get recent daily progress for heatmap
     recent_progress = await db.daily_progress.find(
-        {"session_id": session_id}
+        {"session_id": session_id}, {"_id": 0}
     ).sort("date", -1).limit(90).to_list(90)  # Last 90 days
     
     # Format for heatmap
@@ -456,10 +456,12 @@ async def get_user_progress(session_id: str):
             "minutes": progress["total_minutes_watched"]
         })
     
+    watch_progress_count = await db.watch_progress.count_documents({"session_id": session_id})
+    
     return {
         "stats": stats,
         "recent_activity": heatmap_data,
-        "total_videos_watched": len(await db.watch_progress.find({"session_id": session_id}).to_list(1000))
+        "total_videos_watched": watch_progress_count
     }
 
 @api_router.get("/filters/options")
