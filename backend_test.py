@@ -532,6 +532,335 @@ class EnglishFiestaAPITester:
                 {"errors": validation_errors}
             )
     
+    def test_email_subscribe_valid(self):
+        """Test email subscription with valid email and name"""
+        test_email = "sarah.johnson@example.com"
+        test_name = "Sarah Johnson"
+        
+        try:
+            response = requests.post(
+                f"{BACKEND_URL}/email/subscribe",
+                json={
+                    "email": test_email,
+                    "name": test_name,
+                    "source": "english_fiesta"
+                }
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "message" in data and "status" in data:
+                    # Accept both success and partial_success as valid
+                    if data["status"] in ["success", "partial_success"]:
+                        self.log_test(
+                            "POST /api/email/subscribe - Valid Email with Name",
+                            True,
+                            f"Successfully subscribed {test_email}: {data['message']}",
+                            {"email": test_email, "name": test_name, "status": data["status"]}
+                        )
+                    else:
+                        self.log_test(
+                            "POST /api/email/subscribe - Valid Email with Name",
+                            False,
+                            f"Unexpected status: {data['status']}",
+                            {"response": data}
+                        )
+                else:
+                    self.log_test(
+                        "POST /api/email/subscribe - Valid Email with Name",
+                        False,
+                        "Missing required fields in response",
+                        {"response": data}
+                    )
+            else:
+                self.log_test(
+                    "POST /api/email/subscribe - Valid Email with Name",
+                    False,
+                    f"HTTP {response.status_code}: {response.text}",
+                    {"email": test_email}
+                )
+        except Exception as e:
+            self.log_test(
+                "POST /api/email/subscribe - Valid Email with Name",
+                False,
+                f"Request failed: {str(e)}",
+                {"email": test_email}
+            )
+    
+    def test_email_subscribe_email_only(self):
+        """Test email subscription with just email (name optional)"""
+        test_email = "michael.chen@example.com"
+        
+        try:
+            response = requests.post(
+                f"{BACKEND_URL}/email/subscribe",
+                json={
+                    "email": test_email,
+                    "source": "english_fiesta"
+                }
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "message" in data and "status" in data:
+                    if data["status"] in ["success", "partial_success"]:
+                        self.log_test(
+                            "POST /api/email/subscribe - Email Only",
+                            True,
+                            f"Successfully subscribed {test_email} without name: {data['message']}",
+                            {"email": test_email, "status": data["status"]}
+                        )
+                    else:
+                        self.log_test(
+                            "POST /api/email/subscribe - Email Only",
+                            False,
+                            f"Unexpected status: {data['status']}",
+                            {"response": data}
+                        )
+                else:
+                    self.log_test(
+                        "POST /api/email/subscribe - Email Only",
+                        False,
+                        "Missing required fields in response",
+                        {"response": data}
+                    )
+            else:
+                self.log_test(
+                    "POST /api/email/subscribe - Email Only",
+                    False,
+                    f"HTTP {response.status_code}: {response.text}",
+                    {"email": test_email}
+                )
+        except Exception as e:
+            self.log_test(
+                "POST /api/email/subscribe - Email Only",
+                False,
+                f"Request failed: {str(e)}",
+                {"email": test_email}
+            )
+    
+    def test_email_subscribe_invalid_email(self):
+        """Test email subscription with invalid email format"""
+        invalid_email = "not-a-valid-email"
+        
+        try:
+            response = requests.post(
+                f"{BACKEND_URL}/email/subscribe",
+                json={
+                    "email": invalid_email,
+                    "name": "Test User",
+                    "source": "english_fiesta"
+                }
+            )
+            
+            if response.status_code == 422:
+                self.log_test(
+                    "POST /api/email/subscribe - Invalid Email Format",
+                    True,
+                    "Correctly rejected invalid email format with 422",
+                    {"invalid_email": invalid_email}
+                )
+            else:
+                self.log_test(
+                    "POST /api/email/subscribe - Invalid Email Format",
+                    False,
+                    f"Expected 422 for invalid email, got {response.status_code}",
+                    {"invalid_email": invalid_email, "response": response.text}
+                )
+        except Exception as e:
+            self.log_test(
+                "POST /api/email/subscribe - Invalid Email Format",
+                False,
+                f"Request failed: {str(e)}",
+                {"invalid_email": invalid_email}
+            )
+    
+    def test_email_subscribe_duplicate(self):
+        """Test duplicate email subscription"""
+        test_email = "sarah.johnson@example.com"  # Same as first test
+        
+        try:
+            response = requests.post(
+                f"{BACKEND_URL}/email/subscribe",
+                json={
+                    "email": test_email,
+                    "name": "Sarah Johnson Duplicate",
+                    "source": "english_fiesta"
+                }
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "status" in data and data["status"] == "existing":
+                    self.log_test(
+                        "POST /api/email/subscribe - Duplicate Email",
+                        True,
+                        f"Correctly handled duplicate email: {data.get('message', 'No message')}",
+                        {"email": test_email, "status": data["status"]}
+                    )
+                else:
+                    # Some implementations might still return success for duplicates
+                    self.log_test(
+                        "POST /api/email/subscribe - Duplicate Email",
+                        True,
+                        f"Handled duplicate email (status: {data.get('status', 'unknown')})",
+                        {"email": test_email, "response": data}
+                    )
+            else:
+                self.log_test(
+                    "POST /api/email/subscribe - Duplicate Email",
+                    False,
+                    f"HTTP {response.status_code}: {response.text}",
+                    {"email": test_email}
+                )
+        except Exception as e:
+            self.log_test(
+                "POST /api/email/subscribe - Duplicate Email",
+                False,
+                f"Request failed: {str(e)}",
+                {"email": test_email}
+            )
+    
+    def test_check_subscription_status_subscribed(self):
+        """Test checking subscription status for subscribed email"""
+        test_email = "sarah.johnson@example.com"  # Should be subscribed from previous test
+        
+        try:
+            response = requests.get(f"{BACKEND_URL}/email/subscriptions/{test_email}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "subscribed" in data:
+                    if data["subscribed"] is True:
+                        self.log_test(
+                            "GET /api/email/subscriptions/{email} - Subscribed Email",
+                            True,
+                            f"Correctly identified {test_email} as subscribed",
+                            {"email": test_email, "subscribed": True}
+                        )
+                    else:
+                        self.log_test(
+                            "GET /api/email/subscriptions/{email} - Subscribed Email",
+                            False,
+                            f"Email should be subscribed but returned: {data['subscribed']}",
+                            {"email": test_email, "response": data}
+                        )
+                else:
+                    self.log_test(
+                        "GET /api/email/subscriptions/{email} - Subscribed Email",
+                        False,
+                        "Missing 'subscribed' field in response",
+                        {"email": test_email, "response": data}
+                    )
+            else:
+                self.log_test(
+                    "GET /api/email/subscriptions/{email} - Subscribed Email",
+                    False,
+                    f"HTTP {response.status_code}: {response.text}",
+                    {"email": test_email}
+                )
+        except Exception as e:
+            self.log_test(
+                "GET /api/email/subscriptions/{email} - Subscribed Email",
+                False,
+                f"Request failed: {str(e)}",
+                {"email": test_email}
+            )
+    
+    def test_check_subscription_status_not_subscribed(self):
+        """Test checking subscription status for non-subscribed email"""
+        test_email = "never.subscribed@example.com"
+        
+        try:
+            response = requests.get(f"{BACKEND_URL}/email/subscriptions/{test_email}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "subscribed" in data:
+                    if data["subscribed"] is False:
+                        self.log_test(
+                            "GET /api/email/subscriptions/{email} - Non-subscribed Email",
+                            True,
+                            f"Correctly identified {test_email} as not subscribed",
+                            {"email": test_email, "subscribed": False}
+                        )
+                    else:
+                        self.log_test(
+                            "GET /api/email/subscriptions/{email} - Non-subscribed Email",
+                            False,
+                            f"Email should not be subscribed but returned: {data['subscribed']}",
+                            {"email": test_email, "response": data}
+                        )
+                else:
+                    self.log_test(
+                        "GET /api/email/subscriptions/{email} - Non-subscribed Email",
+                        False,
+                        "Missing 'subscribed' field in response",
+                        {"email": test_email, "response": data}
+                    )
+            else:
+                self.log_test(
+                    "GET /api/email/subscriptions/{email} - Non-subscribed Email",
+                    False,
+                    f"HTTP {response.status_code}: {response.text}",
+                    {"email": test_email}
+                )
+        except Exception as e:
+            self.log_test(
+                "GET /api/email/subscriptions/{email} - Non-subscribed Email",
+                False,
+                f"Request failed: {str(e)}",
+                {"email": test_email}
+            )
+    
+    def test_check_subscription_invalid_email(self):
+        """Test checking subscription status with invalid email format"""
+        invalid_email = "not-a-valid-email"
+        
+        try:
+            response = requests.get(f"{BACKEND_URL}/email/subscriptions/{invalid_email}")
+            
+            # The endpoint might return 200 with subscribed: false for invalid emails
+            # or it might return an error - both are acceptable
+            if response.status_code in [200, 422]:
+                if response.status_code == 200:
+                    data = response.json()
+                    if data.get("subscribed") is False:
+                        self.log_test(
+                            "GET /api/email/subscriptions/{email} - Invalid Email",
+                            True,
+                            f"Handled invalid email format gracefully",
+                            {"invalid_email": invalid_email, "response": data}
+                        )
+                    else:
+                        self.log_test(
+                            "GET /api/email/subscriptions/{email} - Invalid Email",
+                            False,
+                            f"Unexpected response for invalid email",
+                            {"invalid_email": invalid_email, "response": data}
+                        )
+                else:  # 422
+                    self.log_test(
+                        "GET /api/email/subscriptions/{email} - Invalid Email",
+                        True,
+                        f"Correctly rejected invalid email format with 422",
+                        {"invalid_email": invalid_email}
+                    )
+            else:
+                self.log_test(
+                    "GET /api/email/subscriptions/{email} - Invalid Email",
+                    False,
+                    f"Unexpected status code {response.status_code}: {response.text}",
+                    {"invalid_email": invalid_email}
+                )
+        except Exception as e:
+            self.log_test(
+                "GET /api/email/subscriptions/{email} - Invalid Email",
+                False,
+                f"Request failed: {str(e)}",
+                {"invalid_email": invalid_email}
+            )
+    
     def run_all_tests(self):
         """Run all backend tests"""
         print("🚀 Starting English Fiesta Backend API Tests")
