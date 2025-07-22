@@ -160,6 +160,8 @@ const EmailSubscriptionBanner = ({ onSubscribe }) => {
     </div>
   );
 };
+
+const ProgressTracker = ({ sessionId }) => {
   const [progress, setProgress] = useState(null);
   const [loading, setLoading] = useState(true);
 
