@@ -868,7 +868,7 @@ class EnglishFiestaAPITester:
         print(f"Test Session ID: {self.session_id}")
         print("=" * 60)
         
-        # Test sequence
+        # Test sequence - Video Management Tests
         self.test_get_videos_basic()
         self.test_sample_data_validation()
         self.test_video_filtering()
@@ -880,6 +880,17 @@ class EnglishFiestaAPITester:
         self.test_multiple_watch_sessions()
         self.test_progress_statistics()
         self.test_progress_invalid_session()
+        
+        # Email Subscription Tests
+        print("\n📧 Testing Email Subscription Endpoints")
+        print("-" * 40)
+        self.test_email_subscribe_valid()
+        self.test_email_subscribe_email_only()
+        self.test_email_subscribe_invalid_email()
+        self.test_email_subscribe_duplicate()
+        self.test_check_subscription_status_subscribed()
+        self.test_check_subscription_status_not_subscribed()
+        self.test_check_subscription_invalid_email()
         
         # Summary
         print("\n" + "=" * 60)
