@@ -1,158 +1,175 @@
 {
   "total": 21,
-  "passed": 4,
-  "failed": 17,
-  "success_rate": 19.047619047619047,
+  "passed": 20,
+  "failed": 1,
+  "success_rate": 95.23809523809523,
   "results": [
     {
       "test": "GET /api/videos - Basic Retrieval",
-      "success": false,
-      "message": "HTTP 500: Internal Server Error",
-      "timestamp": "2025-07-22T08:18:37.776488",
+      "success": true,
+      "message": "Retrieved 5 videos successfully",
+      "timestamp": "2025-07-22T08:19:57.642648",
       "details": {
-        "status_code": 500
+        "total_count": 5,
+        "returned_count": 5
       }
     },
     {
       "test": "Sample Data Validation",
-      "success": false,
-      "message": "No sample videos available for validation",
-      "timestamp": "2025-07-22T08:18:37.776798",
-      "details": {}
+      "success": true,
+      "message": "All 5 sample videos have valid structure",
+      "timestamp": "2025-07-22T08:19:57.642951",
+      "details": {
+        "video_count": 5
+      }
     },
     {
       "test": "Video Filter - level",
-      "success": false,
-      "message": "HTTP 500: Internal Server Error",
-      "timestamp": "2025-07-22T08:18:37.804479",
+      "success": true,
+      "message": "Filter returned 1 videos",
+      "timestamp": "2025-07-22T08:19:57.668996",
       "details": {
         "filter": {
           "level": "Beginner"
-        }
+        },
+        "count": 1
       }
     },
     {
       "test": "Video Filter - category",
-      "success": false,
-      "message": "HTTP 500: Internal Server Error",
-      "timestamp": "2025-07-22T08:18:37.829350",
+      "success": true,
+      "message": "Filter returned 1 videos",
+      "timestamp": "2025-07-22T08:19:57.728297",
       "details": {
         "filter": {
           "category": "Grammar"
-        }
+        },
+        "count": 1
       }
     },
     {
       "test": "Video Filter - accent",
-      "success": false,
-      "message": "HTTP 500: Internal Server Error",
-      "timestamp": "2025-07-22T08:18:37.851283",
+      "success": true,
+      "message": "Filter returned 2 videos",
+      "timestamp": "2025-07-22T08:19:57.752478",
       "details": {
         "filter": {
           "accent": "American"
-        }
+        },
+        "count": 2
       }
     },
     {
       "test": "Video Filter - guide",
-      "success": false,
-      "message": "HTTP 500: Internal Server Error",
-      "timestamp": "2025-07-22T08:18:37.872362",
+      "success": true,
+      "message": "Filter returned 2 videos",
+      "timestamp": "2025-07-22T08:19:57.777085",
       "details": {
         "filter": {
           "guide": "Native Speaker"
-        }
+        },
+        "count": 2
       }
     },
     {
       "test": "Video Filter - country",
-      "success": false,
-      "message": "HTTP 500: Internal Server Error",
-      "timestamp": "2025-07-22T08:18:37.891788",
+      "success": true,
+      "message": "Filter returned 2 videos",
+      "timestamp": "2025-07-22T08:19:57.840619",
       "details": {
         "filter": {
           "country": "United States"
-        }
+        },
+        "count": 2
       }
     },
     {
       "test": "Video Filter - is_premium",
-      "success": false,
-      "message": "HTTP 500: Internal Server Error",
-      "timestamp": "2025-07-22T08:18:37.917744",
+      "success": true,
+      "message": "Filter returned 4 videos",
+      "timestamp": "2025-07-22T08:19:57.862978",
       "details": {
         "filter": {
           "is_premium": false
-        }
+        },
+        "count": 4
       }
     },
     {
       "test": "Video Filter - is_premium",
-      "success": false,
-      "message": "HTTP 500: Internal Server Error",
-      "timestamp": "2025-07-22T08:18:37.953339",
+      "success": true,
+      "message": "Filter returned 1 videos",
+      "timestamp": "2025-07-22T08:19:57.888782",
       "details": {
         "filter": {
           "is_premium": true
-        }
+        },
+        "count": 1
       }
     },
     {
       "test": "Video Filter - search",
-      "success": false,
-      "message": "HTTP 500: Internal Server Error",
-      "timestamp": "2025-07-22T08:18:37.981408",
+      "success": true,
+      "message": "Filter returned 4 videos",
+      "timestamp": "2025-07-22T08:19:57.910697",
       "details": {
         "filter": {
           "search": "English"
-        }
+        },
+        "count": 4
       }
     },
     {
       "test": "Video Filter - max_duration",
-      "success": false,
-      "message": "HTTP 500: Internal Server Error",
-      "timestamp": "2025-07-22T08:18:38.003315",
+      "success": true,
+      "message": "Filter returned 1 videos",
+      "timestamp": "2025-07-22T08:19:57.933626",
       "details": {
         "filter": {
           "max_duration": 10
-        }
+        },
+        "count": 1
       }
     },
     {
       "test": "Video Filter - sort_by",
-      "success": false,
-      "message": "HTTP 500: Internal Server Error",
-      "timestamp": "2025-07-22T08:18:38.022812",
+      "success": true,
+      "message": "Filter returned 5 videos",
+      "timestamp": "2025-07-22T08:19:57.954494",
       "details": {
         "filter": {
           "sort_by": "shortest"
-        }
+        },
+        "count": 5
       }
     },
     {
       "test": "Video Filter - sort_by",
-      "success": false,
-      "message": "HTTP 500: Internal Server Error",
-      "timestamp": "2025-07-22T08:18:38.040512",
+      "success": true,
+      "message": "Filter returned 5 videos",
+      "timestamp": "2025-07-22T08:19:57.979900",
       "details": {
         "filter": {
           "sort_by": "longest"
-        }
+        },
+        "count": 5
       }
     },
     {
       "test": "GET /api/videos/{video_id}",
-      "success": false,
-      "message": "No sample videos available for testing",
-      "timestamp": "2025-07-22T08:18:38.040744",
-      "details": {}
+      "success": true,
+      "message": "Retrieved video 'Basic English Greetings' successfully",
+      "timestamp": "2025-07-22T08:19:57.995111",
+      "details": {
+        "video_id": "08d17401-8b09-4b35-a3a9-732339b382c5",
+        "title": "Basic English Greetings"
+      }
     },
     {
       "test": "GET /api/videos/{invalid_id} - Error Handling",
       "success": true,
       "message": "Correctly returned 404 for invalid video ID",
-      "timestamp": "2025-07-22T08:18:38.064132",
+      "timestamp": "2025-07-22T08:19:58.012250",
       "details": {
         "invalid_id": "invalid-video-id-123"
       }
@@ -161,7 +178,7 @@
       "test": "GET /api/filters/options",
       "success": true,
       "message": "Retrieved all filter options successfully",
-      "timestamp": "2025-07-22T08:18:38.079393",
+      "timestamp": "2025-07-22T08:19:58.030384",
       "details": {
         "levels_count": 4,
         "categories_count": 6,
@@ -172,45 +189,61 @@
     },
     {
       "test": "POST /api/videos/{video_id}/watch",
-      "success": false,
-      "message": "No sample videos available for testing",
-      "timestamp": "2025-07-22T08:18:38.079678",
-      "details": {}
+      "success": true,
+      "message": "Successfully recorded 5 minutes of watch progress",
+      "timestamp": "2025-07-22T08:19:58.097164",
+      "details": {
+        "video_id": "08d17401-8b09-4b35-a3a9-732339b382c5",
+        "session_id": "602299ce-078e-4c59-a6cf-103a1860e4f6",
+        "watched_minutes": 5
+      }
     },
     {
       "test": "POST /api/videos/{invalid_id}/watch - Error Handling",
-      "success": false,
-      "message": "Expected 404, got 422",
-      "timestamp": "2025-07-22T08:18:38.101009",
+      "success": true,
+      "message": "Correctly returned 404 for invalid video ID",
+      "timestamp": "2025-07-22T08:19:58.117970",
       "details": {
-        "invalid_id": "invalid-video-id-123",
-        "response": "{\"detail\":[{\"type\":\"missing\",\"loc\":[\"query\",\"watched_minutes\"],\"msg\":\"Field required\",\"input\":null,\"url\":\"https://errors.pydantic.dev/2.11/v/missing\"}]}"
+        "invalid_id": "invalid-video-id-123"
       }
     },
     {
       "test": "Multiple Watch Sessions",
-      "success": false,
-      "message": "No sample videos available for testing",
-      "timestamp": "2025-07-22T08:18:38.101296",
-      "details": {}
+      "success": true,
+      "message": "Successfully recorded 3 watch sessions",
+      "timestamp": "2025-07-22T08:19:59.698509",
+      "details": {
+        "sessions": [
+          {
+            "video_idx": 0,
+            "minutes": 8
+          },
+          {
+            "video_idx": 1,
+            "minutes": 10
+          },
+          {
+            "video_idx": 2,
+            "minutes": 15
+          }
+        ],
+        "session_id": "602299ce-078e-4c59-a6cf-103a1860e4f6"
+      }
     },
     {
       "test": "GET /api/progress/{session_id}",
-      "success": true,
-      "message": "Retrieved progress stats: 0 minutes watched",
-      "timestamp": "2025-07-22T08:18:38.120626",
+      "success": false,
+      "message": "HTTP 500: Internal Server Error",
+      "timestamp": "2025-07-22T08:19:59.715855",
       "details": {
-        "total_minutes": 0,
-        "current_streak": 0,
-        "total_videos": 0,
-        "milestones": []
+        "session_id": "602299ce-078e-4c59-a6cf-103a1860e4f6"
       }
     },
     {
       "test": "GET /api/progress/{invalid_session} - Error Handling",
       "success": true,
       "message": "Correctly returned empty stats for invalid session",
-      "timestamp": "2025-07-22T08:18:38.179195",
+      "timestamp": "2025-07-22T08:19:59.741849",
       "details": {
         "invalid_session": "invalid-session-id-123",
         "stats": {
