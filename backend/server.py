@@ -374,7 +374,7 @@ async def update_daily_progress(session_id: str, video_id: str, watched_minutes:
 async def update_user_stats(session_id: str):
     """Update comprehensive user statistics"""
     # Get all daily progress records
-    daily_records = await db.daily_progress.find({"session_id": session_id}).to_list(1000)
+    daily_records = await db.daily_progress.find({"session_id": session_id}, {"_id": 0}).to_list(1000)
     
     total_minutes = sum(record["total_minutes_watched"] for record in daily_records)
     current_streak = daily_records[-1]["streak_count"] if daily_records else 0
@@ -382,7 +382,7 @@ async def update_user_stats(session_id: str):
     personal_best = max([record["total_minutes_watched"] for record in daily_records], default=0)
     
     # Calculate level progress
-    watch_records = await db.watch_progress.find({"session_id": session_id}).to_list(1000)
+    watch_records = await db.watch_progress.find({"session_id": session_id}, {"_id": 0}).to_list(1000)
     level_progress = {}
     
     for record in watch_records:
