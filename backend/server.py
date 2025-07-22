@@ -270,7 +270,7 @@ async def get_videos(
 @api_router.get("/videos/{video_id}")
 async def get_video(video_id: str):
     """Get a specific video by ID"""
-    video = await db.videos.find_one({"id": video_id})
+    video = await db.videos.find_one({"id": video_id}, {"_id": 0})
     if not video:
         raise HTTPException(status_code=404, detail="Video not found")
     return video
