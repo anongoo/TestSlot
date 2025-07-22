@@ -1,6 +1,6 @@
 {
-  "total": 21,
-  "passed": 21,
+  "total": 28,
+  "passed": 28,
   "failed": 0,
   "success_rate": 100.0,
   "results": [
@@ -8,7 +8,7 @@
       "test": "GET /api/videos - Basic Retrieval",
       "success": true,
       "message": "Retrieved 5 videos successfully",
-      "timestamp": "2025-07-22T08:21:00.366192",
+      "timestamp": "2025-07-22T08:31:41.097536",
       "details": {
         "total_count": 5,
         "returned_count": 5
@@ -18,7 +18,7 @@
       "test": "Sample Data Validation",
       "success": true,
       "message": "All 5 sample videos have valid structure",
-      "timestamp": "2025-07-22T08:21:00.366521",
+      "timestamp": "2025-07-22T08:31:41.097847",
       "details": {
         "video_count": 5
       }
@@ -27,7 +27,7 @@
       "test": "Video Filter - level",
       "success": true,
       "message": "Filter returned 1 videos",
-      "timestamp": "2025-07-22T08:21:00.390189",
+      "timestamp": "2025-07-22T08:31:41.124129",
       "details": {
         "filter": {
           "level": "Beginner"
@@ -39,7 +39,7 @@
       "test": "Video Filter - category",
       "success": true,
       "message": "Filter returned 1 videos",
-      "timestamp": "2025-07-22T08:21:00.452446",
+      "timestamp": "2025-07-22T08:31:41.150451",
       "details": {
         "filter": {
           "category": "Grammar"
@@ -51,7 +51,7 @@
       "test": "Video Filter - accent",
       "success": true,
       "message": "Filter returned 2 videos",
-      "timestamp": "2025-07-22T08:21:00.477956",
+      "timestamp": "2025-07-22T08:31:41.172659",
       "details": {
         "filter": {
           "accent": "American"
@@ -63,7 +63,7 @@
       "test": "Video Filter - guide",
       "success": true,
       "message": "Filter returned 2 videos",
-      "timestamp": "2025-07-22T08:21:00.501056",
+      "timestamp": "2025-07-22T08:31:41.236619",
       "details": {
         "filter": {
           "guide": "Native Speaker"
@@ -75,7 +75,7 @@
       "test": "Video Filter - country",
       "success": true,
       "message": "Filter returned 2 videos",
-      "timestamp": "2025-07-22T08:21:00.526498",
+      "timestamp": "2025-07-22T08:31:41.262630",
       "details": {
         "filter": {
           "country": "United States"
@@ -87,7 +87,7 @@
       "test": "Video Filter - is_premium",
       "success": true,
       "message": "Filter returned 4 videos",
-      "timestamp": "2025-07-22T08:21:00.548393",
+      "timestamp": "2025-07-22T08:31:41.285108",
       "details": {
         "filter": {
           "is_premium": false
@@ -99,7 +99,7 @@
       "test": "Video Filter - is_premium",
       "success": true,
       "message": "Filter returned 1 videos",
-      "timestamp": "2025-07-22T08:21:00.574827",
+      "timestamp": "2025-07-22T08:31:41.306744",
       "details": {
         "filter": {
           "is_premium": true
@@ -111,7 +111,7 @@
       "test": "Video Filter - search",
       "success": true,
       "message": "Filter returned 4 videos",
-      "timestamp": "2025-07-22T08:21:00.599482",
+      "timestamp": "2025-07-22T08:31:41.325664",
       "details": {
         "filter": {
           "search": "English"
@@ -123,7 +123,7 @@
       "test": "Video Filter - max_duration",
       "success": true,
       "message": "Filter returned 1 videos",
-      "timestamp": "2025-07-22T08:21:00.657887",
+      "timestamp": "2025-07-22T08:31:41.347052",
       "details": {
         "filter": {
           "max_duration": 10
@@ -135,7 +135,7 @@
       "test": "Video Filter - sort_by",
       "success": true,
       "message": "Filter returned 5 videos",
-      "timestamp": "2025-07-22T08:21:00.679116",
+      "timestamp": "2025-07-22T08:31:41.370091",
       "details": {
         "filter": {
           "sort_by": "shortest"
@@ -147,7 +147,7 @@
       "test": "Video Filter - sort_by",
       "success": true,
       "message": "Filter returned 5 videos",
-      "timestamp": "2025-07-22T08:21:00.701114",
+      "timestamp": "2025-07-22T08:31:41.389435",
       "details": {
         "filter": {
           "sort_by": "longest"
@@ -159,7 +159,7 @@
       "test": "GET /api/videos/{video_id}",
       "success": true,
       "message": "Retrieved video 'Basic English Greetings' successfully",
-      "timestamp": "2025-07-22T08:21:00.718766",
+      "timestamp": "2025-07-22T08:31:41.405255",
       "details": {
         "video_id": "08d17401-8b09-4b35-a3a9-732339b382c5",
         "title": "Basic English Greetings"
@@ -169,7 +169,7 @@
       "test": "GET /api/videos/{invalid_id} - Error Handling",
       "success": true,
       "message": "Correctly returned 404 for invalid video ID",
-      "timestamp": "2025-07-22T08:21:00.737932",
+      "timestamp": "2025-07-22T08:31:41.433983",
       "details": {
         "invalid_id": "invalid-video-id-123"
       }
@@ -178,7 +178,7 @@
       "test": "GET /api/filters/options",
       "success": true,
       "message": "Retrieved all filter options successfully",
-      "timestamp": "2025-07-22T08:21:00.755714",
+      "timestamp": "2025-07-22T08:31:41.454421",
       "details": {
         "levels_count": 4,
         "categories_count": 6,
@@ -191,10 +191,10 @@
       "test": "POST /api/videos/{video_id}/watch",
       "success": true,
       "message": "Successfully recorded 5 minutes of watch progress",
-      "timestamp": "2025-07-22T08:21:00.781713",
+      "timestamp": "2025-07-22T08:31:41.477604",
       "details": {
         "video_id": "08d17401-8b09-4b35-a3a9-732339b382c5",
-        "session_id": "e2de2812-9d36-486e-9393-a4e908cfc397",
+        "session_id": "6cba1fdb-031f-4453-8f3a-c25fb9a38c79",
         "watched_minutes": 5
       }
     },
@@ -202,7 +202,7 @@
       "test": "POST /api/videos/{invalid_id}/watch - Error Handling",
       "success": true,
       "message": "Correctly returned 404 for invalid video ID",
-      "timestamp": "2025-07-22T08:21:00.840674",
+      "timestamp": "2025-07-22T08:31:41.496742",
       "details": {
         "invalid_id": "invalid-video-id-123"
       }
@@ -211,7 +211,7 @@
       "test": "Multiple Watch Sessions",
       "success": true,
       "message": "Successfully recorded 3 watch sessions",
-      "timestamp": "2025-07-22T08:21:02.418435",
+      "timestamp": "2025-07-22T08:31:43.081766",
       "details": {
         "sessions": [
           {
@@ -227,14 +227,14 @@
             "minutes": 15
           }
         ],
-        "session_id": "e2de2812-9d36-486e-9393-a4e908cfc397"
+        "session_id": "6cba1fdb-031f-4453-8f3a-c25fb9a38c79"
       }
     },
     {
       "test": "GET /api/progress/{session_id}",
       "success": true,
       "message": "Retrieved progress stats: 38 minutes watched",
-      "timestamp": "2025-07-22T08:21:02.438554",
+      "timestamp": "2025-07-22T08:31:43.101291",
       "details": {
         "total_minutes": 38,
         "current_streak": 1,
@@ -246,7 +246,7 @@
       "test": "GET /api/progress/{invalid_session} - Error Handling",
       "success": true,
       "message": "Correctly returned empty stats for invalid session",
-      "timestamp": "2025-07-22T08:21:02.461453",
+      "timestamp": "2025-07-22T08:31:43.120279",
       "details": {
         "invalid_session": "invalid-session-id-123",
         "stats": {
@@ -256,6 +256,78 @@
           "personal_best_day": 0,
           "level_progress": {},
           "milestones_achieved": []
+        }
+      }
+    },
+    {
+      "test": "POST /api/email/subscribe - Valid Email with Name",
+      "success": true,
+      "message": "Successfully subscribed sarah.johnson@example.com: Subscription saved locally, email service temporarily unavailable",
+      "timestamp": "2025-07-22T08:31:43.328952",
+      "details": {
+        "email": "sarah.johnson@example.com",
+        "name": "Sarah Johnson",
+        "status": "partial_success"
+      }
+    },
+    {
+      "test": "POST /api/email/subscribe - Email Only",
+      "success": true,
+      "message": "Successfully subscribed michael.chen@example.com without name: Subscription saved locally, email service temporarily unavailable",
+      "timestamp": "2025-07-22T08:31:43.448230",
+      "details": {
+        "email": "michael.chen@example.com",
+        "status": "partial_success"
+      }
+    },
+    {
+      "test": "POST /api/email/subscribe - Invalid Email Format",
+      "success": true,
+      "message": "Correctly rejected invalid email format with 422",
+      "timestamp": "2025-07-22T08:31:43.468147",
+      "details": {
+        "invalid_email": "not-a-valid-email"
+      }
+    },
+    {
+      "test": "POST /api/email/subscribe - Duplicate Email",
+      "success": true,
+      "message": "Correctly handled duplicate email: Email already subscribed",
+      "timestamp": "2025-07-22T08:31:43.526730",
+      "details": {
+        "email": "sarah.johnson@example.com",
+        "status": "existing"
+      }
+    },
+    {
+      "test": "GET /api/email/subscriptions/{email} - Subscribed Email",
+      "success": true,
+      "message": "Correctly identified sarah.johnson@example.com as subscribed",
+      "timestamp": "2025-07-22T08:31:43.543313",
+      "details": {
+        "email": "sarah.johnson@example.com",
+        "subscribed": true
+      }
+    },
+    {
+      "test": "GET /api/email/subscriptions/{email} - Non-subscribed Email",
+      "success": true,
+      "message": "Correctly identified never.subscribed@example.com as not subscribed",
+      "timestamp": "2025-07-22T08:31:43.565937",
+      "details": {
+        "email": "never.subscribed@example.com",
+        "subscribed": false
+      }
+    },
+    {
+      "test": "GET /api/email/subscriptions/{email} - Invalid Email",
+      "success": true,
+      "message": "Handled invalid email format gracefully",
+      "timestamp": "2025-07-22T08:31:43.623902",
+      "details": {
+        "invalid_email": "not-a-valid-email",
+        "response": {
+          "subscribed": false
         }
       }
     }
