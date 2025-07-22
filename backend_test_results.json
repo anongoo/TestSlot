@@ -1,0 +1,227 @@
+{
+  "total": 21,
+  "passed": 4,
+  "failed": 17,
+  "success_rate": 19.047619047619047,
+  "results": [
+    {
+      "test": "GET /api/videos - Basic Retrieval",
+      "success": false,
+      "message": "HTTP 500: Internal Server Error",
+      "timestamp": "2025-07-22T08:18:37.776488",
+      "details": {
+        "status_code": 500
+      }
+    },
+    {
+      "test": "Sample Data Validation",
+      "success": false,
+      "message": "No sample videos available for validation",
+      "timestamp": "2025-07-22T08:18:37.776798",
+      "details": {}
+    },
+    {
+      "test": "Video Filter - level",
+      "success": false,
+      "message": "HTTP 500: Internal Server Error",
+      "timestamp": "2025-07-22T08:18:37.804479",
+      "details": {
+        "filter": {
+          "level": "Beginner"
+        }
+      }
+    },
+    {
+      "test": "Video Filter - category",
+      "success": false,
+      "message": "HTTP 500: Internal Server Error",
+      "timestamp": "2025-07-22T08:18:37.829350",
+      "details": {
+        "filter": {
+          "category": "Grammar"
+        }
+      }
+    },
+    {
+      "test": "Video Filter - accent",
+      "success": false,
+      "message": "HTTP 500: Internal Server Error",
+      "timestamp": "2025-07-22T08:18:37.851283",
+      "details": {
+        "filter": {
+          "accent": "American"
+        }
+      }
+    },
+    {
+      "test": "Video Filter - guide",
+      "success": false,
+      "message": "HTTP 500: Internal Server Error",
+      "timestamp": "2025-07-22T08:18:37.872362",
+      "details": {
+        "filter": {
+          "guide": "Native Speaker"
+        }
+      }
+    },
+    {
+      "test": "Video Filter - country",
+      "success": false,
+      "message": "HTTP 500: Internal Server Error",
+      "timestamp": "2025-07-22T08:18:37.891788",
+      "details": {
+        "filter": {
+          "country": "United States"
+        }
+      }
+    },
+    {
+      "test": "Video Filter - is_premium",
+      "success": false,
+      "message": "HTTP 500: Internal Server Error",
+      "timestamp": "2025-07-22T08:18:37.917744",
+      "details": {
+        "filter": {
+          "is_premium": false
+        }
+      }
+    },
+    {
+      "test": "Video Filter - is_premium",
+      "success": false,
+      "message": "HTTP 500: Internal Server Error",
+      "timestamp": "2025-07-22T08:18:37.953339",
+      "details": {
+        "filter": {
+          "is_premium": true
+        }
+      }
+    },
+    {
+      "test": "Video Filter - search",
+      "success": false,
+      "message": "HTTP 500: Internal Server Error",
+      "timestamp": "2025-07-22T08:18:37.981408",
+      "details": {
+        "filter": {
+          "search": "English"
+        }
+      }
+    },
+    {
+      "test": "Video Filter - max_duration",
+      "success": false,
+      "message": "HTTP 500: Internal Server Error",
+      "timestamp": "2025-07-22T08:18:38.003315",
+      "details": {
+        "filter": {
+          "max_duration": 10
+        }
+      }
+    },
+    {
+      "test": "Video Filter - sort_by",
+      "success": false,
+      "message": "HTTP 500: Internal Server Error",
+      "timestamp": "2025-07-22T08:18:38.022812",
+      "details": {
+        "filter": {
+          "sort_by": "shortest"
+        }
+      }
+    },
+    {
+      "test": "Video Filter - sort_by",
+      "success": false,
+      "message": "HTTP 500: Internal Server Error",
+      "timestamp": "2025-07-22T08:18:38.040512",
+      "details": {
+        "filter": {
+          "sort_by": "longest"
+        }
+      }
+    },
+    {
+      "test": "GET /api/videos/{video_id}",
+      "success": false,
+      "message": "No sample videos available for testing",
+      "timestamp": "2025-07-22T08:18:38.040744",
+      "details": {}
+    },
+    {
+      "test": "GET /api/videos/{invalid_id} - Error Handling",
+      "success": true,
+      "message": "Correctly returned 404 for invalid video ID",
+      "timestamp": "2025-07-22T08:18:38.064132",
+      "details": {
+        "invalid_id": "invalid-video-id-123"
+      }
+    },
+    {
+      "test": "GET /api/filters/options",
+      "success": true,
+      "message": "Retrieved all filter options successfully",
+      "timestamp": "2025-07-22T08:18:38.079393",
+      "details": {
+        "levels_count": 4,
+        "categories_count": 6,
+        "accents_count": 4,
+        "guides_count": 3,
+        "countries_count": 4
+      }
+    },
+    {
+      "test": "POST /api/videos/{video_id}/watch",
+      "success": false,
+      "message": "No sample videos available for testing",
+      "timestamp": "2025-07-22T08:18:38.079678",
+      "details": {}
+    },
+    {
+      "test": "POST /api/videos/{invalid_id}/watch - Error Handling",
+      "success": false,
+      "message": "Expected 404, got 422",
+      "timestamp": "2025-07-22T08:18:38.101009",
+      "details": {
+        "invalid_id": "invalid-video-id-123",
+        "response": "{\"detail\":[{\"type\":\"missing\",\"loc\":[\"query\",\"watched_minutes\"],\"msg\":\"Field required\",\"input\":null,\"url\":\"https://errors.pydantic.dev/2.11/v/missing\"}]}"
+      }
+    },
+    {
+      "test": "Multiple Watch Sessions",
+      "success": false,
+      "message": "No sample videos available for testing",
+      "timestamp": "2025-07-22T08:18:38.101296",
+      "details": {}
+    },
+    {
+      "test": "GET /api/progress/{session_id}",
+      "success": true,
+      "message": "Retrieved progress stats: 0 minutes watched",
+      "timestamp": "2025-07-22T08:18:38.120626",
+      "details": {
+        "total_minutes": 0,
+        "current_streak": 0,
+        "total_videos": 0,
+        "milestones": []
+      }
+    },
+    {
+      "test": "GET /api/progress/{invalid_session} - Error Handling",
+      "success": true,
+      "message": "Correctly returned empty stats for invalid session",
+      "timestamp": "2025-07-22T08:18:38.179195",
+      "details": {
+        "invalid_session": "invalid-session-id-123",
+        "stats": {
+          "total_minutes_watched": 0,
+          "current_streak": 0,
+          "longest_streak": 0,
+          "personal_best_day": 0,
+          "level_progress": {},
+          "milestones_achieved": []
+        }
+      }
+    }
+  ]
+}
