@@ -124,6 +124,11 @@ class VideoFilterRequest(BaseModel):
     max_duration: Optional[int] = None
     sort_by: Optional[str] = "newest"  # newest, popular, shortest, longest
 
+class EmailSubscribeRequest(BaseModel):
+    email: EmailStr
+    name: Optional[str] = None
+    source: str = "english_fiesta"
+
 # Initialize sample data
 async def init_sample_data():
     """Initialize sample video data if database is empty"""
