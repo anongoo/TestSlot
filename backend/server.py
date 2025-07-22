@@ -386,7 +386,7 @@ async def update_user_stats(session_id: str):
     level_progress = {}
     
     for record in watch_records:
-        video = await db.videos.find_one({"id": record["video_id"]})
+        video = await db.videos.find_one({"id": record["video_id"]}, {"_id": 0})
         if video:
             level = video["level"]
             level_progress[level] = level_progress.get(level, 0) + record["watched_minutes"]
