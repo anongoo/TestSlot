@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, HTTPException, Query
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -6,10 +6,10 @@ import os
 import logging
 from pathlib import Path
 from pydantic import BaseModel, Field
-from typing import List
+from typing import List, Optional, Dict, Any
 import uuid
-from datetime import datetime
-
+from datetime import datetime, timedelta
+from enum import Enum
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -25,32 +25,453 @@ app = FastAPI()
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 
+# Enums
+class VideoLevel(str, Enum):
+    NEW_BEGINNER = "New Beginner"
+    BEGINNER = "Beginner"
+    INTERMEDIATE = "Intermediate"
+    ADVANCED = "Advanced"
 
-# Define Models
-class StatusCheck(BaseModel):
+class VideoCategory(str, Enum):
+    CONVERSATION = "Conversation"
+    GRAMMAR = "Grammar"
+    VOCABULARY = "Vocabulary"
+    PRONUNCIATION = "Pronunciation"
+    CULTURE = "Culture"
+    BUSINESS = "Business"
+
+class AccentType(str, Enum):
+    BRITISH = "British"
+    AMERICAN = "American"
+    AUSTRALIAN = "Australian"
+    CANADIAN = "Canadian"
+
+class GuideType(str, Enum):
+    NATIVE_SPEAKER = "Native Speaker"
+    ESL_TEACHER = "ESL Teacher"
+    LANGUAGE_COACH = "Language Coach"
+
+# Models
+class Video(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    client_name: str
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    title: str
+    description: str
+    thumbnail_url: str
+    video_url: str
+    duration_minutes: int
+    level: VideoLevel
+    category: VideoCategory
+    accent: AccentType
+    guide: GuideType
+    country: str
+    is_premium: bool = False
+    series_id: Optional[str] = None
+    series_order: Optional[int] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
 
-class StatusCheckCreate(BaseModel):
-    client_name: str
+class VideoSeries(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    title: str
+    description: str
+    thumbnail_url: str
+    level: VideoLevel
+    category: VideoCategory
+    video_count: int
+    total_duration_minutes: int
+    created_at: datetime = Field(default_factory=datetime.utcnow)
 
-# Add your routes to the router instead of directly to app
-@api_router.get("/")
-async def root():
-    return {"message": "Hello World"}
+class WatchProgress(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: Optional[str] = None  # For guest users, this will be None
+    session_id: str  # For tracking guest progress
+    video_id: str
+    watched_minutes: int
+    completed: bool = False
+    watched_at: datetime = Field(default_factory=datetime.utcnow)
 
-@api_router.post("/status", response_model=StatusCheck)
-async def create_status_check(input: StatusCheckCreate):
-    status_dict = input.dict()
-    status_obj = StatusCheck(**status_dict)
-    _ = await db.status_checks.insert_one(status_obj.dict())
-    return status_obj
+class DailyProgress(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: Optional[str] = None
+    session_id: str
+    date: str  # Format: YYYY-MM-DD
+    total_minutes_watched: int
+    videos_watched: List[str] = []
+    streak_count: int = 0
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
 
-@api_router.get("/status", response_model=List[StatusCheck])
-async def get_status_checks():
-    status_checks = await db.status_checks.find().to_list(1000)
-    return [StatusCheck(**status_check) for status_check in status_checks]
+class UserStats(BaseModel):
+    user_id: Optional[str] = None
+    session_id: str
+    total_minutes_watched: int = 0
+    current_streak: int = 0
+    longest_streak: int = 0
+    personal_best_day: int = 0
+    level_progress: Dict[str, int] = {}
+    milestones_achieved: List[str] = []
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+class VideoFilterRequest(BaseModel):
+    level: Optional[VideoLevel] = None
+    category: Optional[VideoCategory] = None
+    accent: Optional[AccentType] = None
+    guide: Optional[GuideType] = None
+    country: Optional[str] = None
+    is_premium: Optional[bool] = None
+    search: Optional[str] = None
+    max_duration: Optional[int] = None
+    sort_by: Optional[str] = "newest"  # newest, popular, shortest, longest
+
+# Initialize sample data
+async def init_sample_data():
+    """Initialize sample video data if database is empty"""
+    video_count = await db.videos.count_documents({})
+    if video_count == 0:
+        sample_videos = [
+            {
+                "id": str(uuid.uuid4()),
+                "title": "Basic English Greetings",
+                "description": "Learn how to greet people in English with proper pronunciation and cultural context.",
+                "thumbnail_url": "https://images.unsplash.com/photo-1645594287996-086e2217a809?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NjZ8MHwxfHNlYXJjaHwzfHxsYW5ndWFnZSUyMGxlYXJuaW5nfGVufDB8fHxibHVlfDE3NTMxNzE5NDR8MA&ixlib=rb-4.1.0&q=85",
+                "video_url": "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4",
+                "duration_minutes": 8,
+                "level": "New Beginner",
+                "category": "Conversation",
+                "accent": "American",
+                "guide": "Native Speaker",
+                "country": "United States",
+                "is_premium": False,
+                "created_at": datetime.utcnow()
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "title": "Present Simple vs Present Continuous",
+                "description": "Master the difference between present simple and present continuous tenses with examples.",
+                "thumbnail_url": "https://images.unsplash.com/photo-1426024120108-99cc76989c71?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzR8MHwxfHNlYXJjaHwyfHxvbmxpbmUlMjBlZHVjYXRpb258ZW58MHx8fGJsdWV8MTc1MzE3MTk1N3ww&ixlib=rb-4.1.0&q=85",
+                "video_url": "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_2mb.mp4",
+                "duration_minutes": 15,
+                "level": "Beginner",
+                "category": "Grammar",
+                "accent": "British",
+                "guide": "ESL Teacher",
+                "country": "United Kingdom",
+                "is_premium": False,
+                "created_at": datetime.utcnow()
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "title": "Business Meeting Vocabulary",
+                "description": "Essential vocabulary and phrases for professional English business meetings.",
+                "thumbnail_url": "https://images.unsplash.com/photo-1651796704084-a115817945b2?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzR8MHwxfHNlYXJjaHwzfHxvbmxpbmUlMjBlZHVjYXRpb258ZW58MHx8fGJsdWV8MTc1MzE3MTk1N3ww&ixlib=rb-4.1.0&q=85",
+                "video_url": "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_5mb.mp4",
+                "duration_minutes": 25,
+                "level": "Advanced",
+                "category": "Business",
+                "accent": "American",
+                "guide": "Language Coach",
+                "country": "United States",
+                "is_premium": True,
+                "created_at": datetime.utcnow()
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "title": "Australian Pronunciation Guide",
+                "description": "Learn the unique sounds and pronunciation patterns of Australian English.",
+                "thumbnail_url": "https://images.unsplash.com/photo-1527871369852-eb58cb2b54e2?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzZ8MHwxfHNlYXJjaHwxfHxhY2hpZXZlbWVudHxlbnwwfHx8Ymx1ZXwxNzUzMTcxOTc1fDA&ixlib=rb-4.1.0&q=85",
+                "video_url": "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_7mb.mp4",
+                "duration_minutes": 18,
+                "level": "Intermediate",
+                "category": "Pronunciation",
+                "accent": "Australian",
+                "guide": "Native Speaker",
+                "country": "Australia",
+                "is_premium": False,
+                "created_at": datetime.utcnow()
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "title": "Cultural Differences: Small Talk",
+                "description": "Understanding cultural context when making small talk in English-speaking countries.",
+                "thumbnail_url": "https://images.unsplash.com/photo-1645594287996-086e2217a809?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NjZ8MHwxfHNlYXJjaHwzfHxsYW5ndWFnZSUyMGxlYXJuaW5nfGVufDB8fHxibHVlfDE3NTMxNzE5NDR8MA&ixlib=rb-4.1.0&q=85",
+                "video_url": "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_10mb.mp4",
+                "duration_minutes": 12,
+                "level": "Intermediate",
+                "category": "Culture",
+                "accent": "Canadian",
+                "guide": "ESL Teacher",
+                "country": "Canada",
+                "is_premium": False,
+                "created_at": datetime.utcnow()
+            }
+        ]
+        await db.videos.insert_many(sample_videos)
+
+# API Routes
+@api_router.get("/videos")
+async def get_videos(
+    level: Optional[VideoLevel] = None,
+    category: Optional[VideoCategory] = None,
+    accent: Optional[AccentType] = None,
+    guide: Optional[GuideType] = None,
+    country: Optional[str] = None,
+    is_premium: Optional[bool] = None,
+    search: Optional[str] = None,
+    max_duration: Optional[int] = None,
+    sort_by: str = "newest",
+    limit: int = 20,
+    offset: int = 0
+):
+    """Get videos with filtering and sorting"""
+    query = {}
+    
+    if level:
+        query["level"] = level
+    if category:
+        query["category"] = category
+    if accent:
+        query["accent"] = accent
+    if guide:
+        query["guide"] = guide
+    if country:
+        query["country"] = country
+    if is_premium is not None:
+        query["is_premium"] = is_premium
+    if max_duration:
+        query["duration_minutes"] = {"$lte": max_duration}
+    
+    # Text search
+    if search:
+        query["$or"] = [
+            {"title": {"$regex": search, "$options": "i"}},
+            {"description": {"$regex": search, "$options": "i"}}
+        ]
+    
+    # Sort options
+    sort_options = {
+        "newest": [("created_at", -1)],
+        "popular": [("created_at", -1)],  # TODO: Add popularity metric
+        "shortest": [("duration_minutes", 1)],
+        "longest": [("duration_minutes", -1)]
+    }
+    
+    sort_criteria = sort_options.get(sort_by, sort_options["newest"])
+    
+    videos = await db.videos.find(query).sort(sort_criteria).skip(offset).limit(limit).to_list(limit)
+    total_count = await db.videos.count_documents(query)
+    
+    return {
+        "videos": videos,
+        "total": total_count,
+        "limit": limit,
+        "offset": offset
+    }
+
+@api_router.get("/videos/{video_id}")
+async def get_video(video_id: str):
+    """Get a specific video by ID"""
+    video = await db.videos.find_one({"id": video_id})
+    if not video:
+        raise HTTPException(status_code=404, detail="Video not found")
+    return video
+
+@api_router.post("/videos/{video_id}/watch")
+async def record_watch_progress(video_id: str, watched_minutes: int, session_id: str = Query(...)):
+    """Record video watch progress"""
+    video = await db.videos.find_one({"id": video_id})
+    if not video:
+        raise HTTPException(status_code=404, detail="Video not found")
+    
+    # Create or update watch progress
+    progress_data = {
+        "user_id": None,
+        "session_id": session_id,
+        "video_id": video_id,
+        "watched_minutes": watched_minutes,
+        "completed": watched_minutes >= video["duration_minutes"],
+        "watched_at": datetime.utcnow()
+    }
+    
+    existing_progress = await db.watch_progress.find_one({
+        "session_id": session_id,
+        "video_id": video_id
+    })
+    
+    if existing_progress:
+        # Update existing progress
+        await db.watch_progress.update_one(
+            {"session_id": session_id, "video_id": video_id},
+            {"$set": {
+                "watched_minutes": max(watched_minutes, existing_progress["watched_minutes"]),
+                "completed": watched_minutes >= video["duration_minutes"],
+                "watched_at": datetime.utcnow()
+            }}
+        )
+    else:
+        # Create new progress record
+        progress = WatchProgress(**progress_data)
+        await db.watch_progress.insert_one(progress.dict())
+    
+    # Update daily progress
+    await update_daily_progress(session_id, video_id, watched_minutes)
+    
+    return {"message": "Progress recorded successfully"}
+
+async def update_daily_progress(session_id: str, video_id: str, watched_minutes: int):
+    """Update daily progress and streak tracking"""
+    today = datetime.utcnow().strftime("%Y-%m-%d")
+    
+    # Find or create today's progress
+    daily_progress = await db.daily_progress.find_one({
+        "session_id": session_id,
+        "date": today
+    })
+    
+    if daily_progress:
+        # Update existing daily progress
+        if video_id not in daily_progress["videos_watched"]:
+            daily_progress["videos_watched"].append(video_id)
+        daily_progress["total_minutes_watched"] += watched_minutes
+        daily_progress["updated_at"] = datetime.utcnow()
+        
+        await db.daily_progress.update_one(
+            {"session_id": session_id, "date": today},
+            {"$set": daily_progress}
+        )
+    else:
+        # Create new daily progress
+        # Calculate streak
+        yesterday = (datetime.utcnow() - timedelta(days=1)).strftime("%Y-%m-%d")
+        yesterday_progress = await db.daily_progress.find_one({
+            "session_id": session_id,
+            "date": yesterday
+        })
+        
+        streak_count = (yesterday_progress["streak_count"] + 1) if yesterday_progress else 1
+        
+        new_daily_progress = {
+            "id": str(uuid.uuid4()),
+            "user_id": None,
+            "session_id": session_id,
+            "date": today,
+            "total_minutes_watched": watched_minutes,
+            "videos_watched": [video_id],
+            "streak_count": streak_count,
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow()
+        }
+        
+        await db.daily_progress.insert_one(new_daily_progress)
+    
+    # Update user stats
+    await update_user_stats(session_id)
+
+async def update_user_stats(session_id: str):
+    """Update comprehensive user statistics"""
+    # Get all daily progress records
+    daily_records = await db.daily_progress.find({"session_id": session_id}).to_list(1000)
+    
+    total_minutes = sum(record["total_minutes_watched"] for record in daily_records)
+    current_streak = daily_records[-1]["streak_count"] if daily_records else 0
+    longest_streak = max([record["streak_count"] for record in daily_records], default=0)
+    personal_best = max([record["total_minutes_watched"] for record in daily_records], default=0)
+    
+    # Calculate level progress
+    watch_records = await db.watch_progress.find({"session_id": session_id}).to_list(1000)
+    level_progress = {}
+    
+    for record in watch_records:
+        video = await db.videos.find_one({"id": record["video_id"]})
+        if video:
+            level = video["level"]
+            level_progress[level] = level_progress.get(level, 0) + record["watched_minutes"]
+    
+    # Calculate milestones
+    milestones = []
+    if total_minutes >= 60:
+        milestones.append("First Hour")
+    if total_minutes >= 600:  # 10 hours
+        milestones.append("Intermediate Unlocked")
+    if total_minutes >= 3600:  # 60 hours = 100 hours milestone
+        milestones.append("Century Club")
+    if current_streak >= 7:
+        milestones.append("Week Warrior")
+    if current_streak >= 30:
+        milestones.append("Month Master")
+    
+    # Update or create user stats
+    stats_data = {
+        "user_id": None,
+        "session_id": session_id,
+        "total_minutes_watched": total_minutes,
+        "current_streak": current_streak,
+        "longest_streak": longest_streak,
+        "personal_best_day": personal_best,
+        "level_progress": level_progress,
+        "milestones_achieved": milestones,
+        "updated_at": datetime.utcnow()
+    }
+    
+    existing_stats = await db.user_stats.find_one({"session_id": session_id})
+    if existing_stats:
+        await db.user_stats.update_one(
+            {"session_id": session_id},
+            {"$set": stats_data}
+        )
+    else:
+        stats_data["created_at"] = datetime.utcnow()
+        await db.user_stats.insert_one(stats_data)
+
+@api_router.get("/progress/{session_id}")
+async def get_user_progress(session_id: str):
+    """Get comprehensive user progress and statistics"""
+    stats = await db.user_stats.find_one({"session_id": session_id})
+    
+    if not stats:
+        # Initialize empty stats if none exist
+        stats = {
+            "total_minutes_watched": 0,
+            "current_streak": 0,
+            "longest_streak": 0,
+            "personal_best_day": 0,
+            "level_progress": {},
+            "milestones_achieved": []
+        }
+    
+    # Get recent daily progress for heatmap
+    recent_progress = await db.daily_progress.find(
+        {"session_id": session_id}
+    ).sort("date", -1).limit(90).to_list(90)  # Last 90 days
+    
+    # Format for heatmap
+    heatmap_data = []
+    for progress in recent_progress:
+        heatmap_data.append({
+            "date": progress["date"],
+            "minutes": progress["total_minutes_watched"]
+        })
+    
+    return {
+        "stats": stats,
+        "recent_activity": heatmap_data,
+        "total_videos_watched": len(await db.watch_progress.find({"session_id": session_id}).to_list(1000))
+    }
+
+@api_router.get("/filters/options")
+async def get_filter_options():
+    """Get available filter options"""
+    return {
+        "levels": [level.value for level in VideoLevel],
+        "categories": [category.value for category in VideoCategory],
+        "accents": [accent.value for accent in AccentType],
+        "guides": [guide.value for guide in GuideType],
+        "countries": ["United States", "United Kingdom", "Australia", "Canada"]
+    }
+
+# Initialize sample data on startup
+@app.on_event("startup")
+async def startup_event():
+    await init_sample_data()
 
 # Include the router in the main app
 app.include_router(api_router)
