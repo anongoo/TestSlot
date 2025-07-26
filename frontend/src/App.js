@@ -908,8 +908,25 @@ const AppContent = () => {
       <Header />
 
       <div className="container mx-auto px-4 py-8">
-        {/* Show login prompt for guests */}
-        {!isAuthenticated && <LoginPrompt />}
+        {/* Single login prompt for guests - only show once at top */}
+        {!isAuthenticated && (
+          <div className="bg-gradient-to-r from-blue-100 to-purple-100 rounded-xl p-6 text-center mb-8">
+            <div className="text-4xl mb-3">🔐</div>
+            <h3 className="text-xl font-bold text-gray-800 mb-2">Join English Fiesta!</h3>
+            <p className="text-gray-600 mb-4">
+              Create your account to track progress, access premium content, and join our learning community.
+            </p>
+            <button
+              onClick={() => {
+                const { login } = useAuth();
+                login();
+              }}
+              className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+            >
+              Sign Up / Login
+            </button>
+          </div>
+        )}
         
         {/* Admin Dashboard */}
         <RoleGate allowedRoles={['admin']}>
