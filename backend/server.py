@@ -684,6 +684,193 @@ async def check_subscription_status(email: str):
 @app.on_event("startup")
 async def startup_event():
     await init_sample_data()
+    await create_default_admin()
+
+async def create_default_admin():
+    """Create default admin user if none exists"""
+    admin_count = await db.users.count_documents({"role": UserRole.ADMIN})
+    if admin_count == 0:
+        # Create a placeholder admin - in production, this should be done via secure process
+        logger.info("No admin users found. First user to login will be promoted to admin.")
+
+# Authentication Endpoints
+@api_router.post("/auth/session", response_model=UserProfileResponse)
+async def create_auth_session(request: AuthSessionRequest):
+    """Create user session from Emergent auth session ID"""
+    try:
+        # Call Emergent auth API to get user data
+        emergent_response = requests.get(
+            "https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data",
+            headers={"X-Session-ID": request.session_id},
+            timeout=10
+        )
+        
+        if emergent_response.status_code != 200:
+            raise HTTPException(status_code=401, detail="Invalid session ID")
+        
+        emergent_data = emergent_response.json()
+        
+        # Check if user exists
+        existing_user = await db.users.find_one({"email": emergent_data["email"]}, {"_id": 0})
+        
+        if existing_user:
+            user = User(**existing_user)
+        else:
+            # Create new user with default student role
+            user_data = {
+                "id": str(uuid.uuid4()),
+                "email": emergent_data["email"],
+                "name": emergent_data["name"],
+                "picture": emergent_data.get("picture"),
+                "role": UserRole.STUDENT,
+                "emergent_user_id": emergent_data["id"],
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow(),
+                "is_active": True
+            }
+            
+            # Check if this is the first user - make them admin
+            user_count = await db.users.count_documents({})
+            if user_count == 0:
+                user_data["role"] = UserRole.ADMIN
+                logger.info(f"Creating first admin user: {emergent_data['email']}")
+            
+            await db.users.insert_one(user_data)
+            user = User(**user_data)
+            
+            # Migrate any guest session data to this user
+            await migrate_guest_data_to_user(user.id, request.session_id)
+        
+        # Create session token
+        session_token = secrets.token_urlsafe(32)
+        expires_at = datetime.utcnow() + timedelta(days=7)
+        
+        # Deactivate old sessions for this user
+        await db.user_sessions.update_many(
+            {"user_id": user.id},
+            {"$set": {"is_active": False}}
+        )
+        
+        # Create new session
+        session_data = {
+            "id": str(uuid.uuid4()),
+            "user_id": user.id,
+            "session_token": session_token,
+            "emergent_session_id": request.session_id,
+            "expires_at": expires_at,
+            "created_at": datetime.utcnow(),
+            "is_active": True
+        }
+        
+        await db.user_sessions.insert_one(session_data)
+        
+        return UserProfileResponse(
+            id=user.id,
+            email=user.email,
+            name=user.name,
+            picture=user.picture,
+            role=user.role,
+            created_at=user.created_at,
+            session_token=session_token
+        )
+        
+    except requests.RequestException as e:
+        logger.error(f"Emergent auth API error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Authentication service unavailable")
+    except Exception as e:
+        logger.error(f"Session creation error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to create session")
+
+async def migrate_guest_data_to_user(user_id: str, guest_session_id: str):
+    """Migrate guest session data to authenticated user"""
+    try:
+        # Update watch progress
+        await db.watch_progress.update_many(
+            {"session_id": guest_session_id},
+            {"$set": {"user_id": user_id}}
+        )
+        
+        # Update daily progress
+        await db.daily_progress.update_many(
+            {"session_id": guest_session_id},
+            {"$set": {"user_id": user_id}}
+        )
+        
+        # Update user stats
+        await db.user_stats.update_many(
+            {"session_id": guest_session_id},
+            {"$set": {"user_id": user_id}}
+        )
+        
+        logger.info(f"Migrated guest data from session {guest_session_id} to user {user_id}")
+    except Exception as e:
+        logger.error(f"Data migration error: {str(e)}")
+
+@api_router.get("/auth/profile")
+async def get_user_profile(current_user: User = Depends(get_current_user)):
+    """Get current user profile"""
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    return {
+        "id": current_user.id,
+        "email": current_user.email,
+        "name": current_user.name,
+        "picture": current_user.picture,
+        "role": current_user.role,
+        "created_at": current_user.created_at
+    }
+
+@api_router.post("/auth/logout")
+async def logout(current_user: User = Depends(get_current_user)):
+    """Logout current user"""
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    # Get session token from request (we'd need to modify this to get the actual token)
+    # For now, deactivate all sessions for the user
+    await db.user_sessions.update_many(
+        {"user_id": current_user.id},
+        {"$set": {"is_active": False}}
+    )
+    
+    return {"message": "Logged out successfully"}
+
+# Admin endpoints
+@api_router.get("/admin/users")
+async def get_all_users(current_user: User = Depends(require_admin)):
+    """Get all users (admin only)"""
+    users = await db.users.find({}, {"_id": 0}).to_list(1000)
+    return {"users": users}
+
+@api_router.post("/admin/users/role")
+async def update_user_role(request: RoleUpdateRequest, current_user: User = Depends(require_admin)):
+    """Update user role (admin only)"""
+    # Find target user
+    target_user = await db.users.find_one({"id": request.user_id}, {"_id": 0})
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Prevent admin from demoting themselves if they're the only admin
+    if current_user.id == request.user_id and request.new_role != UserRole.ADMIN:
+        admin_count = await db.users.count_documents({"role": UserRole.ADMIN})
+        if admin_count <= 1:
+            raise HTTPException(status_code=400, detail="Cannot remove the last admin")
+    
+    # Update role
+    await db.users.update_one(
+        {"id": request.user_id},
+        {"$set": {
+            "role": request.new_role,
+            "updated_at": datetime.utcnow()
+        }}
+    )
+    
+    return {
+        "message": f"User role updated to {request.new_role}",
+        "user_id": request.user_id,
+        "new_role": request.new_role
+    }
 
 # Include the router in the main app
 app.include_router(api_router)
