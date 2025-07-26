@@ -29,6 +29,16 @@ app = FastAPI()
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 
+# Security
+security = HTTPBearer(auto_error=False)
+
+# User Roles Enum
+class UserRole(str, Enum):
+    GUEST = "guest"
+    STUDENT = "student"
+    INSTRUCTOR = "instructor"
+    ADMIN = "admin"
+
 # Enums
 class VideoLevel(str, Enum):
     NEW_BEGINNER = "New Beginner"
