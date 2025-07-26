@@ -449,7 +449,7 @@ async def record_watch_progress(
     
     return {"message": "Progress recorded successfully"}
 
-async def update_daily_progress(session_id: str, video_id: str, watched_minutes: int):
+async def update_daily_progress(session_id: str, video_id: str, watched_minutes: int, user_id: Optional[str] = None):
     """Update daily progress and streak tracking"""
     today = datetime.utcnow().strftime("%Y-%m-%d")
     
@@ -465,6 +465,7 @@ async def update_daily_progress(session_id: str, video_id: str, watched_minutes:
             daily_progress["videos_watched"].append(video_id)
         daily_progress["total_minutes_watched"] += watched_minutes
         daily_progress["updated_at"] = datetime.utcnow()
+        daily_progress["user_id"] = user_id  # Update user_id if now authenticated
         
         await db.daily_progress.update_one(
             {"session_id": session_id, "date": today},
@@ -483,7 +484,7 @@ async def update_daily_progress(session_id: str, video_id: str, watched_minutes:
         
         new_daily_progress = {
             "id": str(uuid.uuid4()),
-            "user_id": None,
+            "user_id": user_id,
             "session_id": session_id,
             "date": today,
             "total_minutes_watched": watched_minutes,
@@ -496,7 +497,7 @@ async def update_daily_progress(session_id: str, video_id: str, watched_minutes:
         await db.daily_progress.insert_one(new_daily_progress)
     
     # Update user stats
-    await update_user_stats(session_id)
+    await update_user_stats(session_id, user_id)
 
 async def update_user_stats(session_id: str):
     """Update comprehensive user statistics"""
