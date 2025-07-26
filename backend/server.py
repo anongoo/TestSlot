@@ -499,7 +499,7 @@ async def update_daily_progress(session_id: str, video_id: str, watched_minutes:
     # Update user stats
     await update_user_stats(session_id, user_id)
 
-async def update_user_stats(session_id: str):
+async def update_user_stats(session_id: str, user_id: Optional[str] = None):
     """Update comprehensive user statistics"""
     # Get all daily progress records
     daily_records = await db.daily_progress.find({"session_id": session_id}, {"_id": 0}).to_list(1000)
@@ -534,7 +534,7 @@ async def update_user_stats(session_id: str):
     
     # Update or create user stats
     stats_data = {
-        "user_id": None,
+        "user_id": user_id,
         "session_id": session_id,
         "total_minutes_watched": total_minutes,
         "current_streak": current_streak,
