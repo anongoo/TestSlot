@@ -622,8 +622,15 @@ const ProgressTracker = ({ sessionId }) => {
 const VideoCard = ({ video, onWatchProgress, sessionId }) => {
   const [isWatching, setIsWatching] = useState(false);
   const [watchedMinutes, setWatchedMinutes] = useState(0);
+  const { sessionToken, isStudent } = useAuth();
 
   const handleWatchVideo = async () => {
+    // Check premium access
+    if (video.is_premium && !isStudent) {
+      alert('Please create an account to access premium content!');
+      return;
+    }
+
     setIsWatching(true);
     
     // Simulate watching progress (in real app, this would be video player events)
@@ -636,13 +643,14 @@ const VideoCard = ({ video, onWatchProgress, sessionId }) => {
       
       // Record progress every minute
       try {
-        await axios.post(`${API}/videos/${video.id}/watch`, {}, {
-          params: {
-            session_id: sessionId
-          },
-          data: {
-            watched_minutes: currentMinutes
-          }
+        const headers = sessionToken ? 
+          { 'Authorization': `Bearer ${sessionToken}` } : {};
+        
+        await axios.post(`${API}/videos/${video.id}/watch`, {
+          watched_minutes: currentMinutes
+        }, {
+          params: { session_id: sessionId },
+          headers
         });
         
         // Notify parent to refresh progress
@@ -710,17 +718,19 @@ const VideoCard = ({ video, onWatchProgress, sessionId }) => {
             <span className="block">{video.country}</span>
           </div>
           
-          <button
-            onClick={handleWatchVideo}
-            disabled={isWatching}
-            className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
-              isWatching 
-                ? 'bg-green-500 text-white cursor-not-allowed'
-                : 'bg-blue-600 text-white hover:bg-blue-700'
-            }`}
-          >
-            {isWatching ? `Watching... ${watchedMinutes}min` : 'Watch Now'}
-          </button>
+          <PremiumGate video={video}>
+            <button
+              onClick={handleWatchVideo}
+              disabled={isWatching}
+              className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+                isWatching 
+                  ? 'bg-green-500 text-white cursor-not-allowed'
+                  : 'bg-blue-600 text-white hover:bg-blue-700'
+              }`}
+            >
+              {isWatching ? `Watching... ${watchedMinutes}min` : 'Watch Now'}
+            </button>
+          </PremiumGate>
         </div>
       </div>
     </div>
