@@ -426,7 +426,236 @@ async def get_video(video_id: str):
 class WatchRequest(BaseModel):
     watched_minutes: int
 
-@api_router.post("/videos/{video_id}/watch")
+@api_router.post("/videos/{video_id}/mark-watched")
+async def mark_video_as_watched(
+    video_id: str,
+    request: MarkAsWatchedRequest,
+    session_id: str = Query(...),
+    current_user: Optional[User] = Depends(get_current_user)
+):
+    """Mark a video as already watched (for external content)"""
+    video = await db.videos.find_one({"id": video_id}, {"_id": 0})
+    if not video:
+        raise HTTPException(status_code=404, detail="Video not found")
+    
+    user_id = current_user.id if current_user else None
+    watched_minutes = video["duration_minutes"]  # Credit full duration
+    
+    # Check if already marked as watched
+    existing_progress = await db.watch_progress.find_one({
+        "session_id": session_id,
+        "video_id": video_id
+    })
+    
+    if existing_progress and existing_progress.get("completed", False):
+        return {"message": "Video already marked as watched", "already_watched": True}
+    
+    # Create or update watch progress
+    progress_data = {
+        "user_id": user_id,
+        "session_id": session_id,
+        "video_id": video_id,
+        "watched_minutes": watched_minutes,
+        "completed": True,
+        "watched_at": datetime.utcnow(),
+        "marked_as_watched": True  # Flag to indicate manual marking
+    }
+    
+    if existing_progress:
+        await db.watch_progress.update_one(
+            {"session_id": session_id, "video_id": video_id},
+            {"$set": progress_data}
+        )
+    else:
+        progress = WatchProgress(**{**progress_data, "id": str(uuid.uuid4())})
+        await db.watch_progress.insert_one(progress.dict())
+    
+    # Update daily progress
+    await update_daily_progress(session_id, video_id, watched_minutes, user_id)
+    
+    return {
+        "message": "Video marked as watched successfully",
+        "credited_minutes": watched_minutes,
+        "already_watched": False
+    }
+
+@api_router.post("/activities/manual")
+async def log_manual_activity(
+    request: ManualActivityRequest,
+    session_id: str = Query(...),
+    current_user: Optional[User] = Depends(get_current_user)
+):
+    """Log manual learning activity (movies, podcasts, conversations)"""
+    user_id = current_user.id if current_user else None
+    
+    # Create manual activity record
+    activity_data = {
+        "id": str(uuid.uuid4()),
+        "user_id": user_id,
+        "session_id": session_id,
+        "activity_type": request.activity_type,
+        "duration_minutes": request.duration_minutes,
+        "date": request.date,
+        "title": request.title,
+        "difficulty_level": request.difficulty_level,
+        "created_at": datetime.utcnow()
+    }
+    
+    activity = ManualActivity(**activity_data)
+    await db.manual_activities.insert_one(activity.dict())
+    
+    # Update daily progress for the specified date
+    await update_daily_progress_for_date(
+        session_id, 
+        request.date, 
+        request.duration_minutes, 
+        user_id,
+        activity_type=request.activity_type
+    )
+    
+    return {
+        "message": "Manual activity logged successfully",
+        "activity": {
+            "type": request.activity_type,
+            "duration": request.duration_minutes,
+            "date": request.date,
+            "title": request.title
+        }
+    }
+
+@api_router.get("/activities/manual")
+async def get_manual_activities(
+    session_id: str = Query(...),
+    current_user: Optional[User] = Depends(get_current_user),
+    limit: int = 50,
+    offset: int = 0
+):
+    """Get user's manual activities"""
+    activities = await db.manual_activities.find(
+        {"session_id": session_id},
+        {"_id": 0}
+    ).sort("date", -1).skip(offset).limit(limit).to_list(limit)
+    
+    total_count = await db.manual_activities.count_documents({"session_id": session_id})
+    
+    return {
+        "activities": activities,
+        "total": total_count,
+        "limit": limit,
+        "offset": offset
+    }
+
+async def update_daily_progress_for_date(
+    session_id: str, 
+    date: str, 
+    duration_minutes: int, 
+    user_id: Optional[str] = None,
+    activity_type: Optional[str] = None
+):
+    """Update daily progress for a specific date (used for manual activities)"""
+    
+    # Find or create daily progress for the specified date
+    daily_progress = await db.daily_progress.find_one({
+        "session_id": session_id,
+        "date": date
+    })
+    
+    if daily_progress:
+        # Update existing daily progress
+        daily_progress["total_minutes_watched"] += duration_minutes
+        daily_progress["updated_at"] = datetime.utcnow()
+        daily_progress["user_id"] = user_id
+        
+        # Add to manual activity tracking
+        if "manual_activities" not in daily_progress:
+            daily_progress["manual_activities"] = {}
+        
+        if activity_type:
+            daily_progress["manual_activities"][activity_type] = daily_progress["manual_activities"].get(activity_type, 0) + duration_minutes
+        
+        await db.daily_progress.update_one(
+            {"session_id": session_id, "date": date},
+            {"$set": daily_progress}
+        )
+    else:
+        # Create new daily progress for the date
+        # Calculate streak based on consecutive days
+        all_dates = await db.daily_progress.find(
+            {"session_id": session_id},
+            {"date": 1, "_id": 0}
+        ).sort("date", 1).to_list(1000)
+        
+        existing_dates = [record["date"] for record in all_dates]
+        streak_count = calculate_streak_up_to_date(existing_dates, date)
+        
+        manual_activities = {}
+        if activity_type:
+            manual_activities[activity_type] = duration_minutes
+        
+        new_daily_progress = {
+            "id": str(uuid.uuid4()),
+            "user_id": user_id,
+            "session_id": session_id,
+            "date": date,
+            "total_minutes_watched": duration_minutes,
+            "videos_watched": [],  # No videos for manual activities
+            "manual_activities": manual_activities,
+            "streak_count": streak_count,
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow()
+        }
+        
+        await db.daily_progress.insert_one(new_daily_progress)
+        
+        # Recalculate streaks for all subsequent dates
+        await recalculate_streaks_from_date(session_id, date)
+    
+    # Update user stats
+    await update_user_stats(session_id, user_id)
+
+def calculate_streak_up_to_date(existing_dates: List[str], target_date: str) -> int:
+    """Calculate streak count up to a specific date"""
+    from datetime import datetime, timedelta
+    
+    # Sort all dates including the target date
+    all_dates = sorted(existing_dates + [target_date])
+    target_idx = all_dates.index(target_date)
+    
+    # Calculate streak ending at target date
+    streak = 1
+    current_date = datetime.strptime(target_date, "%Y-%m-%d")
+    
+    for i in range(target_idx - 1, -1, -1):
+        prev_date = datetime.strptime(all_dates[i], "%Y-%m-%d")
+        if (current_date - prev_date).days == 1:
+            streak += 1
+            current_date = prev_date
+        else:
+            break
+    
+    return streak
+
+async def recalculate_streaks_from_date(session_id: str, from_date: str):
+    """Recalculate streak counts for all dates from the given date onwards"""
+    # Get all daily progress records from the date onwards
+    daily_records = await db.daily_progress.find(
+        {"session_id": session_id, "date": {"$gte": from_date}},
+        {"_id": 0}
+    ).sort("date", 1).to_list(1000)
+    
+    if not daily_records:
+        return
+    
+    # Get all dates for streak calculation
+    all_dates = [record["date"] for record in daily_records]
+    
+    # Update each record with correct streak
+    for i, record in enumerate(daily_records):
+        new_streak = calculate_streak_up_to_date(all_dates[:i+1], record["date"])
+        await db.daily_progress.update_one(
+            {"session_id": session_id, "date": record["date"]},
+            {"$set": {"streak_count": new_streak}}
+        )
 async def record_watch_progress(
     video_id: str, 
     request: WatchRequest, 
