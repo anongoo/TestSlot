@@ -622,6 +622,7 @@ const ProgressTracker = ({ sessionId }) => {
 const VideoCard = ({ video, onWatchProgress, sessionId }) => {
   const [isWatching, setIsWatching] = useState(false);
   const [watchedMinutes, setWatchedMinutes] = useState(0);
+  const [isMarkingWatched, setIsMarkingWatched] = useState(false);
   const { sessionToken, isStudent } = useAuth();
 
   const handleWatchVideo = async () => {
@@ -668,6 +669,39 @@ const VideoCard = ({ video, onWatchProgress, sessionId }) => {
         setWatchedMinutes(0);
       }
     }, 2000); // Update every 2 seconds for demo purposes
+  };
+
+  const handleMarkAsWatched = async () => {
+    if (isMarkingWatched) return;
+    
+    setIsMarkingWatched(true);
+    
+    try {
+      const headers = sessionToken ? 
+        { 'Authorization': `Bearer ${sessionToken}` } : {};
+      
+      const response = await axios.post(`${API}/videos/${video.id}/mark-watched`, {
+        difficulty_level: video.level
+      }, {
+        params: { session_id: sessionId },
+        headers
+      });
+
+      if (response.data.already_watched) {
+        alert('This video is already marked as watched!');
+      } else {
+        alert(`✅ Marked as watched! ${response.data.credited_minutes} minutes added to your progress.`);
+        // Notify parent to refresh progress
+        if (onWatchProgress) {
+          onWatchProgress();
+        }
+      }
+    } catch (error) {
+      console.error('Error marking video as watched:', error);
+      alert('Failed to mark video as watched. Please try again.');
+    } finally {
+      setIsMarkingWatched(false);
+    }
   };
 
   const levelColors = {
@@ -718,19 +752,32 @@ const VideoCard = ({ video, onWatchProgress, sessionId }) => {
             <span className="block">{video.country}</span>
           </div>
           
-          <PremiumGate video={video}>
+          <div className="flex gap-2">
+            {/* Mark as Watched Button */}
             <button
-              onClick={handleWatchVideo}
-              disabled={isWatching}
-              className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
-                isWatching 
-                  ? 'bg-green-500 text-white cursor-not-allowed'
-                  : 'bg-blue-600 text-white hover:bg-blue-700'
-              }`}
+              onClick={handleMarkAsWatched}
+              disabled={isMarkingWatched}
+              className="px-3 py-2 bg-gray-200 text-gray-700 text-sm rounded-lg hover:bg-gray-300 disabled:opacity-50 transition-colors"
+              title="Mark as already watched"
             >
-              {isWatching ? `Watching... ${watchedMinutes}min` : 'Watch Now'}
+              {isMarkingWatched ? '...' : '✓ Watched'}
             </button>
-          </PremiumGate>
+            
+            {/* Watch Now Button */}
+            <PremiumGate video={video}>
+              <button
+                onClick={handleWatchVideo}
+                disabled={isWatching}
+                className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+                  isWatching 
+                    ? 'bg-green-500 text-white cursor-not-allowed'
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                }`}
+              >
+                {isWatching ? `Watching... ${watchedMinutes}min` : 'Watch Now'}
+              </button>
+            </PremiumGate>
+          </div>
         </div>
       </div>
     </div>
