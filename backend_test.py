@@ -1317,6 +1317,22 @@ class EnglishFiestaAPITester:
         self.test_check_subscription_status_not_subscribed()
         self.test_check_subscription_invalid_email()
         
+        # Authentication System Tests
+        print("\n🔐 Testing Authentication & Role Management System")
+        print("-" * 50)
+        self.test_auth_session_creation_mock()
+        self.test_auth_profile_without_token()
+        self.test_auth_profile_invalid_token()
+        self.test_auth_logout_without_token()
+        self.test_admin_users_without_auth()
+        self.test_admin_users_invalid_token()
+        self.test_admin_role_update_without_auth()
+        self.test_premium_video_access_guest()
+        self.test_free_video_access_guest()
+        self.test_role_hierarchy_validation()
+        self.test_session_token_format_validation()
+        self.test_authentication_endpoints_structure()
+        
         # Summary
         print("\n" + "=" * 60)
         print("📊 TEST SUMMARY")
