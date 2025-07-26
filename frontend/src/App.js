@@ -129,6 +129,238 @@ const getSessionId = () => {
   return sessionId;
 };
 
+// Role-based Header Component
+const Header = () => {
+  const { user, login, logout, isAuthenticated } = useAuth();
+
+  return (
+    <div className="bg-gradient-to-r from-blue-600 to-purple-700 text-white">
+      <div className="container mx-auto px-4 py-4">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl md:text-4xl font-bold">English Fiesta</h1>
+            <p className="text-sm md:text-lg opacity-90">Master English through immersive, comprehensible input</p>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            {isAuthenticated ? (
+              <div className="flex items-center gap-4">
+                <div className="text-right">
+                  <div className="font-semibold">{user.name}</div>
+                  <div className="text-xs opacity-75 capitalize">
+                    {user.role === 'admin' && '👑 '}
+                    {user.role === 'instructor' && '🎓 '}
+                    {user.role === 'student' && '📚 '}
+                    {user.role}
+                  </div>
+                </div>
+                {user.picture && (
+                  <img 
+                    src={user.picture} 
+                    alt="Profile" 
+                    className="w-10 h-10 rounded-full border-2 border-white"
+                  />
+                )}
+                <button
+                  onClick={logout}
+                  className="bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-2 rounded-lg text-sm transition-colors"
+                >
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={login}
+                className="bg-white text-blue-600 px-6 py-2 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+              >
+                Login / Sign Up
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Role-based Access Control Component
+const RoleGate = ({ allowedRoles, children, fallback = null }) => {
+  const { user, isAuthenticated } = useAuth();
+  
+  if (!isAuthenticated && allowedRoles.includes('guest')) {
+    return children;
+  }
+  
+  if (!isAuthenticated) {
+    return fallback || (
+      <div className="text-center py-8">
+        <p className="text-gray-600 mb-4">Please log in to access this content.</p>
+        <LoginPrompt />
+      </div>
+    );
+  }
+  
+  if (allowedRoles.includes(user.role)) {
+    return children;
+  }
+  
+  return fallback || (
+    <div className="text-center py-8">
+      <p className="text-red-600">Insufficient permissions to access this content.</p>
+      <p className="text-gray-600 text-sm mt-2">Required: {allowedRoles.join(', ')}</p>
+    </div>
+  );
+};
+
+// Admin Dashboard Component
+const AdminDashboard = () => {
+  const { user, sessionToken } = useAuth();
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    try {
+      const response = await axios.get(`${API}/admin/users`, {
+        headers: { 'Authorization': `Bearer ${sessionToken}` }
+      });
+      setUsers(response.data.users);
+    } catch (error) {
+      console.error('Failed to fetch users:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateUserRole = async (userId, newRole) => {
+    try {
+      await axios.post(`${API}/admin/users/role`, {
+        user_id: userId,
+        new_role: newRole
+      }, {
+        headers: { 'Authorization': `Bearer ${sessionToken}` }
+      });
+      
+      // Refresh users list
+      fetchUsers();
+      alert('User role updated successfully!');
+    } catch (error) {
+      console.error('Failed to update user role:', error);
+      alert('Failed to update user role. Please try again.');
+    }
+  };
+
+  if (loading) {
+    return <div className="text-center py-8">Loading admin dashboard...</div>;
+  }
+
+  return (
+    <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+      <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+        <span className="text-yellow-600 mr-2">👑</span>
+        Admin Dashboard
+      </h2>
+      
+      <div className="mb-6">
+        <h3 className="text-lg font-semibold text-gray-700 mb-4">User Management</h3>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b">
+                <th className="text-left py-2">Name</th>
+                <th className="text-left py-2">Email</th>
+                <th className="text-left py-2">Current Role</th>
+                <th className="text-left py-2">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map(u => (
+                <tr key={u.id} className="border-b">
+                  <td className="py-2">{u.name}</td>
+                  <td className="py-2">{u.email}</td>
+                  <td className="py-2">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      u.role === 'admin' ? 'bg-yellow-100 text-yellow-800' :
+                      u.role === 'instructor' ? 'bg-blue-100 text-blue-800' :
+                      'bg-green-100 text-green-800'
+                    }`}>
+                      {u.role}
+                    </span>
+                  </td>
+                  <td className="py-2">
+                    <select
+                      value={u.role}
+                      onChange={(e) => updateUserRole(u.id, e.target.value)}
+                      className="text-xs border rounded px-2 py-1"
+                      disabled={u.id === user.id} // Prevent self-modification
+                    >
+                      <option value="student">Student</option>
+                      <option value="instructor">Instructor</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+      <div className="text-sm text-gray-600">
+        <p><strong>Total Users:</strong> {users.length}</p>
+        <p><strong>Students:</strong> {users.filter(u => u.role === 'student').length}</p>
+        <p><strong>Instructors:</strong> {users.filter(u => u.role === 'instructor').length}</p>
+        <p><strong>Admins:</strong> {users.filter(u => u.role === 'admin').length}</p>
+      </div>
+    </div>
+  );
+};
+
+// Login Prompt Component
+const LoginPrompt = () => {
+  const { login } = useAuth();
+  
+  return (
+    <div className="bg-gradient-to-r from-blue-100 to-purple-100 rounded-xl p-6 text-center mb-8">
+      <div className="text-4xl mb-3">🔐</div>
+      <h3 className="text-xl font-bold text-gray-800 mb-2">Join English Fiesta!</h3>
+      <p className="text-gray-600 mb-4">
+        Create your account to track progress, access premium content, and join our learning community.
+      </p>
+      <button
+        onClick={login}
+        className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+      >
+        Sign Up / Login
+      </button>
+    </div>
+  );
+};
+
+// Premium Content Gate
+const PremiumGate = ({ video, children }) => {
+  const { isStudent } = useAuth();
+  
+  if (!video.is_premium) {
+    return children;
+  }
+  
+  if (!isStudent) {
+    return (
+      <div className="text-center py-4">
+        <div className="text-yellow-500 text-2xl mb-2">👑</div>
+        <p className="text-sm text-gray-600 mb-2">Premium Content</p>
+        <LoginPrompt />
+      </div>
+    );
+  }
+  
+  return children;
+};
+
 const EmailSubscriptionModal = ({ isOpen, onClose, onSuccess }) => {
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
