@@ -835,7 +835,7 @@ const FilterPanel = ({ filters, onFilterChange, onSearch }) => {
   );
 };
 
-const App = () => {
+const AppContent = () => {
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({});
@@ -843,6 +843,7 @@ const App = () => {
   const [refreshProgress, setRefreshProgress] = useState(0);
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [hasWatchedVideo, setHasWatchedVideo] = useState(false);
+  const { user, isAdmin, isAuthenticated } = useAuth();
 
   useEffect(() => {
     fetchVideos();
@@ -850,13 +851,13 @@ const App = () => {
 
   // Show email modal after user has watched a video for engagement
   useEffect(() => {
-    if (hasWatchedVideo && !localStorage.getItem('email_subscribed')) {
+    if (hasWatchedVideo && !localStorage.getItem('email_subscribed') && !isAuthenticated) {
       const timer = setTimeout(() => {
         setShowEmailModal(true);
-      }, 3000); // Show modal 3 seconds after watching a video
+      }, 3000);
       return () => clearTimeout(timer);
     }
-  }, [hasWatchedVideo]);
+  }, [hasWatchedVideo, isAuthenticated]);
 
   const fetchVideos = async () => {
     setLoading(true);
@@ -892,7 +893,6 @@ const App = () => {
   };
 
   const handleWatchProgress = () => {
-    // Trigger progress refresh and mark that user has watched a video
     setRefreshProgress(prev => prev + 1);
     setHasWatchedVideo(true);
   };
@@ -904,31 +904,22 @@ const App = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Hero Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-700 text-white">
-        <div className="container mx-auto px-4 py-16">
-          <div className="text-center">
-            <h1 className="text-4xl md:text-6xl font-bold mb-4">
-              English Fiesta
-            </h1>
-            <p className="text-xl md:text-2xl opacity-90 mb-8">
-              Master English through immersive, comprehensible input
-            </p>
-            <div className="max-w-2xl mx-auto">
-              <img 
-                src="https://images.unsplash.com/photo-1645594287996-086e2217a809?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NjZ8MHwxfHNlYXJjaHwzfHxsYW5ndWFnZSUyMGxlYXJuaW5nfGVufDB8fHxibHVlfDE3NTMxNzE5NDR8MA&ixlib=rb-4.1.0&q=85"
-                alt="English Learning"
-                className="rounded-xl shadow-2xl mx-auto"
-                style={{ maxHeight: '300px', width: 'auto' }}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Header with Authentication */}
+      <Header />
 
       <div className="container mx-auto px-4 py-8">
-        {/* Email Subscription Banner */}
-        <EmailSubscriptionBanner onSubscribe={() => setShowEmailModal(true)} />
+        {/* Show login prompt for guests */}
+        {!isAuthenticated && <LoginPrompt />}
+        
+        {/* Admin Dashboard */}
+        <RoleGate allowedRoles={['admin']}>
+          <AdminDashboard />
+        </RoleGate>
+        
+        {/* Email Subscription Banner (only for non-authenticated users) */}
+        {!isAuthenticated && (
+          <EmailSubscriptionBanner onSubscribe={() => setShowEmailModal(true)} />
+        )}
         
         {/* Progress Tracker */}
         <ProgressTracker sessionId={sessionId} key={refreshProgress} />
@@ -942,9 +933,19 @@ const App = () => {
         
         {/* Videos Grid */}
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">
-            📚 Video Library
-          </h2>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-800">
+              📚 Video Library
+            </h2>
+            {user && (
+              <div className="text-sm text-gray-600">
+                Welcome back, <span className="font-semibold">{user.name}</span>!
+                {user.role === 'admin' && ' 👑'}
+                {user.role === 'instructor' && ' 🎓'}
+                {user.role === 'student' && ' 📚'}
+              </div>
+            )}
+          </div>
           
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -978,13 +979,23 @@ const App = () => {
         </div>
       </div>
 
-      {/* Email Subscription Modal */}
-      <EmailSubscriptionModal 
-        isOpen={showEmailModal}
-        onClose={() => setShowEmailModal(false)}
-        onSuccess={handleEmailSubscriptionSuccess}
-      />
+      {/* Email Subscription Modal (only for non-authenticated users) */}
+      {!isAuthenticated && (
+        <EmailSubscriptionModal 
+          isOpen={showEmailModal}
+          onClose={() => setShowEmailModal(false)}
+          onSuccess={handleEmailSubscriptionSuccess}
+        />
+      )}
     </div>
+  );
+};
+
+const App = () => {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 };
 
