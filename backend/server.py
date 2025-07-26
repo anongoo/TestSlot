@@ -179,6 +179,39 @@ class RoleUpdateRequest(BaseModel):
     user_id: str
     new_role: UserRole
 
+# Manual Activity Tracking Models
+class ActivityType(str, Enum):
+    MOVIES_TV = "Movies/TV Shows"
+    AUDIOBOOKS_PODCASTS = "Audiobooks/Podcasts"
+    TALKING_FRIENDS = "Talking with friends"
+
+class ActivityLevel(str, Enum):
+    NEW_BEGINNER = "New Beginner"
+    BEGINNER = "Beginner"
+    INTERMEDIATE = "Intermediate"
+    ADVANCED = "Advanced"
+
+class ManualActivity(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: Optional[str] = None
+    session_id: str
+    activity_type: ActivityType
+    duration_minutes: int
+    date: str  # Format: YYYY-MM-DD
+    title: Optional[str] = None
+    difficulty_level: Optional[ActivityLevel] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class ManualActivityRequest(BaseModel):
+    activity_type: ActivityType
+    duration_minutes: int
+    date: str  # Format: YYYY-MM-DD
+    title: Optional[str] = None
+    difficulty_level: Optional[ActivityLevel] = None
+
+class MarkAsWatchedRequest(BaseModel):
+    difficulty_level: Optional[ActivityLevel] = None
+
 # Current User Dependency
 async def get_current_user(authorization: HTTPAuthorizationCredentials = Depends(security)) -> Optional[User]:
     """Get current authenticated user from session token"""
