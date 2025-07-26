@@ -394,17 +394,28 @@ class WatchRequest(BaseModel):
     watched_minutes: int
 
 @api_router.post("/videos/{video_id}/watch")
-async def record_watch_progress(video_id: str, request: WatchRequest, session_id: str = Query(...)):
+async def record_watch_progress(
+    video_id: str, 
+    request: WatchRequest, 
+    session_id: str = Query(...),
+    current_user: Optional[User] = Depends(get_current_user)
+):
     """Record video watch progress"""
     video = await db.videos.find_one({"id": video_id}, {"_id": 0})
     if not video:
         raise HTTPException(status_code=404, detail="Video not found")
     
+    # Check if video is premium and user has access
+    if video.get("is_premium", False):
+        if not current_user or current_user.role == UserRole.GUEST:
+            raise HTTPException(status_code=403, detail="Premium content requires student account or higher")
+    
     watched_minutes = request.watched_minutes
+    user_id = current_user.id if current_user else None
     
     # Create or update watch progress
     progress_data = {
-        "user_id": None,
+        "user_id": user_id,
         "session_id": session_id,
         "video_id": video_id,
         "watched_minutes": watched_minutes,
@@ -422,6 +433,7 @@ async def record_watch_progress(video_id: str, request: WatchRequest, session_id
         await db.watch_progress.update_one(
             {"session_id": session_id, "video_id": video_id},
             {"$set": {
+                "user_id": user_id,  # Update user_id if now authenticated
                 "watched_minutes": max(watched_minutes, existing_progress["watched_minutes"]),
                 "completed": watched_minutes >= video["duration_minutes"],
                 "watched_at": datetime.utcnow()
@@ -433,7 +445,7 @@ async def record_watch_progress(video_id: str, request: WatchRequest, session_id
         await db.watch_progress.insert_one(progress.dict())
     
     # Update daily progress
-    await update_daily_progress(session_id, video_id, watched_minutes)
+    await update_daily_progress(session_id, video_id, watched_minutes, user_id)
     
     return {"message": "Progress recorded successfully"}
 
