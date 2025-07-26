@@ -819,39 +819,88 @@ async def update_user_stats(session_id: str, user_id: Optional[str] = None):
 
 @api_router.get("/progress/{session_id}")
 async def get_user_progress(session_id: str):
-    """Get comprehensive user progress and statistics"""
+    """Get comprehensive user progress and statistics including manual activities"""
     stats = await db.user_stats.find_one({"session_id": session_id}, {"_id": 0})
     
     if not stats:
         # Initialize empty stats if none exist
         stats = {
             "total_minutes_watched": 0,
+            "platform_minutes": 0,
+            "manual_minutes": 0,
             "current_streak": 0,
             "longest_streak": 0,
             "personal_best_day": 0,
             "level_progress": {},
-            "milestones_achieved": []
+            "milestones_achieved": [],
+            "manual_activity_breakdown": {}
         }
     
-    # Get recent daily progress for heatmap
+    # Get recent daily progress for heatmap (last 90 days)
     recent_progress = await db.daily_progress.find(
         {"session_id": session_id}, {"_id": 0}
-    ).sort("date", -1).limit(90).to_list(90)  # Last 90 days
+    ).sort("date", -1).limit(90).to_list(90)
     
-    # Format for heatmap
+    # Format for heatmap and calculate breakdowns
     heatmap_data = []
+    total_platform_minutes = 0
+    total_manual_minutes = 0
+    activity_breakdown = {
+        "Movies/TV Shows": 0,
+        "Audiobooks/Podcasts": 0,
+        "Talking with friends": 0
+    }
+    
     for progress in recent_progress:
+        platform_minutes = 0
+        manual_minutes = 0
+        
+        # Calculate platform minutes (from videos watched)
+        if progress.get("videos_watched"):
+            for video_id in progress["videos_watched"]:
+                video = await db.videos.find_one({"id": video_id}, {"duration_minutes": 1, "_id": 0})
+                if video:
+                    platform_minutes += video["duration_minutes"]
+        
+        # Calculate manual minutes (from manual activities)
+        manual_activities = progress.get("manual_activities", {})
+        for activity_type, minutes in manual_activities.items():
+            manual_minutes += minutes
+            activity_breakdown[activity_type] = activity_breakdown.get(activity_type, 0) + minutes
+        
+        total_platform_minutes += platform_minutes
+        total_manual_minutes += manual_minutes
+        
         heatmap_data.append({
             "date": progress["date"],
-            "minutes": progress["total_minutes_watched"]
+            "minutes": progress["total_minutes_watched"],
+            "platform_minutes": platform_minutes,
+            "manual_minutes": manual_minutes
         })
     
+    # Get total video count
     watch_progress_count = await db.watch_progress.count_documents({"session_id": session_id})
+    
+    # Get manual activity count
+    manual_activity_count = await db.manual_activities.count_documents({"session_id": session_id})
+    
+    # Update stats with breakdown
+    stats.update({
+        "platform_minutes": total_platform_minutes,
+        "manual_minutes": total_manual_minutes,
+        "manual_activity_breakdown": activity_breakdown
+    })
     
     return {
         "stats": stats,
         "recent_activity": heatmap_data,
-        "total_videos_watched": watch_progress_count
+        "total_videos_watched": watch_progress_count,
+        "total_manual_activities": manual_activity_count,
+        "breakdown": {
+            "platform_hours": round(total_platform_minutes / 60, 1),
+            "manual_hours": round(total_manual_minutes / 60, 1),
+            "total_hours": round((total_platform_minutes + total_manual_minutes) / 60, 1)
+        }
     }
 
 @api_router.get("/filters/options")
