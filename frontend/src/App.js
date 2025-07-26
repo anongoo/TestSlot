@@ -843,7 +843,7 @@ const AppContent = () => {
   const [refreshProgress, setRefreshProgress] = useState(0);
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [hasWatchedVideo, setHasWatchedVideo] = useState(false);
-  const { user, isAdmin, isAuthenticated } = useAuth();
+  const { user, isAdmin, isAuthenticated, login } = useAuth();
 
   useEffect(() => {
     fetchVideos();
@@ -917,10 +917,7 @@ const AppContent = () => {
               Create your account to track progress, access premium content, and join our learning community.
             </p>
             <button
-              onClick={() => {
-                const { login } = useAuth();
-                login();
-              }}
+              onClick={login}
               className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
             >
               Sign Up / Login
