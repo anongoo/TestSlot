@@ -142,6 +142,102 @@ class EmailSubscribeRequest(BaseModel):
     name: Optional[str] = None
     source: str = "english_fiesta"
 
+# Authentication Models
+class User(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    email: str
+    name: str
+    picture: Optional[str] = None
+    role: UserRole = UserRole.STUDENT
+    emergent_user_id: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    is_active: bool = True
+
+class UserSession(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    session_token: str
+    emergent_session_id: str
+    expires_at: datetime
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    is_active: bool = True
+
+class AuthSessionRequest(BaseModel):
+    session_id: str
+
+class UserProfileResponse(BaseModel):
+    id: str
+    email: str
+    name: str
+    picture: Optional[str]
+    role: UserRole
+    created_at: datetime
+    session_token: str
+
+class RoleUpdateRequest(BaseModel):
+    user_id: str
+    new_role: UserRole
+
+# Current User Dependency
+async def get_current_user(authorization: HTTPAuthorizationCredentials = Depends(security)) -> Optional[User]:
+    """Get current authenticated user from session token"""
+    if not authorization:
+        return None
+    
+    session_token = authorization.credentials
+    
+    # Find active session
+    session = await db.user_sessions.find_one({
+        "session_token": session_token,
+        "is_active": True,
+        "expires_at": {"$gt": datetime.utcnow()}
+    })
+    
+    if not session:
+        return None
+    
+    # Get user
+    user = await db.users.find_one({"id": session["user_id"]}, {"_id": 0})
+    if not user:
+        return None
+    
+    return User(**user)
+
+# Role-based access decorators
+def require_role(required_role: UserRole):
+    """Decorator to require specific role or higher"""
+    role_hierarchy = {
+        UserRole.GUEST: 0,
+        UserRole.STUDENT: 1, 
+        UserRole.INSTRUCTOR: 2,
+        UserRole.ADMIN: 3
+    }
+    
+    async def role_checker(current_user: User = Depends(get_current_user)):
+        if not current_user:
+            if required_role == UserRole.GUEST:
+                return None
+            raise HTTPException(status_code=401, detail="Authentication required")
+        
+        user_level = role_hierarchy.get(current_user.role, 0)
+        required_level = role_hierarchy.get(required_role, 0)
+        
+        if user_level < required_level:
+            raise HTTPException(
+                status_code=403, 
+                detail=f"Insufficient permissions. Required: {required_role}, Current: {current_user.role}"
+            )
+        
+        return current_user
+    
+    return role_checker
+
+# Role helpers
+require_student = require_role(UserRole.STUDENT)
+require_instructor = require_role(UserRole.INSTRUCTOR)  
+require_admin = require_role(UserRole.ADMIN)
+
 # Initialize sample data
 async def init_sample_data():
     """Initialize sample video data if database is empty"""
