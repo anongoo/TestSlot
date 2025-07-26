@@ -183,7 +183,7 @@ const Header = () => {
   );
 };
 
-// Role-based Access Control Component
+// Role-based Access Control Component  
 const RoleGate = ({ allowedRoles, children, fallback = null }) => {
   const { user, isAuthenticated } = useAuth();
   
@@ -193,9 +193,8 @@ const RoleGate = ({ allowedRoles, children, fallback = null }) => {
   
   if (!isAuthenticated) {
     return fallback || (
-      <div className="text-center py-8">
-        <p className="text-gray-600 mb-4">Please log in to access this content.</p>
-        <LoginPrompt />
+      <div className="text-center py-4">
+        <p className="text-gray-600 text-sm">Please log in to access this content.</p>
       </div>
     );
   }
@@ -205,9 +204,8 @@ const RoleGate = ({ allowedRoles, children, fallback = null }) => {
   }
   
   return fallback || (
-    <div className="text-center py-8">
-      <p className="text-red-600">Insufficient permissions to access this content.</p>
-      <p className="text-gray-600 text-sm mt-2">Required: {allowedRoles.join(', ')}</p>
+    <div className="text-center py-4">
+      <p className="text-red-600 text-sm">Insufficient permissions.</p>
     </div>
   );
 };
