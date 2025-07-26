@@ -19,6 +19,8 @@ class EnglishFiestaAPITester:
         self.session_id = str(uuid.uuid4())
         self.test_results = []
         self.sample_videos = []
+        self.auth_tokens = {}  # Store auth tokens for different users
+        self.test_users = {}   # Store test user data
         
     def log_test(self, test_name: str, success: bool, message: str, details: Dict = None):
         """Log test results"""
