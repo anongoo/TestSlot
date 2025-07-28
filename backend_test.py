@@ -2068,6 +2068,17 @@ class EnglishFiestaAPITester:
         self.test_file_serving_endpoints_structure()
         self.test_admin_endpoints_comprehensive_auth()
         
+        # Additional Phase 2 Comprehensive Tests
+        print("\n🔧 Testing Phase 2 Enhanced Features")
+        print("-" * 40)
+        self.test_file_serving_endpoints_detailed()
+        self.test_youtube_video_integration_flow()
+        self.test_invalid_youtube_url_handling()
+        self.test_admin_video_management_pagination()
+        self.test_video_model_backward_compatibility()
+        self.test_enhanced_video_fields_validation()
+        self.test_phase2_integration_comprehensive()
+        
         # Summary
         print("\n" + "=" * 60)
         print("📊 TEST SUMMARY")
