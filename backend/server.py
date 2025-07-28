@@ -1418,7 +1418,7 @@ async def update_video(
 @api_router.delete("/admin/videos/{video_id}")
 async def delete_video(
     video_id: str,
-    current_user: User = Depends(lambda: require_role(UserRole.ADMIN))
+    current_user: User = Depends(require_role(UserRole.ADMIN))
 ):
     """Delete video and associated files (Admin only)"""
     
