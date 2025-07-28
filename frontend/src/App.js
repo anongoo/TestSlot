@@ -2,6 +2,9 @@ import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import "./App.css";
 
+// i18n setup
+import './i18n';
+
 // Context
 import { AuthProvider } from './contexts/AuthContext';
 
