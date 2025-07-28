@@ -29,6 +29,24 @@ from urllib.parse import urlparse, parse_qs
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
+# File upload configuration
+UPLOAD_DIR = ROOT_DIR / "uploads"
+THUMBNAILS_DIR = UPLOAD_DIR / "thumbnails"
+VIDEOS_DIR = UPLOAD_DIR / "videos"
+TEMP_DIR = UPLOAD_DIR / "temp"
+
+# Create upload directories
+UPLOAD_DIR.mkdir(exist_ok=True)
+THUMBNAILS_DIR.mkdir(exist_ok=True)
+VIDEOS_DIR.mkdir(exist_ok=True)
+TEMP_DIR.mkdir(exist_ok=True)
+
+# File upload limits and supported formats
+MAX_FILE_SIZE = 5 * 1024 * 1024 * 1024  # 5GB in bytes
+CHUNK_SIZE = 1024 * 1024  # 1MB chunks
+SUPPORTED_VIDEO_FORMATS = ['.mp4', '.mov', '.avi']
+SUPPORTED_IMAGE_FORMATS = ['.jpg', '.jpeg', '.png', '.webp']
+
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
