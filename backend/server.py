@@ -321,6 +321,115 @@ class ManualActivityRequest(BaseModel):
 class MarkAsWatchedRequest(BaseModel):
     difficulty_level: Optional[ActivityLevel] = None
 
+# ==========================================
+# FILE HANDLING UTILITIES
+# ==========================================
+
+def get_file_extension(filename: str) -> str:
+    """Get file extension from filename"""
+    return Path(filename).suffix.lower()
+
+def is_video_file(filename: str) -> bool:
+    """Check if file is a supported video format"""
+    return get_file_extension(filename) in SUPPORTED_VIDEO_FORMATS
+
+def is_image_file(filename: str) -> bool:
+    """Check if file is a supported image format"""
+    return get_file_extension(filename) in SUPPORTED_IMAGE_FORMATS
+
+async def save_uploaded_file(file: UploadFile, destination: Path) -> bool:
+    """Save uploaded file to destination with chunked reading"""
+    try:
+        async with aiofiles.open(destination, 'wb') as f:
+            while chunk := await file.read(CHUNK_SIZE):
+                await f.write(chunk)
+        return True
+    except Exception as e:
+        logging.error(f"Error saving file {destination}: {e}")
+        if destination.exists():
+            destination.unlink()  # Clean up partial file
+        return False
+
+def get_video_duration(file_path: Path) -> Optional[int]:
+    """Get video duration in minutes using ffprobe"""
+    try:
+        cmd = [
+            'ffprobe', '-v', 'quiet', '-show_entries', 'format=duration',
+            '-of', 'csv=p=0', str(file_path)
+        ]
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode == 0:
+            duration_seconds = float(result.stdout.strip())
+            return int(duration_seconds / 60)  # Convert to minutes
+    except Exception as e:
+        logging.error(f"Error getting video duration for {file_path}: {e}")
+    return None
+
+def extract_video_thumbnail(video_path: Path, thumbnail_path: Path) -> bool:
+    """Extract thumbnail from video file using ffmpeg"""
+    try:
+        cmd = [
+            'ffmpeg', '-i', str(video_path), '-ss', '00:00:01.000',
+            '-vframes', '1', '-f', 'image2', str(thumbnail_path), '-y'
+        ]
+        result = subprocess.run(cmd, capture_output=True)
+        return result.returncode == 0 and thumbnail_path.exists()
+    except Exception as e:
+        logging.error(f"Error extracting thumbnail: {e}")
+        return False
+
+def get_youtube_video_id(url: str) -> Optional[str]:
+    """Extract YouTube video ID from URL"""
+    patterns = [
+        r'(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)',
+        r'youtube\.com\/watch\?.*v=([^&\n?#]+)'
+    ]
+    
+    for pattern in patterns:
+        match = re.search(pattern, url)
+        if match:
+            return match.group(1)
+    return None
+
+async def fetch_youtube_metadata(video_id: str) -> Optional[Dict[str, Any]]:
+    """Fetch YouTube video metadata using yt-dlp"""
+    try:
+        ydl_opts = {
+            'quiet': True,
+            'no_warnings': True,
+            'extract_flat': False,
+        }
+        
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(f'https://www.youtube.com/watch?v={video_id}', download=False)
+            
+            return {
+                'title': info.get('title', ''),
+                'description': info.get('description', ''),
+                'duration': int(info.get('duration', 0) / 60) if info.get('duration') else 0,
+                'thumbnail_url': info.get('thumbnail', ''),
+                'uploader': info.get('uploader', ''),
+                'upload_date': info.get('upload_date', '')
+            }
+    except Exception as e:
+        logging.error(f"Error fetching YouTube metadata for {video_id}: {e}")
+        return None
+
+def validate_file_size(file_size: int) -> bool:
+    """Validate file size against maximum limit"""
+    return file_size <= MAX_FILE_SIZE
+
+def generate_unique_filename(original_filename: str) -> str:
+    """Generate unique filename to avoid conflicts"""
+    ext = get_file_extension(original_filename)
+    unique_id = str(uuid.uuid4())[:8]
+    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    return f"{timestamp}_{unique_id}{ext}"
+
+# ==========================================
+# AUTHENTICATION DEPENDENCIES
+# ==========================================
+
 # Current User Dependency
 async def get_current_user(authorization: HTTPAuthorizationCredentials = Depends(security)) -> Optional[User]:
     """Get current authenticated user from session token"""
