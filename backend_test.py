@@ -1286,6 +1286,371 @@ class EnglishFiestaAPITester:
                 {"endpoints_tested": len(auth_endpoints), "successful": success_count}
             )
     
+    # ========== PHASE 2 ADMIN VIDEO MANAGEMENT TESTS ==========
+    
+    def test_admin_videos_list_without_auth(self):
+        """Test admin video list endpoint without authentication"""
+        try:
+            response = requests.get(f"{BACKEND_URL}/admin/videos")
+            
+            if response.status_code == 401:
+                self.log_test(
+                    "GET /api/admin/videos - No Auth",
+                    True,
+                    "Correctly rejected admin video list request without authentication",
+                    {"expected_status": 401}
+                )
+            else:
+                self.log_test(
+                    "GET /api/admin/videos - No Auth",
+                    False,
+                    f"Expected 401, got {response.status_code}: {response.text}",
+                    {"status_code": response.status_code}
+                )
+        except Exception as e:
+            self.log_test(
+                "GET /api/admin/videos - No Auth",
+                False,
+                f"Request failed: {str(e)}"
+            )
+    
+    def test_admin_videos_list_invalid_token(self):
+        """Test admin video list endpoint with invalid token"""
+        invalid_token = "invalid_admin_token_123"
+        
+        try:
+            headers = {"Authorization": f"Bearer {invalid_token}"}
+            response = requests.get(f"{BACKEND_URL}/admin/videos", headers=headers)
+            
+            if response.status_code == 401:
+                self.log_test(
+                    "GET /api/admin/videos - Invalid Token",
+                    True,
+                    "Correctly rejected admin video list request with invalid token",
+                    {"invalid_token": invalid_token}
+                )
+            else:
+                self.log_test(
+                    "GET /api/admin/videos - Invalid Token",
+                    False,
+                    f"Expected 401, got {response.status_code}: {response.text}",
+                    {"invalid_token": invalid_token}
+                )
+        except Exception as e:
+            self.log_test(
+                "GET /api/admin/videos - Invalid Token",
+                False,
+                f"Request failed: {str(e)}",
+                {"invalid_token": invalid_token}
+            )
+    
+    def test_admin_youtube_video_without_auth(self):
+        """Test adding YouTube video without authentication"""
+        youtube_data = {
+            "youtube_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+            "title": "Test YouTube Video",
+            "level": "Beginner",
+            "accents": ["American"],
+            "tags": ["test", "youtube"],
+            "instructor_name": "Test Instructor",
+            "country": "USA",
+            "category": "Conversation",
+            "is_premium": False
+        }
+        
+        try:
+            response = requests.post(f"{BACKEND_URL}/admin/videos/youtube", json=youtube_data)
+            
+            if response.status_code == 401:
+                self.log_test(
+                    "POST /api/admin/videos/youtube - No Auth",
+                    True,
+                    "Correctly rejected YouTube video addition without authentication",
+                    {"expected_status": 401}
+                )
+            else:
+                self.log_test(
+                    "POST /api/admin/videos/youtube - No Auth",
+                    False,
+                    f"Expected 401, got {response.status_code}: {response.text}",
+                    {"status_code": response.status_code}
+                )
+        except Exception as e:
+            self.log_test(
+                "POST /api/admin/videos/youtube - No Auth",
+                False,
+                f"Request failed: {str(e)}"
+            )
+    
+    def test_admin_youtube_video_invalid_token(self):
+        """Test adding YouTube video with invalid token"""
+        invalid_token = "invalid_admin_token_123"
+        youtube_data = {
+            "youtube_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+            "title": "Test YouTube Video",
+            "level": "Beginner",
+            "accents": ["American"],
+            "tags": ["test", "youtube"],
+            "instructor_name": "Test Instructor",
+            "country": "USA",
+            "category": "Conversation",
+            "is_premium": False
+        }
+        
+        try:
+            headers = {"Authorization": f"Bearer {invalid_token}"}
+            response = requests.post(f"{BACKEND_URL}/admin/videos/youtube", json=youtube_data, headers=headers)
+            
+            if response.status_code == 401:
+                self.log_test(
+                    "POST /api/admin/videos/youtube - Invalid Token",
+                    True,
+                    "Correctly rejected YouTube video addition with invalid token",
+                    {"invalid_token": invalid_token}
+                )
+            else:
+                self.log_test(
+                    "POST /api/admin/videos/youtube - Invalid Token",
+                    False,
+                    f"Expected 401, got {response.status_code}: {response.text}",
+                    {"invalid_token": invalid_token}
+                )
+        except Exception as e:
+            self.log_test(
+                "POST /api/admin/videos/youtube - Invalid Token",
+                False,
+                f"Request failed: {str(e)}",
+                {"invalid_token": invalid_token}
+            )
+    
+    def test_admin_video_update_without_auth(self):
+        """Test updating video without authentication"""
+        if not self.sample_videos:
+            self.log_test(
+                "PUT /api/admin/videos/{video_id} - No Auth",
+                False,
+                "No sample videos available for testing"
+            )
+            return
+        
+        video_id = self.sample_videos[0]['id']
+        update_data = {
+            "title": "Updated Title",
+            "description": "Updated description"
+        }
+        
+        try:
+            response = requests.put(f"{BACKEND_URL}/admin/videos/{video_id}", json=update_data)
+            
+            if response.status_code == 401:
+                self.log_test(
+                    "PUT /api/admin/videos/{video_id} - No Auth",
+                    True,
+                    "Correctly rejected video update without authentication",
+                    {"video_id": video_id, "expected_status": 401}
+                )
+            else:
+                self.log_test(
+                    "PUT /api/admin/videos/{video_id} - No Auth",
+                    False,
+                    f"Expected 401, got {response.status_code}: {response.text}",
+                    {"video_id": video_id, "status_code": response.status_code}
+                )
+        except Exception as e:
+            self.log_test(
+                "PUT /api/admin/videos/{video_id} - No Auth",
+                False,
+                f"Request failed: {str(e)}",
+                {"video_id": video_id}
+            )
+    
+    def test_admin_video_delete_without_auth(self):
+        """Test deleting video without authentication"""
+        fake_video_id = "fake-video-id-for-auth-test"
+        
+        try:
+            response = requests.delete(f"{BACKEND_URL}/admin/videos/{fake_video_id}")
+            
+            if response.status_code == 401:
+                self.log_test(
+                    "DELETE /api/admin/videos/{video_id} - No Auth",
+                    True,
+                    "Correctly rejected video deletion without authentication",
+                    {"video_id": fake_video_id, "expected_status": 401}
+                )
+            else:
+                self.log_test(
+                    "DELETE /api/admin/videos/{video_id} - No Auth",
+                    False,
+                    f"Expected 401, got {response.status_code}: {response.text}",
+                    {"video_id": fake_video_id, "status_code": response.status_code}
+                )
+        except Exception as e:
+            self.log_test(
+                "DELETE /api/admin/videos/{video_id} - No Auth",
+                False,
+                f"Request failed: {str(e)}",
+                {"video_id": fake_video_id}
+            )
+    
+    def test_enhanced_video_model_fields(self):
+        """Test that videos now support enhanced model fields"""
+        if not self.sample_videos:
+            self.log_test(
+                "Enhanced Video Model Fields",
+                False,
+                "No sample videos available for testing"
+            )
+            return
+        
+        # Check if videos have the new enhanced fields
+        enhanced_fields = ['accents', 'tags', 'instructor_name', 'country', 'video_type']
+        legacy_fields = ['title', 'description', 'duration_minutes', 'level', 'category']
+        
+        field_support = {}
+        for field in enhanced_fields + legacy_fields:
+            field_support[field] = 0
+            for video in self.sample_videos:
+                if field in video:
+                    field_support[field] += 1
+        
+        # Check if enhanced fields are supported (even if not all videos have them)
+        enhanced_support = sum(1 for field in enhanced_fields if field_support[field] > 0)
+        legacy_support = sum(1 for field in legacy_fields if field_support[field] > 0)
+        
+        if enhanced_support >= 2 and legacy_support >= 4:  # At least some enhanced fields and most legacy fields
+            self.log_test(
+                "Enhanced Video Model Fields",
+                True,
+                f"Video model supports enhanced fields: {enhanced_support}/{len(enhanced_fields)} enhanced, {legacy_support}/{len(legacy_fields)} legacy",
+                {"field_support": field_support}
+            )
+        else:
+            self.log_test(
+                "Enhanced Video Model Fields",
+                False,
+                f"Insufficient field support: {enhanced_support}/{len(enhanced_fields)} enhanced, {legacy_support}/{len(legacy_fields)} legacy",
+                {"field_support": field_support}
+            )
+    
+    def test_enhanced_filter_options_countries(self):
+        """Test that filter options now include CountryType enum values"""
+        try:
+            response = requests.get(f"{BACKEND_URL}/filters/options")
+            
+            if response.status_code == 200:
+                data = response.json()
+                countries = data.get('countries', [])
+                
+                # Check for expected country values from CountryType enum
+                expected_countries = ['USA', 'UK', 'Canada', 'Australia']
+                found_countries = [country for country in expected_countries if country in countries]
+                
+                if len(found_countries) >= 3:  # At least 3 of the 4 expected countries
+                    self.log_test(
+                        "Enhanced Filter Options - Countries",
+                        True,
+                        f"Filter options include CountryType enum values: {found_countries}",
+                        {"countries": countries, "found_expected": found_countries}
+                    )
+                else:
+                    self.log_test(
+                        "Enhanced Filter Options - Countries",
+                        False,
+                        f"Missing expected CountryType values. Found: {found_countries}, Expected: {expected_countries}",
+                        {"countries": countries, "found_expected": found_countries}
+                    )
+            else:
+                self.log_test(
+                    "Enhanced Filter Options - Countries",
+                    False,
+                    f"HTTP {response.status_code}: {response.text}"
+                )
+        except Exception as e:
+            self.log_test(
+                "Enhanced Filter Options - Countries",
+                False,
+                f"Request failed: {str(e)}"
+            )
+    
+    def test_file_serving_endpoints_structure(self):
+        """Test that file serving endpoints exist and respond appropriately"""
+        # Test with fake filenames to check endpoint structure
+        file_endpoints = [
+            {"path": "/files/videos/fake-video.mp4", "expected_codes": [404, 401, 403]},
+            {"path": "/files/thumbnails/fake-thumb.jpg", "expected_codes": [404, 401, 403]}
+        ]
+        
+        success_count = 0
+        for endpoint in file_endpoints:
+            try:
+                response = requests.get(f"{BACKEND_URL}{endpoint['path']}")
+                
+                if response.status_code in endpoint["expected_codes"]:
+                    success_count += 1
+            except:
+                pass
+        
+        if success_count == len(file_endpoints):
+            self.log_test(
+                "File Serving Endpoints Structure",
+                True,
+                f"All {len(file_endpoints)} file serving endpoints exist and respond appropriately",
+                {"endpoints_tested": len(file_endpoints)}
+            )
+        else:
+            self.log_test(
+                "File Serving Endpoints Structure",
+                False,
+                f"Only {success_count}/{len(file_endpoints)} file endpoints responded as expected",
+                {"endpoints_tested": len(file_endpoints), "successful": success_count}
+            )
+    
+    def test_admin_endpoints_comprehensive_auth(self):
+        """Comprehensive test of all admin endpoints requiring authentication"""
+        admin_endpoints = [
+            {"method": "GET", "path": "/admin/videos", "name": "Admin Video List"},
+            {"method": "POST", "path": "/admin/videos/youtube", "name": "Add YouTube Video", "data": {
+                "youtube_url": "https://www.youtube.com/watch?v=test",
+                "level": "Beginner", "accents": ["American"], "tags": ["test"],
+                "instructor_name": "Test", "country": "USA", "category": "Conversation"
+            }},
+            {"method": "PUT", "path": "/admin/videos/fake-id", "name": "Update Video", "data": {"title": "Test"}},
+            {"method": "DELETE", "path": "/admin/videos/fake-id", "name": "Delete Video"}
+        ]
+        
+        success_count = 0
+        for endpoint in admin_endpoints:
+            try:
+                if endpoint["method"] == "GET":
+                    response = requests.get(f"{BACKEND_URL}{endpoint['path']}")
+                elif endpoint["method"] == "POST":
+                    response = requests.post(f"{BACKEND_URL}{endpoint['path']}", json=endpoint.get("data", {}))
+                elif endpoint["method"] == "PUT":
+                    response = requests.put(f"{BACKEND_URL}{endpoint['path']}", json=endpoint.get("data", {}))
+                elif endpoint["method"] == "DELETE":
+                    response = requests.delete(f"{BACKEND_URL}{endpoint['path']}")
+                
+                if response.status_code == 401:
+                    success_count += 1
+            except:
+                pass
+        
+        if success_count == len(admin_endpoints):
+            self.log_test(
+                "Admin Endpoints Comprehensive Auth",
+                True,
+                f"All {len(admin_endpoints)} admin endpoints correctly require authentication",
+                {"endpoints_tested": len(admin_endpoints)}
+            )
+        else:
+            self.log_test(
+                "Admin Endpoints Comprehensive Auth",
+                False,
+                f"Only {success_count}/{len(admin_endpoints)} admin endpoints properly secured",
+                {"endpoints_tested": len(admin_endpoints), "secured": success_count}
+            )
+    
     def run_all_tests(self):
         """Run all backend tests"""
         print("🚀 Starting English Fiesta Backend API Tests")
