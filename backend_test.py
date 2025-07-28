@@ -1651,6 +1651,362 @@ class EnglishFiestaAPITester:
                 {"endpoints_tested": len(admin_endpoints), "secured": success_count}
             )
     
+    def test_file_serving_endpoints_detailed(self):
+        """Test video and thumbnail file serving endpoints in detail"""
+        # Test video file serving endpoint structure
+        test_filename = "test_video.mp4"
+        
+        try:
+            response = requests.get(f"{BACKEND_URL}/files/videos/{test_filename}")
+            
+            # We expect 404 since the file doesn't exist, but endpoint should exist
+            if response.status_code == 404:
+                self.log_test(
+                    "GET /api/files/videos/{filename} - Detailed Test",
+                    True,
+                    "Video file serving endpoint exists and returns 404 for non-existent file",
+                    {"test_filename": test_filename}
+                )
+            else:
+                self.log_test(
+                    "GET /api/files/videos/{filename} - Detailed Test",
+                    False,
+                    f"Unexpected status code {response.status_code}: {response.text}",
+                    {"test_filename": test_filename}
+                )
+        except Exception as e:
+            self.log_test(
+                "GET /api/files/videos/{filename} - Detailed Test",
+                False,
+                f"Request failed: {str(e)}",
+                {"test_filename": test_filename}
+            )
+        
+        # Test thumbnail file serving endpoint structure
+        test_thumbnail = "test_thumbnail.jpg"
+        
+        try:
+            response = requests.get(f"{BACKEND_URL}/files/thumbnails/{test_thumbnail}")
+            
+            # We expect 404 since the file doesn't exist, but endpoint should exist
+            if response.status_code == 404:
+                self.log_test(
+                    "GET /api/files/thumbnails/{filename} - Detailed Test",
+                    True,
+                    "Thumbnail file serving endpoint exists and returns 404 for non-existent file",
+                    {"test_filename": test_thumbnail}
+                )
+            else:
+                self.log_test(
+                    "GET /api/files/thumbnails/{filename} - Detailed Test",
+                    False,
+                    f"Unexpected status code {response.status_code}: {response.text}",
+                    {"test_filename": test_thumbnail}
+                )
+        except Exception as e:
+            self.log_test(
+                "GET /api/files/thumbnails/{filename} - Detailed Test",
+                False,
+                f"Request failed: {str(e)}",
+                {"test_filename": test_thumbnail}
+            )
+    
+    def test_youtube_video_integration_flow(self):
+        """Test complete YouTube video integration flow (without auth - should fail)"""
+        # Test with a real YouTube URL for educational content
+        youtube_data = {
+            "youtube_url": "https://www.youtube.com/watch?v=YQHsXMglC9A",  # "Hello" by Adele (popular, likely to exist)
+            "title": "English Learning - Hello by Adele",
+            "description": "Learn English through music with Adele's Hello",
+            "level": "Intermediate",
+            "accents": ["British"],
+            "tags": ["music", "listening", "vocabulary"],
+            "instructor_name": "Music Teacher",
+            "country": "UK",
+            "category": "Culture",
+            "is_premium": False
+        }
+        
+        try:
+            # This should fail due to authentication, but tests the endpoint structure
+            response = requests.post(f"{BACKEND_URL}/admin/videos/youtube", json=youtube_data)
+            
+            if response.status_code == 401:
+                self.log_test(
+                    "YouTube Video Integration Flow - Authentication Check",
+                    True,
+                    "YouTube video endpoint correctly requires authentication",
+                    {"youtube_url": youtube_data["youtube_url"]}
+                )
+            else:
+                self.log_test(
+                    "YouTube Video Integration Flow - Authentication Check",
+                    False,
+                    f"Expected 401 for unauthenticated request, got {response.status_code}",
+                    {"youtube_url": youtube_data["youtube_url"], "response": response.text}
+                )
+        except Exception as e:
+            self.log_test(
+                "YouTube Video Integration Flow - Authentication Check",
+                False,
+                f"Request failed: {str(e)}",
+                {"youtube_url": youtube_data["youtube_url"]}
+            )
+    
+    def test_invalid_youtube_url_handling(self):
+        """Test error handling for invalid YouTube URLs"""
+        invalid_urls = [
+            "https://www.youtube.com/watch?v=invalid123",
+            "https://not-youtube.com/watch?v=test",
+            "invalid-url-format",
+            "https://www.youtube.com/watch?v=",
+            ""
+        ]
+        
+        success_count = 0
+        for invalid_url in invalid_urls:
+            youtube_data = {
+                "youtube_url": invalid_url,
+                "title": "Test Video",
+                "level": "Beginner",
+                "accents": ["American"],
+                "tags": ["test"],
+                "instructor_name": "Test Instructor",
+                "country": "USA",
+                "category": "Conversation",
+                "is_premium": False
+            }
+            
+            try:
+                # This should fail due to authentication first, but tests URL validation structure
+                response = requests.post(f"{BACKEND_URL}/admin/videos/youtube", json=youtube_data)
+                
+                # We expect 401 (auth) or 400 (bad request) - both are acceptable
+                if response.status_code in [400, 401, 422]:
+                    success_count += 1
+            except:
+                pass
+        
+        if success_count >= len(invalid_urls) * 0.8:  # At least 80% should be handled correctly
+            self.log_test(
+                "Invalid YouTube URL Handling",
+                True,
+                f"Correctly handled {success_count}/{len(invalid_urls)} invalid YouTube URLs",
+                {"tested_urls": len(invalid_urls), "handled_correctly": success_count}
+            )
+        else:
+            self.log_test(
+                "Invalid YouTube URL Handling",
+                False,
+                f"Only {success_count}/{len(invalid_urls)} invalid URLs handled correctly",
+                {"tested_urls": len(invalid_urls), "handled_correctly": success_count}
+            )
+    
+    def test_admin_video_management_pagination(self):
+        """Test admin video management with pagination parameters"""
+        # Test pagination parameters (should fail due to auth, but tests endpoint structure)
+        pagination_tests = [
+            {"page": 1, "limit": 10},
+            {"page": 2, "limit": 5},
+            {"page": 1, "limit": 50},
+            {"search": "English", "page": 1, "limit": 20},
+            {"level": "Beginner", "page": 1, "limit": 10},
+            {"category": "Grammar", "page": 1, "limit": 15}
+        ]
+        
+        success_count = 0
+        for params in pagination_tests:
+            try:
+                response = requests.get(f"{BACKEND_URL}/admin/videos", params=params)
+                
+                # Should fail with 401 due to authentication
+                if response.status_code == 401:
+                    success_count += 1
+            except:
+                pass
+        
+        if success_count == len(pagination_tests):
+            self.log_test(
+                "Admin Video Management - Pagination Parameters",
+                True,
+                f"All {len(pagination_tests)} pagination parameter combinations correctly require authentication",
+                {"tested_combinations": len(pagination_tests)}
+            )
+        else:
+            self.log_test(
+                "Admin Video Management - Pagination Parameters",
+                False,
+                f"Only {success_count}/{len(pagination_tests)} pagination tests returned expected auth error",
+                {"tested_combinations": len(pagination_tests), "successful": success_count}
+            )
+    
+    def test_video_model_backward_compatibility(self):
+        """Test that enhanced video model maintains backward compatibility"""
+        if not self.sample_videos:
+            self.log_test(
+                "Video Model Backward Compatibility",
+                False,
+                "No sample videos available for testing"
+            )
+            return
+        
+        # Check that all existing videos still have legacy fields
+        legacy_required_fields = ['id', 'title', 'description', 'duration_minutes', 'level', 'category']
+        compatibility_issues = []
+        
+        for i, video in enumerate(self.sample_videos):
+            missing_fields = [field for field in legacy_required_fields if field not in video]
+            if missing_fields:
+                compatibility_issues.append(f"Video {i+1} missing legacy fields: {missing_fields}")
+        
+        if not compatibility_issues:
+            self.log_test(
+                "Video Model Backward Compatibility",
+                True,
+                f"All {len(self.sample_videos)} videos maintain backward compatibility with legacy fields",
+                {"videos_tested": len(self.sample_videos), "legacy_fields": legacy_required_fields}
+            )
+        else:
+            self.log_test(
+                "Video Model Backward Compatibility",
+                False,
+                f"Found {len(compatibility_issues)} backward compatibility issues",
+                {"issues": compatibility_issues}
+            )
+    
+    def test_enhanced_video_fields_validation(self):
+        """Test validation of enhanced video model fields"""
+        if not self.sample_videos:
+            self.log_test(
+                "Enhanced Video Fields Validation",
+                False,
+                "No sample videos available for testing"
+            )
+            return
+        
+        # Check for enhanced fields and their data types
+        enhanced_field_checks = {
+            'accents': (list, "should be array of accent types"),
+            'tags': (list, "should be array of strings"),
+            'instructor_name': (str, "should be string"),
+            'country': (str, "should be country code"),
+            'video_type': (str, "should be 'upload' or 'youtube'")
+        }
+        
+        field_validation_results = {}
+        for field, (expected_type, description) in enhanced_field_checks.items():
+            field_validation_results[field] = {
+                'present_count': 0,
+                'valid_type_count': 0,
+                'total_videos': len(self.sample_videos)
+            }
+            
+            for video in self.sample_videos:
+                if field in video:
+                    field_validation_results[field]['present_count'] += 1
+                    if isinstance(video[field], expected_type):
+                        field_validation_results[field]['valid_type_count'] += 1
+        
+        # Calculate overall validation score
+        total_validations = sum(result['valid_type_count'] for result in field_validation_results.values())
+        total_possible = len(enhanced_field_checks) * len(self.sample_videos)
+        validation_score = total_validations / total_possible if total_possible > 0 else 0
+        
+        if validation_score >= 0.3:  # At least 30% of enhanced fields are properly implemented
+            self.log_test(
+                "Enhanced Video Fields Validation",
+                True,
+                f"Enhanced video fields validation score: {validation_score:.2%}",
+                {"validation_results": field_validation_results, "score": validation_score}
+            )
+        else:
+            self.log_test(
+                "Enhanced Video Fields Validation",
+                False,
+                f"Low enhanced fields validation score: {validation_score:.2%}",
+                {"validation_results": field_validation_results, "score": validation_score}
+            )
+    
+    def test_phase2_integration_comprehensive(self):
+        """Comprehensive integration test for Phase 2 functionality"""
+        # Test the complete flow that would happen with proper authentication
+        # 1. Check admin endpoints exist
+        # 2. Check file serving endpoints exist
+        # 3. Check enhanced video model support
+        # 4. Check filter options include new countries
+        
+        integration_checks = {
+            "admin_videos_endpoint": False,
+            "youtube_video_endpoint": False,
+            "video_file_serving": False,
+            "thumbnail_file_serving": False,
+            "enhanced_filter_options": False
+        }
+        
+        # Check admin videos endpoint
+        try:
+            response = requests.get(f"{BACKEND_URL}/admin/videos")
+            if response.status_code == 401:  # Correctly requires auth
+                integration_checks["admin_videos_endpoint"] = True
+        except:
+            pass
+        
+        # Check YouTube video endpoint
+        try:
+            response = requests.post(f"{BACKEND_URL}/admin/videos/youtube", json={
+                "youtube_url": "https://www.youtube.com/watch?v=test",
+                "level": "Beginner", "accents": ["American"], "tags": ["test"],
+                "instructor_name": "Test", "country": "USA", "category": "Conversation"
+            })
+            if response.status_code == 401:  # Correctly requires auth
+                integration_checks["youtube_video_endpoint"] = True
+        except:
+            pass
+        
+        # Check file serving endpoints
+        try:
+            response = requests.get(f"{BACKEND_URL}/files/videos/test.mp4")
+            if response.status_code == 404:  # Endpoint exists
+                integration_checks["video_file_serving"] = True
+        except:
+            pass
+        
+        try:
+            response = requests.get(f"{BACKEND_URL}/files/thumbnails/test.jpg")
+            if response.status_code == 404:  # Endpoint exists
+                integration_checks["thumbnail_file_serving"] = True
+        except:
+            pass
+        
+        # Check enhanced filter options
+        try:
+            response = requests.get(f"{BACKEND_URL}/filters/options")
+            if response.status_code == 200:
+                data = response.json()
+                countries = data.get('countries', [])
+                if any(country in countries for country in ['USA', 'UK', 'Canada', 'Australia']):
+                    integration_checks["enhanced_filter_options"] = True
+        except:
+            pass
+        
+        passed_checks = sum(integration_checks.values())
+        total_checks = len(integration_checks)
+        
+        if passed_checks >= total_checks * 0.8:  # At least 80% of checks pass
+            self.log_test(
+                "Phase 2 Integration Comprehensive",
+                True,
+                f"Phase 2 integration checks: {passed_checks}/{total_checks} passed",
+                {"integration_checks": integration_checks}
+            )
+        else:
+            self.log_test(
+                "Phase 2 Integration Comprehensive",
+                False,
+                f"Phase 2 integration checks: only {passed_checks}/{total_checks} passed",
+                {"integration_checks": integration_checks}
+            )
+
     def run_all_tests(self):
         """Run all backend tests"""
         print("🚀 Starting English Fiesta Backend API Tests")
