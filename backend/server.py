@@ -1156,7 +1156,7 @@ async def upload_video(
     category: VideoCategory = Form(...),
     is_premium: bool = Form(False),
     thumbnail: Optional[UploadFile] = File(None),
-    current_user: User = Depends(lambda: require_role(UserRole.ADMIN))
+    current_user: User = Depends(require_role(UserRole.ADMIN))
 ):
     """Upload a video file with metadata (Admin only)"""
     
