@@ -1,0 +1,72 @@
+<analysis>
+The previous AI engineer successfully developed the English Fiesta language learning platform, transitioning it from concept to a functional MVP. Initially, core features like comprehensive progress tracking and a detailed video library were built using FastAPI for the backend and React with Tailwind CSS for the frontend, leveraging  for rapid initial setup. This phase included implementing video filtering, search, and real-time session-based progress updates. Subsequently, Kit (ConvertKit) email integration for lead capture was seamlessly added. The project then pivoted to building a robust authentication system using Emergent Authentication, establishing role-based access control (Guest, Student, Instructor, Admin) and associated permissions and UI elements. A recurring UI bug involving a duplicate Join English Fiesta! banner was identified and repeatedly addressed. Most recently, the engineer implemented advanced tracking features: Mark as Already Watched for videos and a Manual Activity Logging system for external learning, complete with custom categories, flexible time entry, and retroactive streak updates, enhancing the progress dashboard. Backend testing was consistently performed and passed after each major feature. The AI engineer has just confirmed the platform's functional readiness for deployment and is awaiting clarification on the deployment type from the user.
+</analysis>
+
+<product_requirements>
+English Fiesta is envisioned as a luxury, mobile-friendly language learning platform utilizing the comprehensible input method, prioritizing immersion and visual motivation.
+**Implemented Features:**
+1.  **Progress Tracking:** Tracks daily/all-time minutes, visual streak, personal best, progress by level, visual milestones, and automatic updates for both general videos and series. Supports session-based tracking for guests and persistence for authenticated users.
+2.  **Video Library:** Features clean browsing, filtering by level, category, accent, guide, country, length, and keyword search. Supports free and premium videos with sorting options. Five sample videos are integrated.
+3.  **Email List Integration (Kit):** Connects to ConvertKit (API key provided), allowing opt-in during onboarding/dashboard for motivational messages, updates, and promotions.
+4.  **Authentication System:** Secure login/signup with email+password (via Emergent Auth), session/token handling. Implements four custom roles: , , , and . Includes role-based access control and UI customization.
+5.  **Advanced Tracking Enhancements:**
+    *   **Mark as Already Watched:** Allows users to credit previously watched videos by instantly adding their duration to progress.
+    *   **Outside Hours Manual Logging:** Enables logging of external learning activities (Movies/TV, Audiobooks/Podcasts, Talking with friends) with duration, date, optional title/description, and difficulty. Manual entries count towards streaks, with equal weighting and combined visualization (Platform vs. Total Hours).
+**Future Feature (Planned for later):**
+*   **Instructor Booking:** Users book 1-on-1 classes via Calendly, with Stripe for secure payment.
+</product_requirements>
+
+<key_technical_concepts>
+-   **Full-Stack Architecture:** React (Frontend), FastAPI (Backend), MongoDB (Database).
+-   **Cloud Environment:** Kubernetes container, Linux bash access.
+-   **UI/UX:** Mobile-first, Tailwind CSS for styling,  for images.
+-   **API Integration:** Emergent Authentication (email-based OAuth), ConvertKit (email list).
+-   **Data Persistence:** MongoDB for users, videos, progress, and email subscriptions.
+-   **Testing:** , .
+</key_technical_concepts>
+
+<code_architecture>
+The application follows a standard full-stack architecture with a React frontend and a FastAPI backend, leveraging MongoDB for data persistence.
+
+
+
+**Key Files and Modifications:**
+
+*   :
+    *   **Importance:** Core FastAPI application, handling all backend logic, API endpoints, and database interactions.
+    *   **Changes:** Initial setup for video library and progress tracking. Integrated Kit email subscription API routes. Heavily modified for Emergent Authentication, including user creation, session management, and role-based access control. Latest changes include new endpoints and models for Mark as Watched videos and Manual Activity Logging, along with updates to existing progress endpoints to combine platform and manual hours.
+*   :
+    *   **Importance:** Main React component structuring the application, defining global layout, and integrating major sections/components.
+    *   **Changes:** Initial setup of hero section, progress dashboard, and video library. Updated for email subscription modal/banner. Modified to wrap the application with  provider, integrate role-based UI elements, and manage conditional rendering based on authentication status, specifically for fixing login banner duplication.
+*   :
+    *   **Importance:** Lists all Python dependencies for the FastAPI backend.
+    *   **Changes:** Dependencies were added for Kit (ConvertKit) integration and for authentication and enhanced tracking features.
+*    (implied component):
+    *   **Importance:** Renders individual video details and interaction buttons.
+    *   **Changes:** Updated to include authentication logic for premium content access and to display the ✓ Watched button.
+*    (implied component):
+    *   **Importance:** Displays user's learning progress.
+    *   **Changes:** Updated to show Platform Videos vs Manual Activities breakdown, Total Hours, and include the + Log Activity button.
+*    (new component):
+    *   **Importance:** Provides a modal interface for users to manually log outside learning activities.
+    *   **Changes:** Newly created to include input fields for activity type, duration, date, title/description, and difficulty level.
+</code_architecture>
+
+<pending_tasks>
+-   **Instructor Booking System:** Implement instructor profiles, Calendly integration for class booking, and Stripe for secure payment.
+-   **Progress Data Export:** Implement export capabilities for users' personal progress records.
+-   **Final Deployment Setup:** Clarify and assist with specific deployment needs (e.g., production environment setup, CI/CD pipeline, domain/DNS configuration, production API keys).
+</pending_tasks>
+
+<current_work>
+The previous AI engineer has just completed the implementation of advanced progress tracking features for the English Fiesta platform. This includes:
+1.  **Mark as Already Watched functionality:** A ✓ Watched button is now present on each video card, allowing users to instantly credit the full video duration to their progress, integrating seamlessly with existing streak and milestone tracking.
+2.  **Outside Hours Manual Activity Logging:** A comprehensive modal, accessed via a + Log Activity button on the progress dashboard, enables users to record external learning. This includes three user-defined categories (Movies/TV Shows, Audiobooks/Podcasts, Talking with friends), precise minute-by-minute duration tracking, date selection (with no retroactive limits), and optional fields for title/description and difficulty level.
+3.  **Enhanced Progress Dashboard:** The dashboard now clearly differentiates between Platform Videos and Manual Activities under a Learning Sources section, displaying Total Hours and a count of logged manual activities. All logged activities, regardless of source, contribute equally to retroactive streak calculations.
+Additionally, a persistent UI bug where a Join English Fiesta! banner was duplicated on the guest view has been fixed, ensuring a cleaner user experience.
+The AI engineer has confirmed that these features are fully implemented and that the platform is functionally ready for deployment. The immediate next step is to clarify the specific type of deployment the user requires and address any associated pre-deployment considerations.
+</current_work>
+
+<optional_next_step>
+The next step is to clarify the user's specific deployment requirements and address any related pre-deployment considerations.
+</optional_next_step>
