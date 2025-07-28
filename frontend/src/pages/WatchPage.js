@@ -89,7 +89,7 @@ const WatchPage = () => {
                 <div>
                   <h3 className="font-bold text-lg">Track Your Learning Progress!</h3>
                   <p className="text-sm opacity-90">
-                    Create an account to track hours, save history, and unlock the Progress tab
+                    Create an account to track hours, save videos to My List, and unlock the Progress tab
                   </p>
                 </div>
               </div>
