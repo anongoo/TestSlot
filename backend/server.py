@@ -1261,7 +1261,7 @@ async def upload_video(
 @api_router.post("/admin/videos/youtube")
 async def add_youtube_video(
     request: YouTubeVideoRequest,
-    current_user: User = Depends(lambda: require_role(UserRole.ADMIN))
+    current_user: User = Depends(require_role(UserRole.ADMIN))
 ):
     """Add a YouTube video with metadata (Admin only)"""
     
