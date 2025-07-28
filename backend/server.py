@@ -1131,8 +1131,339 @@ async def get_filter_options():
         "categories": [category.value for category in VideoCategory],
         "accents": [accent.value for accent in AccentType],
         "guides": [guide.value for guide in GuideType],
-        "countries": ["United States", "United Kingdom", "Australia", "Canada"]
+        "countries": [country.value for country in CountryType]
     }
+
+# ==========================================
+# ADMIN VIDEO UPLOAD ENDPOINTS
+# ==========================================
+
+@api_router.post("/admin/videos/upload")
+async def upload_video(
+    file: UploadFile = File(...),
+    title: str = Form(...),
+    description: str = Form(...),
+    level: VideoLevel = Form(...),
+    accents: str = Form(...),  # JSON string of accent list
+    tags: str = Form(...),  # JSON string of tag list
+    instructor_name: str = Form(...),
+    country: CountryType = Form(...),
+    category: VideoCategory = Form(...),
+    is_premium: bool = Form(False),
+    thumbnail: Optional[UploadFile] = File(None),
+    current_user: User = Depends(lambda: require_role(UserRole.ADMIN))
+):
+    """Upload a video file with metadata (Admin only)"""
+    
+    # Validate file type
+    if not is_video_file(file.filename):
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Unsupported file format. Supported formats: {', '.join(SUPPORTED_VIDEO_FORMATS)}"
+        )
+    
+    # Validate file size
+    if not validate_file_size(file.size if file.size else 0):
+        raise HTTPException(
+            status_code=400,
+            detail=f"File size exceeds maximum limit of {MAX_FILE_SIZE / (1024**3):.1f}GB"
+        )
+    
+    try:
+        # Parse JSON fields
+        accents_list = json.loads(accents) if accents else []
+        tags_list = json.loads(tags) if tags else []
+        
+        # Generate unique filename
+        unique_filename = generate_unique_filename(file.filename)
+        video_path = VIDEOS_DIR / unique_filename
+        
+        # Save video file
+        if not await save_uploaded_file(file, video_path):
+            raise HTTPException(status_code=500, detail="Failed to save video file")
+        
+        # Get video duration
+        duration_minutes = get_video_duration(video_path)
+        if not duration_minutes:
+            # Clean up file if duration extraction failed
+            video_path.unlink()
+            raise HTTPException(status_code=400, detail="Failed to process video file")
+        
+        # Handle thumbnail
+        thumbnail_url = None
+        if thumbnail and is_image_file(thumbnail.filename):
+            # Save uploaded thumbnail
+            thumbnail_filename = generate_unique_filename(thumbnail.filename)
+            thumbnail_path = THUMBNAILS_DIR / thumbnail_filename
+            if await save_uploaded_file(thumbnail, thumbnail_path):
+                thumbnail_url = f"/api/files/thumbnails/{thumbnail_filename}"
+        else:
+            # Extract thumbnail from video
+            thumbnail_filename = f"{Path(unique_filename).stem}.jpg"
+            thumbnail_path = THUMBNAILS_DIR / thumbnail_filename
+            if extract_video_thumbnail(video_path, thumbnail_path):
+                thumbnail_url = f"/api/files/thumbnails/{thumbnail_filename}"
+        
+        # Create video record
+        video_data = {
+            "id": str(uuid.uuid4()),
+            "title": title,
+            "description": description,
+            "duration_minutes": duration_minutes,
+            "level": level,
+            "accents": accents_list,
+            "tags": tags_list,
+            "instructor_name": instructor_name,
+            "country": country,
+            "category": category,
+            "thumbnail_url": thumbnail_url,
+            "is_premium": is_premium,
+            "video_type": VideoType.UPLOAD,
+            "file_path": str(video_path),
+            "video_url": f"/api/files/videos/{unique_filename}",
+            "file_size": video_path.stat().st_size,
+            "file_format": get_file_extension(file.filename),
+            "guide": GuideType.NATIVE_SPEAKER,  # Default value
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow(),
+            "created_by": current_user.id if current_user else None
+        }
+        
+        # Insert into database
+        await db.videos.insert_one(video_data)
+        
+        return {
+            "message": "Video uploaded successfully",
+            "video_id": video_data["id"],
+            "title": title,
+            "duration_minutes": duration_minutes,
+            "file_size": video_data["file_size"],
+            "thumbnail_url": thumbnail_url
+        }
+        
+    except json.JSONDecodeError:
+        # Clean up uploaded file
+        if video_path.exists():
+            video_path.unlink()
+        raise HTTPException(status_code=400, detail="Invalid JSON in accents or tags field")
+    except Exception as e:
+        # Clean up uploaded file
+        if video_path.exists():
+            video_path.unlink()
+        logging.error(f"Error uploading video: {e}")
+        raise HTTPException(status_code=500, detail="Failed to upload video")
+
+@api_router.post("/admin/videos/youtube")
+async def add_youtube_video(
+    request: YouTubeVideoRequest,
+    current_user: User = Depends(lambda: require_role(UserRole.ADMIN))
+):
+    """Add a YouTube video with metadata (Admin only)"""
+    
+    # Extract YouTube video ID
+    video_id = get_youtube_video_id(request.youtube_url)
+    if not video_id:
+        raise HTTPException(status_code=400, detail="Invalid YouTube URL")
+    
+    # Check if video already exists
+    existing_video = await db.videos.find_one({"youtube_video_id": video_id}, {"_id": 0})
+    if existing_video:
+        raise HTTPException(status_code=400, detail="YouTube video already exists in database")
+    
+    try:
+        # Fetch YouTube metadata
+        youtube_metadata = await fetch_youtube_metadata(video_id)
+        if not youtube_metadata:
+            raise HTTPException(status_code=400, detail="Failed to fetch YouTube video metadata")
+        
+        # Use provided metadata or fallback to YouTube data
+        title = request.title or youtube_metadata.get('title', '')
+        description = request.description or youtube_metadata.get('description', '')
+        duration = youtube_metadata.get('duration', 0)
+        
+        if not title:
+            raise HTTPException(status_code=400, detail="Video title is required")
+        
+        # Create video record
+        video_data = {
+            "id": str(uuid.uuid4()),
+            "title": title,
+            "description": description,
+            "duration_minutes": duration,
+            "level": request.level,
+            "accents": request.accents,
+            "tags": request.tags,
+            "instructor_name": request.instructor_name,
+            "country": request.country,
+            "category": request.category,
+            "thumbnail_url": youtube_metadata.get('thumbnail_url', ''),
+            "is_premium": request.is_premium,
+            "video_type": VideoType.YOUTUBE,
+            "video_url": request.youtube_url,
+            "youtube_video_id": video_id,
+            "guide": GuideType.NATIVE_SPEAKER,  # Default value
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow(),
+            "created_by": current_user.id if current_user else None
+        }
+        
+        # Insert into database
+        await db.videos.insert_one(video_data)
+        
+        return {
+            "message": "YouTube video added successfully",
+            "video_id": video_data["id"],
+            "title": title,
+            "duration_minutes": duration,
+            "youtube_video_id": video_id,
+            "thumbnail_url": video_data["thumbnail_url"]
+        }
+        
+    except Exception as e:
+        logging.error(f"Error adding YouTube video: {e}")
+        raise HTTPException(status_code=500, detail="Failed to add YouTube video")
+
+@api_router.get("/admin/videos")
+async def get_admin_videos(
+    page: int = Query(1, ge=1),
+    limit: int = Query(20, ge=1, le=100),
+    search: Optional[str] = Query(None),
+    level: Optional[VideoLevel] = Query(None),
+    category: Optional[VideoCategory] = Query(None),
+    video_type: Optional[VideoType] = Query(None),
+    current_user: User = Depends(lambda: require_role(UserRole.ADMIN))
+):
+    """Get all videos for admin management with pagination and filtering"""
+    
+    # Build filter query
+    filter_query = {}
+    if search:
+        filter_query["$or"] = [
+            {"title": {"$regex": search, "$options": "i"}},
+            {"description": {"$regex": search, "$options": "i"}},
+            {"instructor_name": {"$regex": search, "$options": "i"}}
+        ]
+    if level:
+        filter_query["level"] = level
+    if category:
+        filter_query["category"] = category
+    if video_type:
+        filter_query["video_type"] = video_type
+    
+    # Get total count
+    total_count = await db.videos.count_documents(filter_query)
+    
+    # Get videos with pagination
+    skip = (page - 1) * limit
+    videos = await db.videos.find(
+        filter_query, {"_id": 0}
+    ).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
+    
+    return {
+        "videos": videos,
+        "pagination": {
+            "page": page,
+            "limit": limit,
+            "total": total_count,
+            "pages": (total_count + limit - 1) // limit
+        }
+    }
+
+@api_router.put("/admin/videos/{video_id}")
+async def update_video(
+    video_id: str,
+    request: VideoUpdateRequest,
+    current_user: User = Depends(lambda: require_role(UserRole.ADMIN))
+):
+    """Update video metadata (Admin only)"""
+    
+    # Check if video exists
+    existing_video = await db.videos.find_one({"id": video_id}, {"_id": 0})
+    if not existing_video:
+        raise HTTPException(status_code=404, detail="Video not found")
+    
+    # Build update query
+    update_data = {"updated_at": datetime.utcnow()}
+    if request.title is not None:
+        update_data["title"] = request.title
+    if request.description is not None:
+        update_data["description"] = request.description
+    if request.duration_minutes is not None:
+        update_data["duration_minutes"] = request.duration_minutes
+    if request.level is not None:
+        update_data["level"] = request.level
+    if request.accents is not None:
+        update_data["accents"] = request.accents
+    if request.tags is not None:
+        update_data["tags"] = request.tags
+    if request.instructor_name is not None:
+        update_data["instructor_name"] = request.instructor_name
+    if request.country is not None:
+        update_data["country"] = request.country
+    if request.category is not None:
+        update_data["category"] = request.category
+    if request.is_premium is not None:
+        update_data["is_premium"] = request.is_premium
+    
+    # Update video
+    await db.videos.update_one({"id": video_id}, {"$set": update_data})
+    
+    return {"message": "Video updated successfully"}
+
+@api_router.delete("/admin/videos/{video_id}")
+async def delete_video(
+    video_id: str,
+    current_user: User = Depends(lambda: require_role(UserRole.ADMIN))
+):
+    """Delete video and associated files (Admin only)"""
+    
+    # Get video to delete associated files
+    video = await db.videos.find_one({"id": video_id}, {"_id": 0})
+    if not video:
+        raise HTTPException(status_code=404, detail="Video not found")
+    
+    try:
+        # Delete associated files for uploaded videos
+        if video.get("video_type") == VideoType.UPLOAD:
+            if video.get("file_path"):
+                file_path = Path(video["file_path"])
+                if file_path.exists():
+                    file_path.unlink()
+            
+            # Delete thumbnail if it's a local file
+            if video.get("thumbnail_url") and video["thumbnail_url"].startswith("/api/files/thumbnails/"):
+                thumbnail_filename = video["thumbnail_url"].split("/")[-1]
+                thumbnail_path = THUMBNAILS_DIR / thumbnail_filename
+                if thumbnail_path.exists():
+                    thumbnail_path.unlink()
+        
+        # Delete from database
+        await db.videos.delete_one({"id": video_id})
+        
+        # Also delete associated watch progress and stats
+        await db.watch_progress.delete_many({"video_id": video_id})
+        
+        return {"message": "Video deleted successfully"}
+        
+    except Exception as e:
+        logging.error(f"Error deleting video {video_id}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to delete video")
+
+@api_router.get("/files/videos/{filename}")
+async def serve_video_file(filename: str):
+    """Serve uploaded video files"""
+    file_path = VIDEOS_DIR / filename
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="Video file not found")
+    return FileResponse(file_path)
+
+@api_router.get("/files/thumbnails/{filename}")
+async def serve_thumbnail_file(filename: str):
+    """Serve thumbnail files"""
+    file_path = THUMBNAILS_DIR / filename
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="Thumbnail file not found")
+    return FileResponse(file_path)
 
 @api_router.post("/email/subscribe")
 async def subscribe_email(request: EmailSubscribeRequest):
