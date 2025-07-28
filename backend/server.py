@@ -64,6 +64,9 @@ class VideoCategory(str, Enum):
     PRONUNCIATION = "Pronunciation"
     CULTURE = "Culture"
     BUSINESS = "Business"
+    INTERVIEW = "Interview"
+    TRAVEL = "Travel"
+    TUTORIAL = "Tutorial"
 
 class AccentType(str, Enum):
     BRITISH = "British"
@@ -76,23 +79,50 @@ class GuideType(str, Enum):
     ESL_TEACHER = "ESL Teacher"
     LANGUAGE_COACH = "Language Coach"
 
-# Models
+class VideoType(str, Enum):
+    UPLOAD = "upload"
+    YOUTUBE = "youtube"
+
+class CountryType(str, Enum):
+    USA = "USA"
+    UK = "UK"
+    CANADA = "Canada"
+    AUSTRALIA = "Australia"
+
+# Enhanced Video Model
 class Video(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     title: str
     description: str
-    thumbnail_url: str
-    video_url: str
     duration_minutes: int
     level: VideoLevel
+    accents: List[AccentType] = []  # Changed to support multiple accents
+    tags: List[str] = []  # Comma-separated tags
+    instructor_name: str
+    country: CountryType
     category: VideoCategory
-    accent: AccentType
-    guide: GuideType
-    country: str
+    thumbnail_url: Optional[str] = None  # Optional for uploads, auto-generated
     is_premium: bool = False
+    
+    # Video source information
+    video_type: VideoType  # "upload" or "youtube"
+    video_url: Optional[str] = None  # YouTube URL or local file path
+    file_path: Optional[str] = None  # Local file path for uploads
+    youtube_video_id: Optional[str] = None  # YouTube video ID
+    
+    # File information (for uploads)
+    file_size: Optional[int] = None  # File size in bytes
+    file_format: Optional[str] = None  # MP4, MOV, AVI
+    
+    # Legacy fields (keep for backward compatibility)
+    guide: GuideType = GuideType.NATIVE_SPEAKER
     series_id: Optional[str] = None
     series_order: Optional[int] = None
+    
+    # Metadata
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_by: Optional[str] = None  # Admin user ID who uploaded
 
 class VideoSeries(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
