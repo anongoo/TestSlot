@@ -183,6 +183,56 @@ class EmailSubscribeRequest(BaseModel):
     name: Optional[str] = None
     source: str = "english_fiesta"
 
+# Video Upload and Management Models
+class VideoUploadRequest(BaseModel):
+    title: str
+    description: str
+    duration_minutes: int
+    level: VideoLevel
+    accents: List[AccentType]
+    tags: List[str]
+    instructor_name: str
+    country: CountryType
+    category: VideoCategory
+    is_premium: bool = False
+
+class YouTubeVideoRequest(BaseModel):
+    youtube_url: str
+    title: Optional[str] = None  # Auto-fetch if not provided
+    description: Optional[str] = None
+    level: VideoLevel
+    accents: List[AccentType]
+    tags: List[str]
+    instructor_name: str
+    country: CountryType
+    category: VideoCategory
+    is_premium: bool = False
+
+class VideoUpdateRequest(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    duration_minutes: Optional[int] = None
+    level: Optional[VideoLevel] = None
+    accents: Optional[List[AccentType]] = None
+    tags: Optional[List[str]] = None
+    instructor_name: Optional[str] = None
+    country: Optional[CountryType] = None
+    category: Optional[VideoCategory] = None
+    is_premium: Optional[bool] = None
+
+class BulkUploadResponse(BaseModel):
+    uploaded_files: List[Dict[str, Any]]
+    failed_files: List[Dict[str, str]]
+    total_uploaded: int
+    total_failed: int
+
+class UploadProgressResponse(BaseModel):
+    file_id: str
+    filename: str
+    progress: float  # 0.0 to 1.0
+    status: str  # "uploading", "processing", "completed", "failed"
+    message: Optional[str] = None
+
 # Authentication Models
 class User(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
