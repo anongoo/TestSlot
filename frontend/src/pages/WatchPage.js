@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import WatchTab from '../components/WatchTab';
 import SeriesTab from '../components/SeriesTab';
-import LibraryTab from '../components/LibraryTab';
+import MyListTab from '../components/MyListTab';
 import ProgressTab from '../components/ProgressTab';
 
 const WatchPage = () => {
@@ -13,7 +13,7 @@ const WatchPage = () => {
   const tabs = [
     { id: 'watch', label: '🎥 Watch', icon: '🎥', component: WatchTab },
     { id: 'series', label: '📚 Series', icon: '📚', component: SeriesTab },
-    { id: 'library', label: '🗂️ Library', icon: '🗂️', component: LibraryTab },
+    { id: 'mylist', label: '💾 My List', icon: '💾', component: MyListTab, authRequired: true },
     ...(isAuthenticated ? [
       { id: 'progress', label: '📊 Progress', icon: '📊', component: ProgressTab, authRequired: true }
     ] : [])
