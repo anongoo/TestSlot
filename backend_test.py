@@ -1698,6 +1698,20 @@ class EnglishFiestaAPITester:
         self.test_session_token_format_validation()
         self.test_authentication_endpoints_structure()
         
+        # Phase 2 Admin Video Management Tests
+        print("\n🎬 Testing Phase 2 Admin Video Management System")
+        print("-" * 50)
+        self.test_admin_videos_list_without_auth()
+        self.test_admin_videos_list_invalid_token()
+        self.test_admin_youtube_video_without_auth()
+        self.test_admin_youtube_video_invalid_token()
+        self.test_admin_video_update_without_auth()
+        self.test_admin_video_delete_without_auth()
+        self.test_enhanced_video_model_fields()
+        self.test_enhanced_filter_options_countries()
+        self.test_file_serving_endpoints_structure()
+        self.test_admin_endpoints_comprehensive_auth()
+        
         # Summary
         print("\n" + "=" * 60)
         print("📊 TEST SUMMARY")
