@@ -1,49 +1,15 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
+import React, { useState } from "react";
 import { useAuth } from '../contexts/AuthContext';
 import HeroSection from '../components/HeroSection';
 import GuestHomepage from '../components/GuestHomepage';
-import ProgressTracker from '../components/ProgressTracker';
-import VideoLibrary from '../components/VideoLibrary';
 import AdminDashboard from '../components/AdminDashboard';
 import EmailSubscriptionModal from '../components/EmailSubscriptionModal';
 import EmailSubscriptionBanner from '../components/EmailSubscriptionBanner';
 import RoleGate from '../components/RoleGate';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
-
-// Generate or get session ID for guest users
-const getSessionId = () => {
-  let sessionId = localStorage.getItem('english_fiesta_session');
-  if (!sessionId) {
-    sessionId = 'guest_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
-    localStorage.setItem('english_fiesta_session', sessionId);
-  }
-  return sessionId;
-};
-
 const HomePage = () => {
-  const [sessionId] = useState(getSessionId());
-  const [refreshProgress, setRefreshProgress] = useState(0);
   const [showEmailModal, setShowEmailModal] = useState(false);
-  const [hasWatchedVideo, setHasWatchedVideo] = useState(false);
-  const { user, isAdmin, isAuthenticated, login } = useAuth();
-
-  // Show email modal after user has watched a video for engagement
-  useEffect(() => {
-    if (hasWatchedVideo && !localStorage.getItem('email_subscribed') && !isAuthenticated) {
-      const timer = setTimeout(() => {
-        setShowEmailModal(true);
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [hasWatchedVideo, isAuthenticated]);
-
-  const handleWatchProgress = () => {
-    setRefreshProgress(prev => prev + 1);
-    setHasWatchedVideo(true);
-  };
+  const { isAuthenticated } = useAuth();
 
   const handleEmailSubscriptionSuccess = () => {
     localStorage.setItem('email_subscribed', 'true');
@@ -71,16 +37,53 @@ const HomePage = () => {
           <EmailSubscriptionBanner onSubscribe={() => setShowEmailModal(true)} />
         )}
         
-        {/* Progress Tracker - Show for authenticated users and engaged guests */}
-        {(isAuthenticated || hasWatchedVideo) && (
-          <ProgressTracker sessionId={sessionId} key={refreshProgress} />
+        {/* Browse Videos Section */}
+        <div className="bg-white rounded-xl shadow-lg p-8 mb-8 text-center">
+          <div className="text-6xl mb-4">🎥</div>
+          <h2 className="text-3xl font-bold text-gray-800 mb-4">
+            Ready to Start Learning?
+          </h2>
+          <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
+            Access our complete video library with hundreds of English learning videos organized by level, 
+            topic, and series. Perfect for learners at every stage of their journey.
+          </p>
+          
+          <div className="space-y-4">
+            <a
+              href="/watch"
+              className="inline-block bg-blue-600 text-white text-xl font-semibold px-8 py-4 rounded-xl hover:bg-blue-700 transition-all duration-300 transform hover:scale-105 shadow-lg"
+            >
+              🚀 Browse Videos
+            </a>
+            
+            <div className="text-sm text-gray-500">
+              Over 100+ videos • All levels • Free and Premium content
+            </div>
+          </div>
+        </div>
+
+        {/* Features Preview for Logged-in Users */}
+        {isAuthenticated && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div className="bg-white rounded-xl shadow-sm p-6 text-center">
+              <div className="text-3xl mb-3">📊</div>
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">Track Progress</h3>
+              <p className="text-gray-600 text-sm">Monitor your learning hours and build daily streaks</p>
+            </div>
+            
+            <div className="bg-white rounded-xl shadow-sm p-6 text-center">
+              <div className="text-3xl mb-3">💾</div>
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">Save Videos</h3>
+              <p className="text-gray-600 text-sm">Create your personal watchlist and access watch history</p>
+            </div>
+            
+            <div className="bg-white rounded-xl shadow-sm p-6 text-center">
+              <div className="text-3xl mb-3">📚</div>
+              <h3 className="text-lg font-semibold text-gray-800 mb-2">Organized Learning</h3>
+              <p className="text-gray-600 text-sm">Explore video series and structured learning paths</p>
+            </div>
+          </div>
         )}
-        
-        {/* Video Library */}
-        <VideoLibrary 
-          sessionId={sessionId}
-          onWatchProgress={handleWatchProgress}
-        />
       </div>
 
       {/* Email Subscription Modal (only for non-authenticated users) */}
