@@ -11,6 +11,7 @@ import Footer from './components/Footer';
 
 // Pages
 import HomePage from './pages/HomePage';
+import WatchPage from './pages/WatchPage';
 import About from './components/About';
 import FAQ from './components/FAQ';
 
@@ -24,6 +25,7 @@ const App = () => {
           <main className="flex-1">
             <Routes>
               <Route path="/" element={<HomePage />} />
+              <Route path="/watch" element={<WatchPage />} />
               <Route path="/about" element={<About />} />
               <Route path="/faq" element={<FAQ />} />
             </Routes>
