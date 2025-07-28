@@ -656,6 +656,8 @@ async def recalculate_streaks_from_date(session_id: str, from_date: str):
             {"session_id": session_id, "date": record["date"]},
             {"$set": {"streak_count": new_streak}}
         )
+
+@api_router.post("/videos/{video_id}/watch")
 async def record_watch_progress(
     video_id: str, 
     request: WatchRequest, 
