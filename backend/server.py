@@ -1378,7 +1378,7 @@ async def get_admin_videos(
 async def update_video(
     video_id: str,
     request: VideoUpdateRequest,
-    current_user: User = Depends(lambda: require_role(UserRole.ADMIN))
+    current_user: User = Depends(require_role(UserRole.ADMIN))
 ):
     """Update video metadata (Admin only)"""
     
