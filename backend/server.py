@@ -16,7 +16,12 @@ from enum import Enum
 import hashlib
 import secrets
 import aiofiles
-import magic
+try:
+    import magic
+    MAGIC_AVAILABLE = True
+except ImportError:
+    MAGIC_AVAILABLE = False
+    magic = None
 from PIL import Image
 import tempfile
 import shutil
