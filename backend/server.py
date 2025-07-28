@@ -1336,7 +1336,7 @@ async def get_admin_videos(
     level: Optional[VideoLevel] = Query(None),
     category: Optional[VideoCategory] = Query(None),
     video_type: Optional[VideoType] = Query(None),
-    current_user: User = Depends(lambda: require_role(UserRole.ADMIN))
+    current_user: User = Depends(require_role(UserRole.ADMIN))
 ):
     """Get all videos for admin management with pagination and filtering"""
     
