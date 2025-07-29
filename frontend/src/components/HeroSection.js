@@ -1,10 +1,17 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
+import { useAllContent } from '../hooks/useContent';
 
 const HeroSection = () => {
   const { isAuthenticated, login } = useAuth();
   const { t } = useTranslation();
+  const { getTitle, getContent, loading } = useAllContent();
+
+  // Get dynamic content from database or fall back to translation keys
+  const heroTitle = getTitle('hero_section.hero_title') || t('hero_title');
+  const heroSubtitle = getContent('hero_section.hero_subtitle') || t('hero_subtitle');
+  const ctaText = getTitle('hero_section.cta_button') || t('start_learning_free');
 
   return (
     <div className="bg-gradient-to-r from-blue-600 to-purple-700 text-white">
@@ -12,12 +19,12 @@ const HeroSection = () => {
         <div className="text-center max-w-4xl mx-auto">
           {/* Hero Title */}
           <h1 className="text-4xl md:text-6xl font-bold mb-6 hero-title">
-            {t('hero_title')}
+            {heroTitle}
           </h1>
           
-          {/* Hero Subheadline */}
+          {/* Hero Subtitle */}
           <h2 className="text-xl md:text-2xl mb-8 opacity-90 hero-subtitle">
-            {t('hero_subtitle')}
+            {heroSubtitle}
           </h2>
           
           {/* CTA Button */}
@@ -26,7 +33,7 @@ const HeroSection = () => {
               onClick={login}
               className="bg-white text-blue-600 px-8 py-4 rounded-lg text-xl font-semibold hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-lg mb-12"
             >
-              {t('start_learning_free')}
+              {ctaText}
             </button>
           )}
           
@@ -62,6 +69,12 @@ const HeroSection = () => {
               <p className="text-sm opacity-80">Science-backed and effective language acquisition approach</p>
             </div>
           </div>
+          
+          {loading && (
+            <div className="text-center mt-4 text-sm opacity-60">
+              Loading content...
+            </div>
+          )}
         </div>
       </div>
     </div>
