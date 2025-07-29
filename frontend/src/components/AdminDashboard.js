@@ -84,6 +84,16 @@ const AdminDashboard = () => {
         <div className="border-b mb-6">
           <nav className="-mb-px flex space-x-8">
             <button
+              onClick={() => setActiveTab('content')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'content'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              📝 Content Management
+            </button>
+            <button
               onClick={() => setActiveTab('management')}
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'management'
