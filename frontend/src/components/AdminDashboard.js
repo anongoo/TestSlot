@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import AdminVideoUpload from './AdminVideoUpload';
 import AdminYouTubeAdd from './AdminYouTubeAdd';
 import AdminVideoManagement from './AdminVideoManagement';
+import ContentManagement from './ContentManagement';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
