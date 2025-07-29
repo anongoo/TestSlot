@@ -305,6 +305,27 @@ class ActivityLevel(str, Enum):
     INTERMEDIATE = "Intermediate"
     ADVANCED = "Advanced"
 
+# Content Management Models
+class ContentType(str, Enum):
+    HERO_SECTION = "hero_section"
+    ABOUT_PAGE = "about_page"
+    FAQ_PAGE = "faq_page"
+    FOOTER = "footer"
+    UI_TEXT = "ui_text"
+
+class ContentItem(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    content_type: ContentType
+    section_key: str  # e.g., "hero_title", "faq_section_1", "footer_copyright"
+    languages: Dict[str, Any] = {}  # {"en": {"title": "...", "content": "..."}, "es": {...}, "pt": {...}}
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+
+class ContentUpdateRequest(BaseModel):
+    languages: Dict[str, Any]
+
 class ManualActivity(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     user_id: Optional[str] = None
