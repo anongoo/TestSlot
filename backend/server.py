@@ -1865,10 +1865,10 @@ async def create_auth_session(request: AuthSessionRequest):
         )
         
     except requests.RequestException as e:
-        logger.error(f"Emergent auth API error: {str(e)}")
+        logging.error(f"Emergent auth API error: {str(e)}")
         raise HTTPException(status_code=500, detail="Authentication service unavailable")
     except Exception as e:
-        logger.error(f"Session creation error: {str(e)}")
+        logging.error(f"Session creation error: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to create session")
 
 async def migrate_guest_data_to_user(user_id: str, guest_session_id: str):
