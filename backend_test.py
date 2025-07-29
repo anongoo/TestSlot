@@ -2007,6 +2007,609 @@ class EnglishFiestaAPITester:
                 {"integration_checks": integration_checks}
             )
 
+    # ==========================================
+    # CONTENT MANAGEMENT SYSTEM TESTS
+    # ==========================================
+    
+    def test_content_management_initialization(self):
+        """Test that content management data is initialized on startup"""
+        try:
+            response = requests.get(f"{BACKEND_URL}/content")
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Check if we have content types initialized
+                expected_content_types = ['hero_section', 'about_page', 'faq_page', 'footer', 'ui_text']
+                found_types = list(data.keys())
+                
+                if len(found_types) >= 3:  # At least 3 content types should be initialized
+                    self.log_test(
+                        "Content Management - Database Initialization",
+                        True,
+                        f"Content management initialized with {len(found_types)} content types",
+                        {"content_types": found_types, "total_sections": sum(len(sections) for sections in data.values())}
+                    )
+                else:
+                    self.log_test(
+                        "Content Management - Database Initialization",
+                        False,
+                        f"Expected at least 3 content types, found {len(found_types)}",
+                        {"content_types": found_types}
+                    )
+            else:
+                self.log_test(
+                    "Content Management - Database Initialization",
+                    False,
+                    f"HTTP {response.status_code}: {response.text}"
+                )
+        except Exception as e:
+            self.log_test(
+                "Content Management - Database Initialization",
+                False,
+                f"Request failed: {str(e)}"
+            )
+    
+    def test_get_all_content_public(self):
+        """Test GET /api/content - public content access"""
+        try:
+            response = requests.get(f"{BACKEND_URL}/content")
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Verify structure - should be organized by content_type -> section_key
+                if isinstance(data, dict) and len(data) > 0:
+                    # Check structure of first content type
+                    first_type = list(data.keys())[0]
+                    first_type_data = data[first_type]
+                    
+                    if isinstance(first_type_data, dict):
+                        # Check if sections have proper structure
+                        section_keys = list(first_type_data.keys())
+                        if len(section_keys) > 0:
+                            first_section = first_type_data[section_keys[0]]
+                            required_fields = ['id', 'languages', 'updated_at']
+                            
+                            if all(field in first_section for field in required_fields):
+                                self.log_test(
+                                    "GET /api/content - Public Content Access",
+                                    True,
+                                    f"Successfully retrieved organized content with {len(data)} content types",
+                                    {"content_types": list(data.keys()), "structure_valid": True}
+                                )
+                            else:
+                                self.log_test(
+                                    "GET /api/content - Public Content Access",
+                                    False,
+                                    f"Content sections missing required fields: {required_fields}",
+                                    {"first_section": first_section}
+                                )
+                        else:
+                            self.log_test(
+                                "GET /api/content - Public Content Access",
+                                False,
+                                "Content type has no sections",
+                                {"first_type": first_type}
+                            )
+                    else:
+                        self.log_test(
+                            "GET /api/content - Public Content Access",
+                            False,
+                            "Content type data is not properly structured",
+                            {"first_type_data": first_type_data}
+                        )
+                else:
+                    self.log_test(
+                        "GET /api/content - Public Content Access",
+                        False,
+                        "Response is not a valid content dictionary",
+                        {"response_type": type(data), "data": data}
+                    )
+            else:
+                self.log_test(
+                    "GET /api/content - Public Content Access",
+                    False,
+                    f"HTTP {response.status_code}: {response.text}"
+                )
+        except Exception as e:
+            self.log_test(
+                "GET /api/content - Public Content Access",
+                False,
+                f"Request failed: {str(e)}"
+            )
+    
+    def test_get_content_by_type(self):
+        """Test GET /api/content/{content_type}"""
+        content_types_to_test = ['hero_section', 'about_page', 'faq_page', 'footer', 'ui_text']
+        
+        success_count = 0
+        for content_type in content_types_to_test:
+            try:
+                response = requests.get(f"{BACKEND_URL}/content/{content_type}")
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    
+                    # Verify response structure
+                    if 'content_type' in data and 'items' in data:
+                        if data['content_type'] == content_type and isinstance(data['items'], list):
+                            success_count += 1
+                        else:
+                            self.log_test(
+                                f"GET /api/content/{content_type} - Structure Check",
+                                False,
+                                f"Invalid response structure for {content_type}",
+                                {"response": data}
+                            )
+                    else:
+                        self.log_test(
+                            f"GET /api/content/{content_type} - Structure Check",
+                            False,
+                            f"Missing required fields in response for {content_type}",
+                            {"response": data}
+                        )
+                elif response.status_code == 404:
+                    # Content type might not exist, which is acceptable
+                    pass
+                else:
+                    self.log_test(
+                        f"GET /api/content/{content_type} - Error",
+                        False,
+                        f"HTTP {response.status_code}: {response.text}"
+                    )
+            except Exception as e:
+                self.log_test(
+                    f"GET /api/content/{content_type} - Exception",
+                    False,
+                    f"Request failed: {str(e)}"
+                )
+        
+        if success_count >= 2:  # At least 2 content types should work
+            self.log_test(
+                "GET /api/content/{content_type} - Multiple Types",
+                True,
+                f"Successfully retrieved {success_count}/{len(content_types_to_test)} content types",
+                {"successful_types": success_count, "tested_types": len(content_types_to_test)}
+            )
+        else:
+            self.log_test(
+                "GET /api/content/{content_type} - Multiple Types",
+                False,
+                f"Only {success_count}/{len(content_types_to_test)} content types worked",
+                {"successful_types": success_count, "tested_types": len(content_types_to_test)}
+            )
+    
+    def test_get_specific_content_item(self):
+        """Test GET /api/content/{content_type}/{section_key}"""
+        # Test with common content items that should exist
+        test_items = [
+            ("hero_section", "hero_title"),
+            ("hero_section", "hero_subtitle"),
+            ("about_page", "about_title"),
+            ("faq_page", "faq_title"),
+            ("footer", "footer_copyright")
+        ]
+        
+        success_count = 0
+        for content_type, section_key in test_items:
+            try:
+                response = requests.get(f"{BACKEND_URL}/content/{content_type}/{section_key}")
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    
+                    # Verify response structure
+                    required_fields = ['id', 'content_type', 'section_key', 'languages', 'created_at', 'updated_at']
+                    if all(field in data for field in required_fields):
+                        if data['content_type'] == content_type and data['section_key'] == section_key:
+                            # Check if languages field has multilingual content
+                            languages = data.get('languages', {})
+                            if isinstance(languages, dict) and len(languages) > 0:
+                                success_count += 1
+                            else:
+                                self.log_test(
+                                    f"GET /api/content/{content_type}/{section_key} - Languages Check",
+                                    False,
+                                    f"No language content found for {content_type}/{section_key}",
+                                    {"languages": languages}
+                                )
+                        else:
+                            self.log_test(
+                                f"GET /api/content/{content_type}/{section_key} - Data Mismatch",
+                                False,
+                                f"Response data doesn't match request parameters",
+                                {"expected": {"content_type": content_type, "section_key": section_key}, "actual": data}
+                            )
+                    else:
+                        missing_fields = [field for field in required_fields if field not in data]
+                        self.log_test(
+                            f"GET /api/content/{content_type}/{section_key} - Missing Fields",
+                            False,
+                            f"Missing required fields: {missing_fields}",
+                            {"response": data}
+                        )
+                elif response.status_code == 404:
+                    # Content item might not exist, which is acceptable for some items
+                    pass
+                else:
+                    self.log_test(
+                        f"GET /api/content/{content_type}/{section_key} - Error",
+                        False,
+                        f"HTTP {response.status_code}: {response.text}"
+                    )
+            except Exception as e:
+                self.log_test(
+                    f"GET /api/content/{content_type}/{section_key} - Exception",
+                    False,
+                    f"Request failed: {str(e)}"
+                )
+        
+        if success_count >= 2:  # At least 2 specific content items should work
+            self.log_test(
+                "GET /api/content/{content_type}/{section_key} - Specific Items",
+                True,
+                f"Successfully retrieved {success_count}/{len(test_items)} specific content items",
+                {"successful_items": success_count, "tested_items": len(test_items)}
+            )
+        else:
+            self.log_test(
+                "GET /api/content/{content_type}/{section_key} - Specific Items",
+                False,
+                f"Only {success_count}/{len(test_items)} specific content items worked",
+                {"successful_items": success_count, "tested_items": len(test_items)}
+            )
+    
+    def test_admin_content_list_without_auth(self):
+        """Test GET /api/admin/content without authentication"""
+        try:
+            response = requests.get(f"{BACKEND_URL}/admin/content")
+            
+            if response.status_code == 401:
+                self.log_test(
+                    "GET /api/admin/content - No Auth",
+                    True,
+                    "Correctly rejected admin content list request without authentication",
+                    {"expected_status": 401}
+                )
+            else:
+                self.log_test(
+                    "GET /api/admin/content - No Auth",
+                    False,
+                    f"Expected 401, got {response.status_code}: {response.text}",
+                    {"status_code": response.status_code}
+                )
+        except Exception as e:
+            self.log_test(
+                "GET /api/admin/content - No Auth",
+                False,
+                f"Request failed: {str(e)}"
+            )
+    
+    def test_admin_content_create_without_auth(self):
+        """Test POST /api/admin/content without authentication"""
+        content_data = {
+            "languages": {
+                "en": {
+                    "title": "Test Content",
+                    "content": "This is test content"
+                },
+                "es": {
+                    "title": "Contenido de Prueba",
+                    "content": "Este es contenido de prueba"
+                }
+            }
+        }
+        
+        try:
+            response = requests.post(
+                f"{BACKEND_URL}/admin/content",
+                params={"content_type": "ui_text", "section_key": "test_section"},
+                json=content_data
+            )
+            
+            if response.status_code == 401:
+                self.log_test(
+                    "POST /api/admin/content - No Auth",
+                    True,
+                    "Correctly rejected admin content creation without authentication",
+                    {"expected_status": 401}
+                )
+            else:
+                self.log_test(
+                    "POST /api/admin/content - No Auth",
+                    False,
+                    f"Expected 401, got {response.status_code}: {response.text}",
+                    {"status_code": response.status_code}
+                )
+        except Exception as e:
+            self.log_test(
+                "POST /api/admin/content - No Auth",
+                False,
+                f"Request failed: {str(e)}"
+            )
+    
+    def test_admin_content_update_without_auth(self):
+        """Test PUT /api/admin/content/{content_type}/{section_key} without authentication"""
+        content_data = {
+            "languages": {
+                "en": {
+                    "title": "Updated Test Content",
+                    "content": "This is updated test content"
+                }
+            }
+        }
+        
+        try:
+            response = requests.put(
+                f"{BACKEND_URL}/admin/content/ui_text/test_section",
+                json=content_data
+            )
+            
+            if response.status_code == 401:
+                self.log_test(
+                    "PUT /api/admin/content/{content_type}/{section_key} - No Auth",
+                    True,
+                    "Correctly rejected admin content update without authentication",
+                    {"expected_status": 401}
+                )
+            else:
+                self.log_test(
+                    "PUT /api/admin/content/{content_type}/{section_key} - No Auth",
+                    False,
+                    f"Expected 401, got {response.status_code}: {response.text}",
+                    {"status_code": response.status_code}
+                )
+        except Exception as e:
+            self.log_test(
+                "PUT /api/admin/content/{content_type}/{section_key} - No Auth",
+                False,
+                f"Request failed: {str(e)}"
+            )
+    
+    def test_admin_content_delete_without_auth(self):
+        """Test DELETE /api/admin/content/{content_type}/{section_key} without authentication"""
+        try:
+            response = requests.delete(f"{BACKEND_URL}/admin/content/ui_text/test_section")
+            
+            if response.status_code == 401:
+                self.log_test(
+                    "DELETE /api/admin/content/{content_type}/{section_key} - No Auth",
+                    True,
+                    "Correctly rejected admin content deletion without authentication",
+                    {"expected_status": 401}
+                )
+            else:
+                self.log_test(
+                    "DELETE /api/admin/content/{content_type}/{section_key} - No Auth",
+                    False,
+                    f"Expected 401, got {response.status_code}: {response.text}",
+                    {"status_code": response.status_code}
+                )
+        except Exception as e:
+            self.log_test(
+                "DELETE /api/admin/content/{content_type}/{section_key} - No Auth",
+                False,
+                f"Request failed: {str(e)}"
+            )
+    
+    def test_admin_content_endpoints_invalid_token(self):
+        """Test admin content endpoints with invalid authentication token"""
+        invalid_token = "invalid_admin_content_token_123"
+        headers = {"Authorization": f"Bearer {invalid_token}"}
+        
+        admin_content_endpoints = [
+            {"method": "GET", "path": "/admin/content", "name": "Admin Content List"},
+            {"method": "POST", "path": "/admin/content", "name": "Create Content", 
+             "params": {"content_type": "ui_text", "section_key": "test"}, 
+             "data": {"languages": {"en": {"title": "Test", "content": "Test content"}}}},
+            {"method": "PUT", "path": "/admin/content/ui_text/test", "name": "Update Content",
+             "data": {"languages": {"en": {"title": "Updated", "content": "Updated content"}}}},
+            {"method": "DELETE", "path": "/admin/content/ui_text/test", "name": "Delete Content"}
+        ]
+        
+        success_count = 0
+        for endpoint in admin_content_endpoints:
+            try:
+                if endpoint["method"] == "GET":
+                    response = requests.get(f"{BACKEND_URL}{endpoint['path']}", headers=headers)
+                elif endpoint["method"] == "POST":
+                    response = requests.post(
+                        f"{BACKEND_URL}{endpoint['path']}", 
+                        headers=headers, 
+                        params=endpoint.get("params", {}),
+                        json=endpoint.get("data", {})
+                    )
+                elif endpoint["method"] == "PUT":
+                    response = requests.put(
+                        f"{BACKEND_URL}{endpoint['path']}", 
+                        headers=headers, 
+                        json=endpoint.get("data", {})
+                    )
+                elif endpoint["method"] == "DELETE":
+                    response = requests.delete(f"{BACKEND_URL}{endpoint['path']}", headers=headers)
+                
+                if response.status_code == 401:
+                    success_count += 1
+            except:
+                pass
+        
+        if success_count == len(admin_content_endpoints):
+            self.log_test(
+                "Admin Content Endpoints - Invalid Token",
+                True,
+                f"All {len(admin_content_endpoints)} admin content endpoints correctly reject invalid tokens",
+                {"endpoints_tested": len(admin_content_endpoints), "invalid_token": invalid_token}
+            )
+        else:
+            self.log_test(
+                "Admin Content Endpoints - Invalid Token",
+                False,
+                f"Only {success_count}/{len(admin_content_endpoints)} admin content endpoints properly secured",
+                {"endpoints_tested": len(admin_content_endpoints), "secured": success_count}
+            )
+    
+    def test_content_multilingual_support(self):
+        """Test that content items support multilingual data structure"""
+        try:
+            response = requests.get(f"{BACKEND_URL}/content")
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Find content items and check their language structure
+                multilingual_items = 0
+                total_items = 0
+                language_codes_found = set()
+                
+                for content_type, sections in data.items():
+                    for section_key, section_data in sections.items():
+                        total_items += 1
+                        languages = section_data.get('languages', {})
+                        
+                        if isinstance(languages, dict) and len(languages) > 0:
+                            multilingual_items += 1
+                            language_codes_found.update(languages.keys())
+                            
+                            # Check if language entries have proper structure
+                            for lang_code, lang_data in languages.items():
+                                if isinstance(lang_data, dict):
+                                    # Good - language data is structured
+                                    pass
+                
+                if total_items > 0:
+                    multilingual_ratio = multilingual_items / total_items
+                    
+                    if multilingual_ratio >= 0.5 and len(language_codes_found) >= 2:  # At least 50% multilingual with 2+ languages
+                        self.log_test(
+                            "Content Management - Multilingual Support",
+                            True,
+                            f"Multilingual support verified: {multilingual_items}/{total_items} items ({multilingual_ratio:.1%}) with {len(language_codes_found)} languages",
+                            {"languages_found": list(language_codes_found), "multilingual_ratio": multilingual_ratio}
+                        )
+                    else:
+                        self.log_test(
+                            "Content Management - Multilingual Support",
+                            False,
+                            f"Insufficient multilingual support: {multilingual_items}/{total_items} items ({multilingual_ratio:.1%}) with {len(language_codes_found)} languages",
+                            {"languages_found": list(language_codes_found), "multilingual_ratio": multilingual_ratio}
+                        )
+                else:
+                    self.log_test(
+                        "Content Management - Multilingual Support",
+                        False,
+                        "No content items found to test multilingual support"
+                    )
+            else:
+                self.log_test(
+                    "Content Management - Multilingual Support",
+                    False,
+                    f"Failed to retrieve content for multilingual testing: HTTP {response.status_code}"
+                )
+        except Exception as e:
+            self.log_test(
+                "Content Management - Multilingual Support",
+                False,
+                f"Request failed: {str(e)}"
+            )
+    
+    def test_content_management_comprehensive_integration(self):
+        """Comprehensive integration test for content management system"""
+        integration_checks = {
+            "public_content_access": False,
+            "content_by_type_access": False,
+            "specific_content_access": False,
+            "admin_endpoints_secured": False,
+            "multilingual_structure": False,
+            "content_initialization": False
+        }
+        
+        # Check public content access
+        try:
+            response = requests.get(f"{BACKEND_URL}/content")
+            if response.status_code == 200 and isinstance(response.json(), dict):
+                integration_checks["public_content_access"] = True
+        except:
+            pass
+        
+        # Check content by type access
+        try:
+            response = requests.get(f"{BACKEND_URL}/content/hero_section")
+            if response.status_code == 200:
+                data = response.json()
+                if 'content_type' in data and 'items' in data:
+                    integration_checks["content_by_type_access"] = True
+        except:
+            pass
+        
+        # Check specific content access
+        try:
+            response = requests.get(f"{BACKEND_URL}/content/hero_section/hero_title")
+            if response.status_code == 200:
+                data = response.json()
+                if 'languages' in data:
+                    integration_checks["specific_content_access"] = True
+        except:
+            pass
+        
+        # Check admin endpoints are secured
+        admin_endpoints_secured = 0
+        admin_endpoints = ["/admin/content", "/admin/content/ui_text/test"]
+        for endpoint in admin_endpoints:
+            try:
+                response = requests.get(f"{BACKEND_URL}{endpoint}")
+                if response.status_code == 401:
+                    admin_endpoints_secured += 1
+            except:
+                pass
+        
+        if admin_endpoints_secured >= len(admin_endpoints) * 0.8:
+            integration_checks["admin_endpoints_secured"] = True
+        
+        # Check multilingual structure
+        try:
+            response = requests.get(f"{BACKEND_URL}/content")
+            if response.status_code == 200:
+                data = response.json()
+                for content_type, sections in data.items():
+                    for section_key, section_data in sections.items():
+                        languages = section_data.get('languages', {})
+                        if isinstance(languages, dict) and len(languages) >= 1:
+                            integration_checks["multilingual_structure"] = True
+                            break
+                    if integration_checks["multilingual_structure"]:
+                        break
+        except:
+            pass
+        
+        # Check content initialization
+        try:
+            response = requests.get(f"{BACKEND_URL}/content")
+            if response.status_code == 200:
+                data = response.json()
+                if len(data) >= 3:  # At least 3 content types initialized
+                    integration_checks["content_initialization"] = True
+        except:
+            pass
+        
+        passed_checks = sum(integration_checks.values())
+        total_checks = len(integration_checks)
+        
+        if passed_checks >= total_checks * 0.8:  # At least 80% of checks pass
+            self.log_test(
+                "Content Management - Comprehensive Integration",
+                True,
+                f"Content management integration checks: {passed_checks}/{total_checks} passed",
+                {"integration_checks": integration_checks}
+            )
+        else:
+            self.log_test(
+                "Content Management - Comprehensive Integration",
+                False,
+                f"Content management integration checks: only {passed_checks}/{total_checks} passed",
+                {"integration_checks": integration_checks}
+            )
+
     def run_all_tests(self):
         """Run all backend tests"""
         print("🚀 Starting English Fiesta Backend API Tests")
