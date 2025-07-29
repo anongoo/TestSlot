@@ -1581,6 +1581,158 @@ async def check_subscription_status(email: str):
         return {"subscribed": True, "subscription": subscription}
     return {"subscribed": False}
 
+# ==========================================
+# CONTENT MANAGEMENT ENDPOINTS
+# ==========================================
+
+@api_router.get("/content")
+async def get_all_content():
+    """Get all content items for the public site"""
+    content_items = await db.content_items.find({}, {"_id": 0}).to_list(1000)
+    
+    # Organize content by type and section for easy frontend consumption
+    organized_content = {}
+    for item in content_items:
+        content_type = item["content_type"]
+        section_key = item["section_key"]
+        
+        if content_type not in organized_content:
+            organized_content[content_type] = {}
+        
+        organized_content[content_type][section_key] = {
+            "id": item["id"],
+            "languages": item.get("languages", {}),
+            "updated_at": item["updated_at"]
+        }
+    
+    return organized_content
+
+@api_router.get("/content/{content_type}")
+async def get_content_by_type(content_type: ContentType):
+    """Get content items by type (hero_section, about_page, etc.)"""
+    content_items = await db.content_items.find(
+        {"content_type": content_type}, 
+        {"_id": 0}
+    ).to_list(1000)
+    
+    return {"content_type": content_type, "items": content_items}
+
+@api_router.get("/content/{content_type}/{section_key}")
+async def get_specific_content(content_type: ContentType, section_key: str):
+    """Get a specific content item"""
+    content_item = await db.content_items.find_one(
+        {"content_type": content_type, "section_key": section_key}, 
+        {"_id": 0}
+    )
+    
+    if not content_item:
+        raise HTTPException(status_code=404, detail="Content not found")
+    
+    return content_item
+
+@api_router.post("/admin/content")
+async def create_content_item(
+    content_type: ContentType,
+    section_key: str,
+    request: ContentUpdateRequest,
+    current_user: User = Depends(require_role(UserRole.ADMIN))
+):
+    """Create a new content item (Admin only)"""
+    
+    # Check if content item already exists
+    existing_item = await db.content_items.find_one({
+        "content_type": content_type,
+        "section_key": section_key
+    })
+    
+    if existing_item:
+        raise HTTPException(status_code=400, detail="Content item already exists")
+    
+    content_data = {
+        "id": str(uuid.uuid4()),
+        "content_type": content_type,
+        "section_key": section_key,
+        "languages": request.languages,
+        "created_at": datetime.utcnow(),
+        "updated_at": datetime.utcnow(),
+        "created_by": current_user.id,
+        "updated_by": current_user.id
+    }
+    
+    await db.content_items.insert_one(content_data)
+    
+    return {"message": "Content created successfully", "content_id": content_data["id"]}
+
+@api_router.put("/admin/content/{content_type}/{section_key}")
+async def update_content_item(
+    content_type: ContentType,
+    section_key: str,
+    request: ContentUpdateRequest,
+    current_user: User = Depends(require_role(UserRole.ADMIN))
+):
+    """Update a content item (Admin only)"""
+    
+    # Check if content item exists
+    existing_item = await db.content_items.find_one({
+        "content_type": content_type,
+        "section_key": section_key
+    })
+    
+    if not existing_item:
+        # Create new item if it doesn't exist
+        return await create_content_item(content_type, section_key, request, current_user)
+    
+    # Update existing item
+    update_data = {
+        "languages": request.languages,
+        "updated_at": datetime.utcnow(),
+        "updated_by": current_user.id
+    }
+    
+    await db.content_items.update_one(
+        {"content_type": content_type, "section_key": section_key},
+        {"$set": update_data}
+    )
+    
+    return {"message": "Content updated successfully"}
+
+@api_router.delete("/admin/content/{content_type}/{section_key}")
+async def delete_content_item(
+    content_type: ContentType,
+    section_key: str,
+    current_user: User = Depends(require_role(UserRole.ADMIN))
+):
+    """Delete a content item (Admin only)"""
+    
+    result = await db.content_items.delete_one({
+        "content_type": content_type,
+        "section_key": section_key
+    })
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Content not found")
+    
+    return {"message": "Content deleted successfully"}
+
+@api_router.get("/admin/content")
+async def get_admin_content_list(
+    content_type: Optional[ContentType] = None,
+    current_user: User = Depends(require_role(UserRole.ADMIN))
+):
+    """Get all content items for admin management"""
+    
+    query = {}
+    if content_type:
+        query["content_type"] = content_type
+    
+    content_items = await db.content_items.find(query, {"_id": 0}).sort("content_type", 1).sort("section_key", 1).to_list(1000)
+    
+    return {
+        "content_items": content_items,
+        "total": len(content_items),
+        "content_types": [ct.value for ct in ContentType]
+    }
+
 # Initialize sample data on startup
 @app.on_event("startup")
 async def startup_event():
