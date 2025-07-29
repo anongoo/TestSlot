@@ -1738,6 +1738,7 @@ async def get_admin_content_list(
 async def startup_event():
     await init_sample_data()
     await create_default_admin()
+    await init_content_management_data()
 
 async def create_default_admin():
     """Create default admin user if none exists"""
