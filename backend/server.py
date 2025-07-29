@@ -1745,7 +1745,7 @@ async def create_default_admin():
     admin_count = await db.users.count_documents({"role": UserRole.ADMIN})
     if admin_count == 0:
         # Create a placeholder admin - in production, this should be done via secure process
-        logger.info("No admin users found. First user to login will be promoted to admin.")
+        logging.info("No admin users found. First user to login will be promoted to admin.")
 
 async def init_content_management_data():
     """Initialize default content management data if database is empty"""
