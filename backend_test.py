@@ -2682,6 +2682,21 @@ class EnglishFiestaAPITester:
         self.test_enhanced_video_fields_validation()
         self.test_phase2_integration_comprehensive()
         
+        # Content Management System Tests
+        print("\n📝 Testing Content Management System")
+        print("-" * 40)
+        self.test_content_management_initialization()
+        self.test_get_all_content_public()
+        self.test_get_content_by_type()
+        self.test_get_specific_content_item()
+        self.test_admin_content_list_without_auth()
+        self.test_admin_content_create_without_auth()
+        self.test_admin_content_update_without_auth()
+        self.test_admin_content_delete_without_auth()
+        self.test_admin_content_endpoints_invalid_token()
+        self.test_content_multilingual_support()
+        self.test_content_management_comprehensive_integration()
+        
         # Summary
         print("\n" + "=" * 60)
         print("📊 TEST SUMMARY")
