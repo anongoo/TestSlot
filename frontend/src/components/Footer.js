@@ -1,9 +1,15 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useAllContent } from '../hooks/useContent';
 import LanguageSelector from './LanguageSelector';
 
 const Footer = () => {
   const { t } = useTranslation();
+  const { getContent, loading } = useAllContent();
+
+  // Get dynamic content from database or fall back to translation keys
+  const footerTagline = getContent('footer.footer_tagline') || t('footer_tagline');
+  const copyrightText = getContent('footer.footer_copyright') || t('copyright');
 
   return (
     <footer className="bg-gray-800 text-white py-12 mt-16">
@@ -16,7 +22,7 @@ const Footer = () => {
           <div className="md:col-span-2">
             <h3 className="text-xl font-bold mb-4">English Fiesta</h3>
             <p className="text-gray-300 leading-relaxed mb-4">
-              {t('footer_tagline')}
+              {footerTagline}
             </p>
             
             {/* Email Signup */}
@@ -76,7 +82,7 @@ const Footer = () => {
         {/* Divider */}
         <div className="border-t border-gray-700 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center text-gray-400 text-sm">
-            <p>{t('copyright')}</p>
+            <p>{copyrightText}</p>
             <div className="flex space-x-4 mt-4 md:mt-0">
               <a href="/privacy" className="hover:text-white transition-colors">Privacy</a>
               <a href="/terms" className="hover:text-white transition-colors">Terms</a>
@@ -84,6 +90,12 @@ const Footer = () => {
             </div>
           </div>
         </div>
+        
+        {loading && (
+          <div className="text-center text-gray-500 text-xs mt-2">
+            Loading content...
+          </div>
+        )}
       </div>
     </footer>
   );
