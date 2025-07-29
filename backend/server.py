@@ -1563,7 +1563,7 @@ async def subscribe_email(request: EmailSubscribeRequest):
             }
             
     except requests.RequestException as e:
-        logger.error(f"ConvertKit request error: {str(e)}")
+        logging.error(f"ConvertKit request error: {str(e)}")
         # Still return success since we saved to MongoDB
         return {
             "message": "Subscription saved, email service will sync later",
