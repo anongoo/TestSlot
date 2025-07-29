@@ -1570,7 +1570,7 @@ async def subscribe_email(request: EmailSubscribeRequest):
             "status": "partial_success"
         }
     except Exception as e:
-        logger.error(f"Email subscription error: {str(e)}")
+        logging.error(f"Email subscription error: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to process email subscription")
 
 @api_router.get("/email/subscriptions/{email}")
