@@ -13,7 +13,7 @@ const AdminDashboard = () => {
   const { user, sessionToken } = useAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('management'); // 'management', 'upload', 'youtube'
+  const [activeTab, setActiveTab] = useState('content'); // 'content', 'management', 'upload', 'youtube', 'users'
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
