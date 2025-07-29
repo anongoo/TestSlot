@@ -166,6 +166,10 @@ const AdminDashboard = () => {
       </div>
 
       {/* Tab Content */}
+      {activeTab === 'content' && (
+        <ContentManagement />
+      )}
+
       {activeTab === 'management' && (
         <AdminVideoManagement refreshTrigger={refreshTrigger} />
       )}
