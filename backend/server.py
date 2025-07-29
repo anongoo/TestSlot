@@ -1556,7 +1556,7 @@ async def subscribe_email(request: EmailSubscribeRequest):
             }
         else:
             # Log error but don't fail completely since we saved to MongoDB
-            logger.error(f"ConvertKit API error: {response.status_code} - {response.text}")
+            logging.error(f"ConvertKit API error: {response.status_code} - {response.text}")
             return {
                 "message": "Subscription saved locally, email service temporarily unavailable",
                 "status": "partial_success"
