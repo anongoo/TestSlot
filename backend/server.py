@@ -1823,7 +1823,7 @@ async def create_auth_session(request: AuthSessionRequest):
             user_count = await db.users.count_documents({})
             if user_count == 0:
                 user_data["role"] = UserRole.ADMIN
-                logger.info(f"Creating first admin user: {emergent_data['email']}")
+                logging.info(f"Creating first admin user: {emergent_data['email']}")
             
             await db.users.insert_one(user_data)
             user = User(**user_data)
