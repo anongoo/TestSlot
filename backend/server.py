@@ -1752,14 +1752,15 @@ async def init_content_management_data():
     content_count = await db.content_items.count_documents({})
     if content_count == 0:
         default_content = [
+            # Hero Section
             {
                 "id": str(uuid.uuid4()),
                 "content_type": "hero_section",
                 "section_key": "hero_title",
                 "languages": {
-                    "en": {"title": "Master English with Native Speakers", "content": ""},
-                    "es": {"title": "Domina el Inglés con Hablantes Nativos", "content": ""},
-                    "pt": {"title": "Domine o Inglês com Falantes Nativos", "content": ""}
+                    "en": {"title": "Learn English the Natural Way", "content": ""},
+                    "es": {"title": "Aprende Inglés de Forma Natural", "content": ""},
+                    "pt": {"title": "Aprenda Inglês de Forma Natural", "content": ""}
                 },
                 "created_at": datetime.utcnow(),
                 "updated_at": datetime.utcnow(),
@@ -1771,9 +1772,229 @@ async def init_content_management_data():
                 "content_type": "hero_section",
                 "section_key": "hero_subtitle",
                 "languages": {
-                    "en": {"title": "", "content": "Learn English through authentic conversations, cultural insights, and personalized lessons from native speakers around the world."},
-                    "es": {"title": "", "content": "Aprende inglés a través de conversaciones auténticas, conocimientos culturales y lecciones personalizadas de hablantes nativos de todo el mundo."},
-                    "pt": {"title": "", "content": "Aprenda inglês através de conversas autênticas, insights culturais e lições personalizadas de falantes nativos ao redor do mundo."}
+                    "en": {"title": "", "content": "Real conversations. Real people. No textbooks."},
+                    "es": {"title": "", "content": "Conversaciones reales. Personas reales. Sin libros de texto."},
+                    "pt": {"title": "", "content": "Conversas reais. Pessoas reais. Sem livros didáticos."}
+                },
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow(),
+                "created_by": None,
+                "updated_by": None
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "content_type": "hero_section",
+                "section_key": "cta_button",
+                "languages": {
+                    "en": {"title": "Start Learning Free", "content": ""},
+                    "es": {"title": "Comenzar a Aprender Gratis", "content": ""},
+                    "pt": {"title": "Começar a Aprender Grátis", "content": ""}
+                },
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow(),
+                "created_by": None,
+                "updated_by": None
+            },
+            
+            # About Page
+            {
+                "id": str(uuid.uuid4()),
+                "content_type": "about_page",
+                "section_key": "journey_title",
+                "languages": {
+                    "en": {"title": "Greg's Personal Language Learning Journey", "content": ""},
+                    "es": {"title": "El Viaje Personal de Aprendizaje de Idiomas de Greg", "content": ""},
+                    "pt": {"title": "A Jornada Pessoal de Aprendizado de Idiomas do Greg", "content": ""}
+                },
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow(),
+                "created_by": None,
+                "updated_by": None
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "content_type": "about_page",
+                "section_key": "journey_content",
+                "languages": {
+                    "en": {"title": "", "content": "<p>Greg's journey with language learning started like many others — full of effort, repetition, and frustration. He spent years memorizing vocabulary, drilling grammar rules, and trying to piece together conversations from textbooks and apps. Despite all that effort, real communication always felt just out of reach.</p><p>That changed when he discovered the method of <strong>Comprehensible Input</strong>.</p><p>For the first time, language began to feel alive. Through real messages, authentic conversations, and content he could actually understand, English and other languages opened up in a way they never had before. He wasn't just learning words — he was learning <strong>culture</strong>, building <strong>connection</strong>, and truly experiencing the language.</p><p>This transformation sparked a mission: to build a space where learners all over the world could experience that same breakthrough. That space became <strong>English Fiesta</strong> — a platform designed to help people learn naturally, joyfully, and meaningfully.</p>"},
+                    "es": {"title": "", "content": "<p>El viaje de Greg con el aprendizaje de idiomas comenzó como muchos otros — lleno de esfuerzo, repetición y frustración. Pasó años memorizando vocabulario, practicando reglas gramaticales y tratando de armar conversaciones a partir de libros de texto y aplicaciones. A pesar de todo ese esfuerzo, la comunicación real siempre se sentía fuera de alcance.</p><p>Eso cambió cuando descubrió el método del <strong>Input Comprensible</strong>.</p><p>Por primera vez, el idioma comenzó a sentirse vivo. A través de mensajes reales, conversaciones auténticas y contenido que realmente podía entender, el inglés y otros idiomas se abrieron de una manera que nunca antes habían hecho. No solo estaba aprendiendo palabras — estaba aprendiendo <strong>cultura</strong>, construyendo <strong>conexión</strong> y realmente experimentando el idioma.</p><p>Esta transformación despertó una misión: construir un espacio donde los estudiantes de todo el mundo pudieran experimentar ese mismo avance. Ese espacio se convirtió en <strong>English Fiesta</strong> — una plataforma diseñada para ayudar a las personas a aprender de forma natural, alegre y significativa.</p>"},
+                    "pt": {"title": "", "content": "<p>A jornada do Greg com o aprendizado de idiomas começou como muitas outras — cheia de esforço, repetição e frustração. Ele passou anos memorizando vocabulário, praticando regras gramaticais e tentando montar conversas a partir de livros didáticos e aplicativos. Apesar de todo esse esforço, a comunicação real sempre parecia estar fora de alcance.</p><p>Isso mudou quando ele descobriu o método do <strong>Input Compreensível</strong>.</p><p>Pela primeira vez, o idioma começou a se sentir vivo. Através de mensagens reais, conversas autênticas e conteúdo que ele podia realmente entender, o inglês e outros idiomas se abriram de uma forma que nunca haviam feito antes. Ele não estava apenas aprendendo palavras — ele estava aprendendo <strong>cultura</strong>, construindo <strong>conexão</strong> e realmente experimentando o idioma.</p><p>Esta transformação despertou uma missão: construir um espaço onde estudantes do mundo todo pudessem experimentar o mesmo avanço. Esse espaço se tornou <strong>English Fiesta</strong> — uma plataforma projetada para ajudar as pessoas a aprender de forma natural, alegre e significativa.</p>"}
+                },
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow(),
+                "created_by": None,
+                "updated_by": None
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "content_type": "about_page",
+                "section_key": "mission_title",
+                "languages": {
+                    "en": {"title": "Our Mission", "content": ""},
+                    "es": {"title": "Nuestra Misión", "content": ""},
+                    "pt": {"title": "Nossa Missão", "content": ""}
+                },
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow(),
+                "created_by": None,
+                "updated_by": None
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "content_type": "about_page",
+                "section_key": "mission_content",
+                "languages": {
+                    "en": {"title": "", "content": "English Fiesta is here to help you learn English the way your brain was designed to learn — through real, meaningful input. No memorization. No pressure. Just <strong>natural understanding</strong>."},
+                    "es": {"title": "", "content": "English Fiesta está aquí para ayudarte a aprender inglés de la manera en que tu cerebro fue diseñado para aprender — a través de input real y significativo. Sin memorización. Sin presión. Solo <strong>comprensión natural</strong>."},
+                    "pt": {"title": "", "content": "English Fiesta está aqui para ajudá-lo a aprender inglês da maneira que seu cérebro foi projetado para aprender — através de input real e significativo. Sem memorização. Sem pressão. Apenas <strong>compreensão natural</strong>."}
+                },
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow(),
+                "created_by": None,
+                "updated_by": None
+            },
+            
+            # FAQ Page
+            {
+                "id": str(uuid.uuid4()),
+                "content_type": "faq_page",
+                "section_key": "faq_section_basics",
+                "languages": {
+                    "en": {
+                        "title": "English Fiesta Basics",
+                        "content": json.dumps([
+                            {
+                                "question": "What is English Fiesta?",
+                                "answer": "English Fiesta is a language-learning platform that helps you acquire English naturally through engaging videos and conversations, rather than traditional grammar drills or memorization."
+                            },
+                            {
+                                "question": "How does English Fiesta work?",
+                                "answer": "We use a method called Comprehensible Input, where learners watch videos they can mostly understand, even as beginners. Over time, you absorb grammar, vocabulary, and pronunciation by exposure — not by force."
+                            },
+                            {
+                                "question": "Can I actually learn English with Comprehensible Input?",
+                                "answer": "Yes — and research supports it. When you understand what you hear or read in a language, your brain naturally picks it up the way children do. It's a slower beginning, but results in deeper fluency and confidence over time — without needing to study flashcards or grammar rules directly."
+                            },
+                            {
+                                "question": "Who is this for?",
+                                "answer": "For English learners of all levels, especially beginners. No matter your background, if you want to understand and speak English better, this is for you."
+                            },
+                            {
+                                "question": "Is it free?",
+                                "answer": "Yes, many videos are free. Some advanced content may be part of a premium plan."
+                            }
+                        ])
+                    },
+                    "es": {
+                        "title": "Conceptos Básicos de English Fiesta",
+                        "content": json.dumps([
+                            {
+                                "question": "¿Qué es English Fiesta?",
+                                "answer": "English Fiesta es una plataforma de aprendizaje de idiomas que te ayuda a adquirir inglés naturalmente a través de videos y conversaciones atractivas, en lugar de ejercicios gramaticales tradicionales o memorización."
+                            },
+                            {
+                                "question": "¿Cómo funciona English Fiesta?",
+                                "answer": "Usamos un método llamado Input Comprensible, donde los estudiantes ven videos que pueden entender en su mayoría, incluso como principiantes. Con el tiempo, absorbes gramática, vocabulario y pronunciación por exposición — no por fuerza."
+                            }
+                        ])
+                    },
+                    "pt": {
+                        "title": "Conceitos Básicos do English Fiesta",
+                        "content": json.dumps([
+                            {
+                                "question": "O que é English Fiesta?",
+                                "answer": "English Fiesta é uma plataforma de aprendizado de idiomas que ajuda você a adquirir inglês naturalmente através de vídeos e conversas envolventes, ao invés de exercícios gramaticais tradicionais ou memorização."
+                            },
+                            {
+                                "question": "Como funciona o English Fiesta?",
+                                "answer": "Usamos um método chamado Input Compreensível, onde os estudantes assistem vídeos que conseguem entender em sua maioria, mesmo sendo iniciantes. Com o tempo, você absorve gramática, vocabulário e pronúncia por exposição — não por força."
+                            }
+                        ])
+                    }
+                },
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow(),
+                "created_by": None,
+                "updated_by": None
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "content_type": "faq_page",
+                "section_key": "faq_section_comprehensible_input",
+                "languages": {
+                    "en": {
+                        "title": "Comprehensible Input",
+                        "content": json.dumps([
+                            {
+                                "question": "What is input?",
+                                "answer": "Input is any language you hear or read. When you listen to someone speak or read a book, you're receiving input. Input is the fuel your brain uses to acquire language."
+                            },
+                            {
+                                "question": "What is Comprehensible Input?",
+                                "answer": "Comprehensible Input is language you can mostly understand — even if you don't know every word. It's simple, clear communication that's just slightly above your level. This kind of input helps your brain naturally absorb vocabulary, grammar, and pronunciation over time."
+                            },
+                            {
+                                "question": "Do grammar study, exercises, or flashcards count as input?",
+                                "answer": "Not really. While those tools can support your learning, they don't count as input. Comprehensible Input works best when you're focused on meaning — not memorization. That's why our videos are designed to help you understand the story or message first, and let the language come naturally."
+                            }
+                        ])
+                    },
+                    "es": {
+                        "title": "Input Comprensible",
+                        "content": json.dumps([
+                            {
+                                "question": "¿Qué es el input?",
+                                "answer": "El input es cualquier idioma que escuches o leas. Cuando escuchas a alguien hablar o lees un libro, estás recibiendo input. El input es el combustible que tu cerebro usa para adquirir idiomas."
+                            },
+                            {
+                                "question": "¿Qué es el Input Comprensible?",
+                                "answer": "El Input Comprensible es idioma que puedes entender en su mayoría — aunque no sepas cada palabra. Es comunicación simple y clara que está ligeramente por encima de tu nivel. Este tipo de input ayuda a tu cerebro a absorber naturalmente vocabulario, gramática y pronunciación con el tiempo."
+                            }
+                        ])
+                    },
+                    "pt": {
+                        "title": "Input Compreensível",
+                        "content": json.dumps([
+                            {
+                                "question": "O que é input?",
+                                "answer": "Input é qualquer idioma que você ouve ou lê. Quando você ouve alguém falar ou lê um livro, você está recebendo input. Input é o combustível que seu cérebro usa para adquirir idiomas."
+                            },
+                            {
+                                "question": "O que é Input Compreensível?",
+                                "answer": "Input Compreensível é idioma que você consegue entender em sua maioria — mesmo que não saiba cada palavra. É comunicação simples e clara que está ligeiramente acima do seu nível. Este tipo de input ajuda seu cérebro a absorver naturalmente vocabulário, gramática e pronúncia ao longo do tempo."
+                            }
+                        ])
+                    }
+                },
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow(),
+                "created_by": None,
+                "updated_by": None
+            },
+            
+            # Footer
+            {
+                "id": str(uuid.uuid4()),
+                "content_type": "footer",
+                "section_key": "footer_tagline",
+                "languages": {
+                    "en": {"title": "", "content": "Learn English naturally through real videos and real conversations — no memorization, just meaningful understanding."},
+                    "es": {"title": "", "content": "Aprende inglés naturalmente a través de videos reales y conversaciones reales — sin memorización, solo comprensión significativa."},
+                    "pt": {"title": "", "content": "Aprenda inglês naturalmente através de vídeos reais e conversas reais — sem memorização, apenas compreensão significativa."}
+                },
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow(),
+                "created_by": None,
+                "updated_by": None
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "content_type": "footer",
+                "section_key": "footer_copyright",
+                "languages": {
+                    "en": {"title": "", "content": "© 2025 English Fiesta. All rights reserved."},
+                    "es": {"title": "", "content": "© 2025 English Fiesta. Todos los derechos reservados."},
+                    "pt": {"title": "", "content": "© 2025 English Fiesta. Todos os direitos reservados."}
                 },
                 "created_at": datetime.utcnow(),
                 "updated_at": datetime.utcnow(),
