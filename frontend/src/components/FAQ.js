@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { faqContent } from '../i18n/content';
+import { useContent } from '../hooks/useContent';
 
 const FAQItem = ({ question, answer, isOpen, onToggle }) => {
   return (
@@ -30,9 +30,79 @@ const FAQItem = ({ question, answer, isOpen, onToggle }) => {
 const FAQ = () => {
   const { i18n, t } = useTranslation();
   const [openItem, setOpenItem] = useState(null);
-  
-  const currentLang = i18n.language || 'en';
-  const faqData = faqContent[currentLang] || faqContent.en;
+  const { content: faqContent, loading, getContentForLanguage } = useContent('faq_page');
+
+  // Fallback FAQ data
+  const fallbackFaqData = [
+    {
+      section: "English Fiesta Basics",
+      items: [
+        {
+          question: "What is English Fiesta?",
+          answer: "English Fiesta is a language-learning platform that helps you acquire English naturally through engaging videos and conversations, rather than traditional grammar drills or memorization."
+        },
+        {
+          question: "How does English Fiesta work?",
+          answer: "We use a method called Comprehensible Input, where learners watch videos they can mostly understand, even as beginners. Over time, you absorb grammar, vocabulary, and pronunciation by exposure — not by force."
+        },
+        {
+          question: "Can I actually learn English with Comprehensible Input?",
+          answer: "Yes — and research supports it. When you understand what you hear or read in a language, your brain naturally picks it up the way children do. It's a slower beginning, but results in deeper fluency and confidence over time — without needing to study flashcards or grammar rules directly."
+        }
+      ]
+    },
+    {
+      section: "Comprehensible Input",
+      items: [
+        {
+          question: "What is input?",
+          answer: "Input is any language you hear or read. When you listen to someone speak or read a book, you're receiving input. Input is the fuel your brain uses to acquire language."
+        },
+        {
+          question: "What is Comprehensible Input?",
+          answer: "Comprehensible Input is language you can mostly understand — even if you don't know every word. It's simple, clear communication that's just slightly above your level. This kind of input helps your brain naturally absorb vocabulary, grammar, and pronunciation over time."
+        }
+      ]
+    }
+  ];
+
+  // Get FAQ data from database or use fallback
+  const getFaqData = () => {
+    if (loading || !faqContent?.items) {
+      return fallbackFaqData;
+    }
+
+    // Try to find FAQ sections in the content
+    const faqSections = faqContent.items.filter(item => 
+      item.section_key.startsWith('faq_section_')
+    );
+
+    if (faqSections.length === 0) {
+      return fallbackFaqData;
+    }
+
+    // Transform database content to FAQ format
+    return faqSections.map(section => {
+      const sectionContent = getContentForLanguage(section);
+      const sectionTitle = getContentForLanguage(section, 'title');
+      
+      try {
+        const parsedContent = JSON.parse(sectionContent || '[]');
+        return {
+          section: sectionTitle || 'FAQ Section',
+          items: Array.isArray(parsedContent) ? parsedContent : []
+        };
+      } catch (e) {
+        console.warn('Failed to parse FAQ section content:', e);
+        return {
+          section: sectionTitle || 'FAQ Section',
+          items: []
+        };
+      }
+    }).filter(section => section.items.length > 0);
+  };
+
+  const faqData = getFaqData();
 
   const handleToggle = (index) => {
     setOpenItem(openItem === index ? null : index);
@@ -81,6 +151,12 @@ const FAQ = () => {
             {t('contact_us')}
           </a>
         </div>
+        
+        {loading && (
+          <div className="text-center mt-8 text-gray-500">
+            Loading FAQ content...
+          </div>
+        )}
       </div>
     </div>
   );
