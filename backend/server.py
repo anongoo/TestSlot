@@ -1746,6 +1746,42 @@ async def create_default_admin():
         # Create a placeholder admin - in production, this should be done via secure process
         logger.info("No admin users found. First user to login will be promoted to admin.")
 
+async def init_content_management_data():
+    """Initialize default content management data if database is empty"""
+    content_count = await db.content_items.count_documents({})
+    if content_count == 0:
+        default_content = [
+            {
+                "id": str(uuid.uuid4()),
+                "content_type": "hero_section",
+                "section_key": "hero_title",
+                "languages": {
+                    "en": {"title": "Master English with Native Speakers", "content": ""},
+                    "es": {"title": "Domina el Inglés con Hablantes Nativos", "content": ""},
+                    "pt": {"title": "Domine o Inglês com Falantes Nativos", "content": ""}
+                },
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow(),
+                "created_by": None,
+                "updated_by": None
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "content_type": "hero_section",
+                "section_key": "hero_subtitle",
+                "languages": {
+                    "en": {"title": "", "content": "Learn English through authentic conversations, cultural insights, and personalized lessons from native speakers around the world."},
+                    "es": {"title": "", "content": "Aprende inglés a través de conversaciones auténticas, conocimientos culturales y lecciones personalizadas de hablantes nativos de todo el mundo."},
+                    "pt": {"title": "", "content": "Aprenda inglês através de conversas autênticas, insights culturais e lições personalizadas de falantes nativos ao redor do mundo."}
+                },
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow(),
+                "created_by": None,
+                "updated_by": None
+            }
+        ]
+        await db.content_items.insert_many(default_content)
+
 # Authentication Endpoints
 @api_router.post("/auth/session", response_model=UserProfileResponse)
 async def create_auth_session(request: AuthSessionRequest):
