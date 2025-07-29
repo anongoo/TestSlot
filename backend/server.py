@@ -1892,9 +1892,9 @@ async def migrate_guest_data_to_user(user_id: str, guest_session_id: str):
             {"$set": {"user_id": user_id}}
         )
         
-        logger.info(f"Migrated guest data from session {guest_session_id} to user {user_id}")
+        logging.info(f"Migrated guest data from session {guest_session_id} to user {user_id}")
     except Exception as e:
-        logger.error(f"Data migration error: {str(e)}")
+        logging.error(f"Data migration error: {str(e)}")
 
 @api_router.get("/auth/profile")
 async def get_user_profile(current_user: User = Depends(get_current_user)):
