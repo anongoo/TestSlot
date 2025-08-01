@@ -304,6 +304,9 @@ const ProgressTab = () => {
         </div>
       )}
 
+      {/* Language Levels Section */}
+      <LanguageLevels />
+
       {/* Manual Activity Breakdown */}
       {Object.keys(stats.manual_activity_breakdown || {}).some(key => stats.manual_activity_breakdown[key] > 0) && (
         <div className="bg-white rounded-xl shadow-sm p-6">
