@@ -362,6 +362,27 @@ class UserListItem(BaseModel):
     video_id: str
     added_at: datetime = Field(default_factory=datetime.utcnow)
 
+# Daily Goal System Models
+class DailyGoal(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    daily_minutes_goal: int = 30  # Default 30 minutes
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+class SetDailyGoalRequest(BaseModel):
+    daily_minutes_goal: int = Field(ge=1, le=480)  # 1 minute to 8 hours max
+
+class DailyGoalProgressResponse(BaseModel):
+    daily_goal: int
+    minutes_watched_today: int
+    progress_percentage: float
+    goal_completed: bool
+    streak_days: int
+
+class UnmarkVideoRequest(BaseModel):
+    video_id: str
+
 # ==========================================
 # FILE HANDLING UTILITIES
 # ==========================================
