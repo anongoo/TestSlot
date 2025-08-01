@@ -2697,6 +2697,26 @@ class EnglishFiestaAPITester:
         self.test_content_multilingual_support()
         self.test_content_management_comprehensive_integration()
         
+        # NEW: Video Button Functionality Tests
+        print("\n🎯 Testing NEW Video Button Functionality")
+        print("-" * 40)
+        self.test_manual_progress_logging_valid()
+        self.test_manual_progress_logging_invalid_video()
+        self.test_manual_progress_logging_invalid_date()
+        self.test_manual_progress_logging_guest_user()
+        self.test_user_list_add_video_unauthenticated()
+        self.test_user_list_add_video_invalid_video_id()
+        self.test_user_list_remove_video_unauthenticated()
+        self.test_user_list_remove_video_not_in_list()
+        self.test_user_list_get_saved_videos_unauthenticated()
+        self.test_user_list_get_saved_videos_authenticated_mock()
+        self.test_user_list_check_video_status_unauthenticated()
+        self.test_user_list_check_video_status_authenticated_mock()
+        self.test_user_list_endpoints_structure()
+        self.test_database_verification_user_list_collection()
+        self.test_database_verification_watch_progress_manual_flag()
+        self.test_database_verification_daily_progress_update()
+        
         # Summary
         print("\n" + "=" * 60)
         print("📊 TEST SUMMARY")
