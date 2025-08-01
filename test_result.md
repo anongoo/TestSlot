@@ -310,6 +310,54 @@ frontend:
           agent: "main"
           comment: "Updated MyListTab to use new GET /api/user/list endpoint for fetching saved videos and DELETE /api/user/list/{video_id} for removing videos. Maintained existing UI structure with proper error handling."
 
+  - task: "NEW Daily Goal Progress Bar Component"
+    implemented: true
+    working: false
+    file: "/app/frontend/src/components/DailyGoalProgressBar.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: false
+          agent: "main"
+          comment: "Created DailyGoalProgressBar component with gradient design, progress visualization (minutes watched / goal), percentage-based progress bar, goal completion celebration (🎉), streak counter with fire emoji, and edit button. Shows only for authenticated students. Integrated across all pages via App.js. Mobile-responsive with collapsible streak display."
+
+  - task: "NEW Set Daily Goal Modal Component"
+    implemented: true
+    working: false
+    file: "/app/frontend/src/components/SetDailyGoalModal.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: false
+          agent: "main"
+          comment: "Created SetDailyGoalModal with preset options (Casual 15min, Learner 30min, Serious 60min), custom goal input (1-480 minutes), current goal detection and selection, goal preview display, form validation, and API integration with POST /api/user/daily-goal. Includes proper loading states and error handling."
+
+  - task: "NEW Mark as Unwatched Toggle Functionality"
+    implemented: true
+    working: false
+    file: "/app/frontend/src/components/VideoCard.js, WatchVideoCard.js, VideoPlayer.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: false
+          agent: "main"
+          comment: "Updated all video components (VideoCard, WatchVideoCard, VideoPlayer) to show watched state and toggle functionality. Button changes color/text based on watched status: '+ Watched' (gray) vs '✓ Watched' (green). Clicking watched videos triggers unmark functionality via POST /api/user/unmark-watched. Added watched status checking on component mount and proper state management."
+
+  - task: "NEW Daily Goals Integration - App Structure"
+    implemented: true
+    working: false
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: false
+          agent: "main"
+          comment: "Integrated DailyGoalProgressBar into main App.js structure to display across all pages. Progress bar appears between Header and main content, ensuring persistent visibility throughout the application for authenticated student users. Maintains responsive design and proper component hierarchy."
+
   - task: "EmailSubscriptionBanner Translation Integration"
     implemented: true
     working: true
