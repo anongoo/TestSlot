@@ -96,20 +96,18 @@ const MyListTab = () => {
     if (!isAuthenticated) return;
 
     try {
-      // This would be a new endpoint to save/unsave videos
-      const response = await axios.post(`${API}/user/saved-videos`, {
-        video_id: videoId,
-        action: 'save'
-      }, {
-        headers: { 'Authorization': `Bearer ${sessionToken}` }
-      });
+      const headers = { 'Authorization': `Bearer ${sessionToken}` };
+      
+      // Remove from list (this is called from the remove button)
+      await axios.delete(`${API}/user/list/${videoId}`, { headers });
 
       // Refresh saved videos if on that section
       if (activeSection === 'saved') {
         fetchMyListData();
       }
     } catch (error) {
-      console.error('Error saving video:', error);
+      console.error('Error removing video from list:', error);
+      alert(error.response?.data?.detail || 'Failed to remove video from list. Please try again.');
     }
   };
 
