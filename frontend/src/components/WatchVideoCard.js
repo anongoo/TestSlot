@@ -235,13 +235,18 @@ const WatchVideoCard = ({ video, onVideoSelect }) => {
 
         {/* Action Buttons */}
         <div className="mt-3 flex gap-2">
-          {/* Mark as Watched Button */}
+          {/* Mark as Watched/Unwatched Button */}
           <button
             onClick={handleMarkAsWatched}
-            className="flex-1 px-3 py-2 bg-gray-200 text-gray-700 text-xs rounded-lg hover:bg-gray-300 transition-colors"
-            title="Mark as already watched"
+            disabled={isToggling}
+            className={`flex-1 px-3 py-2 text-xs rounded-lg transition-colors disabled:opacity-50 ${
+              isWatched 
+                ? 'bg-green-100 text-green-700 hover:bg-green-200' 
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+            title={isWatched ? "Mark as unwatched" : "Mark as watched"}
           >
-            ✓ Watched
+            {isToggling ? '...' : (isWatched ? '✓ Watched' : '+ Watched')}
           </button>
           
           {/* Add to My List Button (only for authenticated students+) */}
