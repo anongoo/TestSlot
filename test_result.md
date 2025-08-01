@@ -358,6 +358,18 @@ frontend:
           agent: "main"
           comment: "Integrated DailyGoalProgressBar specifically into WatchPage.js to display only on the Watch page (/watch) with video listings. Progress bar appears between page header and tab navigation, ensuring visibility only for the video watch interface and not on other pages like home, about, or FAQ. Maintains responsive design and proper component hierarchy within the Watch page structure."
 
+  - task: "NEW Language Levels Section - Dreaming Spanish System"
+    implemented: true
+    working: false
+    file: "/app/frontend/src/components/LanguageLevels.js, ProgressTab.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: false
+          agent: "main"
+          comment: "Created comprehensive Language Levels section for Progress tab implementing Dreaming Spanish 7-level system. Features: Level cards (1-7) with hours/words/video type, expandable modal with full descriptions, three-section summary (What you can do/need to do/are learning), tooltip for related vs unrelated languages, attribution to Dreaming Spanish with PDF download link. Updated ProgressTab text: 'Manual Activities' → 'Outside Activities', 'Platform Videos' → 'English Fiesta'. All level descriptions and recommendations included with proper 'New Beginner' terminology."
+
   - task: "EmailSubscriptionBanner Translation Integration"
     implemented: true
     working: true
