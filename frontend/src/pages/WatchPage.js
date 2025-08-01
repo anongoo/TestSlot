@@ -4,6 +4,7 @@ import WatchTab from '../components/WatchTab';
 import SeriesTab from '../components/SeriesTab';
 import MyListTab from '../components/MyListTab';
 import ProgressTab from '../components/ProgressTab';
+import DailyGoalProgressBar from '../components/DailyGoalProgressBar';
 
 const WatchPage = () => {
   const { isAuthenticated, user } = useAuth();
