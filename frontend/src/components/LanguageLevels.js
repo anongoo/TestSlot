@@ -188,7 +188,7 @@ const LanguageLevels = () => {
       {/* Attribution and Download */}
       <div className="mt-8 p-4 bg-gray-50 rounded-lg text-sm text-gray-600">
         <p className="mb-2">
-          <em>Level system utilized with appreciation from <a href="https://dreamingspanish.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Dreaming Spanish</a></em>
+          <em>Level system utilized with appreciation from <a href="https://www.dreamingspanish.com/method" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Dreaming Spanish</a></em>
         </p>
         <p>
           <a 
