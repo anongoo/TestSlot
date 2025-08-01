@@ -23,6 +23,63 @@ const WatchVideoCard = ({ video, onVideoSelect }) => {
   const [isManagingList, setIsManagingList] = useState(false);
   const [sessionId] = useState(getSessionId());
 
+  // Check if video is in user's list on component mount
+  useEffect(() => {
+    if (isAuthenticated && isStudent) {
+      checkVideoInList();
+    }
+  }, [isAuthenticated, isStudent, video.id]);
+
+  const checkVideoInList = async () => {
+    try {
+      const headers = sessionToken ? 
+        { 'Authorization': `Bearer ${sessionToken}` } : {};
+      
+      const response = await axios.get(`${API}/user/list/status/${video.id}`, {
+        headers
+      });
+      
+      setIsInList(response.data.in_list);
+    } catch (error) {
+      console.error('Error checking video list status:', error);
+    }
+  };
+
+  const handleMarkAsWatched = () => {
+    setShowMarkModal(true);
+  };
+
+  const handleMarkModalSuccess = () => {
+    // Could notify parent or refresh data if needed
+  };
+
+  const handleToggleMyList = async () => {
+    if (!isAuthenticated || !isStudent || isManagingList) return;
+    
+    setIsManagingList(true);
+    
+    try {
+      const headers = { 'Authorization': `Bearer ${sessionToken}` };
+      
+      if (isInList) {
+        // Remove from list
+        await axios.delete(`${API}/user/list/${video.id}`, { headers });
+        setIsInList(false);
+      } else {
+        // Add to list
+        await axios.post(`${API}/user/list`, {
+          video_id: video.id
+        }, { headers });
+        setIsInList(true);
+      }
+    } catch (error) {
+      console.error('Error managing video list:', error);
+      alert(error.response?.data?.detail || 'Failed to update your list. Please try again.');
+    } finally {
+      setIsManagingList(false);
+    }
+  };
+
   const levelColors = {
     'New Beginner': 'bg-green-100 text-green-800',
     'Beginner': 'bg-blue-100 text-blue-800',
