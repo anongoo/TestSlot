@@ -250,6 +250,66 @@ frontend:
           agent: "main"
           comment: "Implemented comprehensive WYSIWYG editor using TipTap with rich formatting options: bold, italic, headings, lists, links, quotes, and more. Includes responsive toolbar and proper content synchronization."
 
+  - task: "NEW Mark as Watched Modal Component"
+    implemented: true
+    working: false
+    file: "/app/frontend/src/components/MarkAsWatchedModal.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: false
+          agent: "main"
+          comment: "Created MarkAsWatchedModal component with date picker (default: today), duration input (default: full video length), form validation, loading states, and API integration with POST /api/progress/manual endpoint."
+
+  - task: "NEW Video Button Integration - VideoCard Component"
+    implemented: true
+    working: false
+    file: "/app/frontend/src/components/VideoCard.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: false
+          agent: "main"
+          comment: "Updated VideoCard with Mark as Watched button (opens modal) and Add to My List button (toggles add/remove). Added user list status checking, proper authentication guards (student+ only for My List), loading states, and mobile-friendly design."
+
+  - task: "NEW Video Button Integration - WatchVideoCard Component"
+    implemented: true
+    working: false
+    file: "/app/frontend/src/components/WatchVideoCard.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: false
+          agent: "main"
+          comment: "Updated WatchVideoCard with Mark as Watched and Add to My List buttons. Implemented user list status checking, authentication guards, and responsive button layout for mobile viewing."
+
+  - task: "NEW Video Button Integration - VideoPlayer Component"
+    implemented: true
+    working: false
+    file: "/app/frontend/src/components/VideoPlayer.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: false
+          agent: "main"
+          comment: "Added Mark as Watched and Add to My List buttons to VideoPlayer overlay. Integrated MarkAsWatchedModal and implemented user list management with proper styling for dark video overlay background."
+
+  - task: "NEW My List Integration Update"
+    implemented: true
+    working: false
+    file: "/app/frontend/src/components/MyListTab.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: false
+          agent: "main"
+          comment: "Updated MyListTab to use new GET /api/user/list endpoint for fetching saved videos and DELETE /api/user/list/{video_id} for removing videos. Maintained existing UI structure with proper error handling."
+
   - task: "EmailSubscriptionBanner Translation Integration"
     implemented: true
     working: true
