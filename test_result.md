@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Implement two buttons on each video: 'Mark as Watched' and 'Add to My List'. For 'Mark as Watched': Opens modal with date (default: today) and duration (default: full video length), submits to POST /api/progress/manual with specific JSON format. For 'Add to My List': Toggles between Add/Remove, sends POST /api/user/list and DELETE /api/user/list/:videoId, reflects saved state per user session, available to logged-in users only (student role or higher). Use modular components and make mobile-friendly."
+user_problem_statement: "Implement Daily Goal system similar to Dreaming Spanish: 1) Daily Goal Progress Bar showing minutes watched today vs goal, always visible on Watch page and across all pages. 2) Set/Edit Daily Goal Modal with preset options (Casual 15min, Learner 30min, Serious 60min) and custom input. 3) Track minutes watched automatically tied to user ID. 4) 'Mark as Unwatched' toggle button functionality. 5) Keep existing My List functionality as-is."
 
 backend:
   - task: "Content Management System - Database Initialization"
