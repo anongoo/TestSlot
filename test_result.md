@@ -739,9 +739,9 @@ metadata:
   run_ui: false
 
 test_plan:
-  current_focus: []
+  current_focus: ["NEW Video Button API - Manual Progress Logging", "NEW Video Button API - User List Management", "NEW Mark as Watched Modal Component", "NEW Video Button Integration - VideoCard Component", "NEW Video Button Integration - WatchVideoCard Component", "NEW Video Button Integration - VideoPlayer Component", "NEW My List Integration Update"]
   stuck_tasks: []
-  test_all: true
+  test_all: false
   test_priority: "high_first"
 
 agent_communication:
