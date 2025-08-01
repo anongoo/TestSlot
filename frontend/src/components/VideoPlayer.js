@@ -40,7 +40,28 @@ const VideoPlayer = ({ video, onClose, onVideoEnd }) => {
     if (isAuthenticated && isStudent) {
       checkVideoInList();
     }
+    checkVideoWatchedStatus();
   }, [isAuthenticated, isStudent, video.id]);
+
+  const checkVideoWatchedStatus = async () => {
+    try {
+      const headers = sessionToken ? 
+        { 'Authorization': `Bearer ${sessionToken}` } : {};
+      
+      const response = await axios.get(`${API}/progress/${sessionId}`, {
+        headers
+      });
+      
+      const progressData = response.data;
+      const watchedVideo = progressData.recent_activity?.find(
+        activity => activity.video_id === video.id && activity.completed
+      );
+      
+      setIsWatched(!!watchedVideo);
+    } catch (error) {
+      console.error('Error checking video watched status:', error);
+    }
+  };
 
   const checkVideoInList = async () => {
     try {
