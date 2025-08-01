@@ -769,12 +769,15 @@ backend:
 
   - task: "NEW Daily Goal System - Backend APIs"
     implemented: true
-    working: false
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
+        - working: true
+          agent: "testing"
+          comment: "COMPREHENSIVE DAILY GOAL SYSTEM TESTING COMPLETED: All 15 daily goal backend tests passed with 100% success rate. ✅ GET /api/user/daily-goal properly secured (requires student+ role, returns 401 for unauthenticated/guest users). ✅ POST /api/user/daily-goal correctly validates goal values (accepts 15/30/60/45 minutes, rejects 0/-5/500/1000), handles both create and update operations. ✅ POST /api/user/unmark-watched working perfectly - removes videos from progress, subtracts minutes from daily progress, works for both authenticated users and guests with session_id, returns 404 for invalid/unwatched videos. ✅ Authentication & authorization working correctly - daily goal endpoints require student role or higher, unmark-watched works for guests with session_id. ✅ Complete data flow tested: set goal → watch video → check progress → unmark video → verify progress updated (4/4 steps successful). ✅ Streak calculation logic validated, progress percentage calculation verified, database integration confirmed. Daily Goal system is fully functional and production-ready."
         - working: false
           agent: "main"
           comment: "Implemented daily goal system backend: GET /api/user/daily-goal (get goal and today's progress with streak calculation), POST /api/user/daily-goal (set/update daily goal with validation 1-480 minutes), POST /api/user/unmark-watched (remove video from progress and subtract minutes from daily progress). Added DailyGoal model, goal streak calculation, and enhanced daily progress tracking integration."
