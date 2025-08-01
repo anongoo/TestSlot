@@ -3476,6 +3476,26 @@ class EnglishFiestaAPITester:
         self.test_database_verification_watch_progress_manual_flag()
         self.test_database_verification_daily_progress_update()
         
+        # NEW: Daily Goal System Tests
+        print("\n🎯 Testing NEW Daily Goal System")
+        print("-" * 40)
+        self.test_daily_goal_get_unauthenticated()
+        self.test_daily_goal_get_guest_role()
+        self.test_daily_goal_get_authenticated_mock()
+        self.test_daily_goal_set_unauthenticated()
+        self.test_daily_goal_set_valid_values()
+        self.test_daily_goal_set_invalid_values()
+        self.test_daily_goal_set_update_existing()
+        self.test_unmark_watched_valid_video()
+        self.test_unmark_watched_invalid_video()
+        self.test_unmark_watched_not_watched_video()
+        self.test_unmark_watched_unauthenticated()
+        self.test_unmark_watched_guest_with_session()
+        self.test_daily_goal_streak_calculation()
+        self.test_daily_goal_progress_calculation()
+        self.test_daily_goal_database_integration()
+        self.test_daily_goal_complete_flow()
+        
         # Summary
         print("\n" + "=" * 60)
         print("📊 TEST SUMMARY")
