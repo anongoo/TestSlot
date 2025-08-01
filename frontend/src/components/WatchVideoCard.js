@@ -1,5 +1,20 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
+import MarkAsWatchedModal from './MarkAsWatchedModal';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
+
+// Generate or get session ID for guest users
+const getSessionId = () => {
+  let sessionId = localStorage.getItem('english_fiesta_session');
+  if (!sessionId) {
+    sessionId = 'guest_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
+    localStorage.setItem('english_fiesta_session', sessionId);
+  }
+  return sessionId;
+};
 
 const WatchVideoCard = ({ video, onVideoSelect }) => {
   const { isAuthenticated, isStudent } = useAuth();
