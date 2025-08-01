@@ -84,36 +84,41 @@ const VideoCard = ({ video, onWatchProgress, sessionId }) => {
     }, 2000); // Update every 2 seconds for demo purposes
   };
 
-  const handleMarkAsWatched = async () => {
-    if (isMarkingWatched) return;
+  const handleMarkAsWatched = () => {
+    setShowMarkModal(true);
+  };
+
+  const handleMarkModalSuccess = (data) => {
+    // Notify parent to refresh progress
+    if (onWatchProgress) {
+      onWatchProgress();
+    }
+  };
+
+  const handleToggleMyList = async () => {
+    if (!isAuthenticated || !isStudent || isManagingList) return;
     
-    setIsMarkingWatched(true);
+    setIsManagingList(true);
     
     try {
-      const headers = sessionToken ? 
-        { 'Authorization': `Bearer ${sessionToken}` } : {};
+      const headers = { 'Authorization': `Bearer ${sessionToken}` };
       
-      const response = await axios.post(`${API}/videos/${video.id}/mark-watched`, {
-        difficulty_level: video.level
-      }, {
-        params: { session_id: sessionId },
-        headers
-      });
-
-      if (response.data.already_watched) {
-        alert('This video is already marked as watched!');
+      if (isInList) {
+        // Remove from list
+        await axios.delete(`${API}/user/list/${video.id}`, { headers });
+        setIsInList(false);
       } else {
-        alert(`✅ Marked as watched! ${response.data.credited_minutes} minutes added to your progress.`);
-        // Notify parent to refresh progress
-        if (onWatchProgress) {
-          onWatchProgress();
-        }
+        // Add to list
+        await axios.post(`${API}/user/list`, {
+          video_id: video.id
+        }, { headers });
+        setIsInList(true);
       }
     } catch (error) {
-      console.error('Error marking video as watched:', error);
-      alert('Failed to mark video as watched. Please try again.');
+      console.error('Error managing video list:', error);
+      alert(error.response?.data?.detail || 'Failed to update your list. Please try again.');
     } finally {
-      setIsMarkingWatched(false);
+      setIsManagingList(false);
     }
   };
 
