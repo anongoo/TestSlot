@@ -11,7 +11,10 @@ const VideoCard = ({ video, onWatchProgress, sessionId }) => {
   const [isWatching, setIsWatching] = useState(false);
   const [watchedMinutes, setWatchedMinutes] = useState(0);
   const [isMarkingWatched, setIsMarkingWatched] = useState(false);
-  const { sessionToken, isStudent } = useAuth();
+  const [showMarkModal, setShowMarkModal] = useState(false);
+  const [isInList, setIsInList] = useState(false);
+  const [isManagingList, setIsManagingList] = useState(false);
+  const { sessionToken, isStudent, isAuthenticated } = useAuth();
 
   const handleWatchVideo = async () => {
     // Check premium access
