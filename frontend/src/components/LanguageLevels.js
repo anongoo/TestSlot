@@ -167,10 +167,10 @@ const LanguageLevels = () => {
           <div
             key={level.level}
             onClick={() => handleCardClick(level)}
-            className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 p-6 cursor-pointer border border-gray-200 hover:border-blue-300"
+            className={`bg-gradient-to-br ${level.color} rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-6 cursor-pointer border ${level.borderColor} hover:scale-105`}
           >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-blue-600">Level {level.level}</h3>
+              <h3 className={`text-lg font-bold ${level.titleColor}`}>Level {level.level}</h3>
               <div className="text-sm text-gray-500">
                 {level.hours}h • {typeof level.words === 'string' ? level.words : level.words.toLocaleString()} words
               </div>
