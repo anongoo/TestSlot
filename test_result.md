@@ -799,7 +799,7 @@ metadata:
   run_ui: false
 
 test_plan:
-  current_focus: ["NEW Video Button API - Manual Progress Logging", "NEW Video Button API - User List Management", "NEW Mark as Watched Modal Component", "NEW Video Button Integration - VideoCard Component", "NEW Video Button Integration - WatchVideoCard Component", "NEW Video Button Integration - VideoPlayer Component", "NEW My List Integration Update"]
+  current_focus: ["NEW Daily Goal System - Backend APIs", "NEW Daily Goal Progress Bar Component", "NEW Set Daily Goal Modal Component", "NEW Mark as Unwatched Toggle Functionality", "NEW Daily Goals Integration - App Structure"]
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
