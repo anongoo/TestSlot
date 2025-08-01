@@ -133,8 +133,11 @@ const ProgressTab = () => {
   return (
     <div className="space-y-8">
       {/* Overview Stats */}
-      <div className="bg-white rounded-xl shadow-sm p-6">
-        <h2 className="text-2xl font-bold text-gray-800 mb-6">Learning Overview</h2>
+      <div className="bg-gradient-to-br from-white to-blue-50 rounded-xl shadow-sm p-6 border border-blue-100">
+        <div className="flex items-center gap-3 mb-6">
+          <img src="/english-fiesta-logo.png" alt="English Fiesta" className="w-8 h-8" />
+          <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Learning Overview</h2>
+        </div>
         
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           <div className="text-center bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4">
