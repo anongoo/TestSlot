@@ -181,6 +181,22 @@ const VideoCard = ({ video, onWatchProgress, sessionId }) => {
               {isMarkingWatched ? '...' : '✓ Watched'}
             </button>
             
+            {/* Add to My List Button (only for authenticated students+) */}
+            {isAuthenticated && isStudent && (
+              <button
+                onClick={handleToggleMyList}
+                disabled={isManagingList}
+                className={`px-3 py-2 text-sm rounded-lg transition-colors disabled:opacity-50 ${
+                  isInList 
+                    ? 'bg-red-100 text-red-700 hover:bg-red-200' 
+                    : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                }`}
+                title={isInList ? "Remove from My List" : "Add to My List"}
+              >
+                {isManagingList ? '...' : (isInList ? '✕ Remove' : '+ My List')}
+              </button>
+            )}
+            
             {/* Watch Now Button */}
             <PremiumGate video={video}>
               <button
