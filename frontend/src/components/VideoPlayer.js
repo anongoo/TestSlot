@@ -329,6 +329,34 @@ const VideoPlayer = ({ video, onClose, onVideoEnd }) => {
             <div>⏱️ {video.duration_minutes} minutes</div>
             {video.is_premium && <div>💎 Premium Content</div>}
           </div>
+          
+          {/* Action Buttons */}
+          <div className="mt-3 flex gap-2">
+            {/* Mark as Watched Button */}
+            <button
+              onClick={handleMarkAsWatched}
+              className="px-3 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white text-sm rounded-lg transition-colors"
+              title="Mark as already watched"
+            >
+              ✓ Watched
+            </button>
+            
+            {/* Add to My List Button (only for authenticated students+) */}
+            {isAuthenticated && isStudent && (
+              <button
+                onClick={handleToggleMyList}
+                disabled={isManagingList}
+                className={`px-3 py-2 text-sm rounded-lg transition-colors disabled:opacity-50 ${
+                  isInList 
+                    ? 'bg-red-500 bg-opacity-80 hover:bg-opacity-100 text-white' 
+                    : 'bg-blue-500 bg-opacity-80 hover:bg-opacity-100 text-white'
+                }`}
+                title={isInList ? "Remove from My List" : "Add to My List"}
+              >
+                {isManagingList ? '...' : (isInList ? '✕ Remove' : '+ My List')}
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Guest Tracking Notice */}
