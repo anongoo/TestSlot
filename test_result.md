@@ -635,6 +635,30 @@ backend:
           agent: "testing"
           comment: "Complete CRUD operations implemented for content management. Create (POST), Read (GET), Update (PUT), and Delete (DELETE) endpoints all functional with proper authentication for admin operations. Content types supported: hero_section, about_page, faq_page, footer, ui_text. All operations support multilingual data structure and proper error handling."
 
+  - task: "NEW Video Button API - Manual Progress Logging"
+    implemented: true
+    working: false  
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: false
+          agent: "main"
+          comment: "Implemented POST /api/progress/manual endpoint for Mark as Watched functionality. Accepts videoId, watchedAt (YYYY-MM-DD), and minutesWatched. Creates/updates watch progress with manual flag and updates daily progress."
+
+  - task: "NEW Video Button API - User List Management"
+    implemented: true
+    working: false
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: false
+          agent: "main"
+          comment: "Implemented user list endpoints: POST /api/user/list (add video), DELETE /api/user/list/{video_id} (remove video), GET /api/user/list (get user's list), GET /api/user/list/status/{video_id} (check if video in list). Requires student role or higher. Supports video existence validation and duplicate prevention."
+
 frontend:
   - task: "Phase 2 - Admin Upload Interface & Dashboard"
     implemented: true
