@@ -349,14 +349,14 @@ frontend:
   - task: "NEW Daily Goals Integration - App Structure"
     implemented: true
     working: false
-    file: "/app/frontend/src/App.js"
+    file: "/app/frontend/src/pages/WatchPage.js"
     stuck_count: 0
     priority: "high"
     needs_retesting: true
     status_history:
         - working: false
           agent: "main"
-          comment: "Integrated DailyGoalProgressBar into main App.js structure to display across all pages. Progress bar appears between Header and main content, ensuring persistent visibility throughout the application for authenticated student users. Maintains responsive design and proper component hierarchy."
+          comment: "Integrated DailyGoalProgressBar specifically into WatchPage.js to display only on the Watch page (/watch) with video listings. Progress bar appears between page header and tab navigation, ensuring visibility only for the video watch interface and not on other pages like home, about, or FAQ. Maintains responsive design and proper component hierarchy within the Watch page structure."
 
   - task: "EmailSubscriptionBanner Translation Integration"
     implemented: true
