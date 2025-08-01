@@ -27,6 +27,8 @@ const VideoPlayer = ({ video, onClose, onVideoEnd }) => {
   const [showMarkModal, setShowMarkModal] = useState(false);
   const [isInList, setIsInList] = useState(false);
   const [isManagingList, setIsManagingList] = useState(false);
+  const [isWatched, setIsWatched] = useState(false);
+  const [isToggling, setIsToggling] = useState(false);
   
   const videoRef = useRef(null);
   const playerContainerRef = useRef(null);
