@@ -311,8 +311,8 @@ const ProgressTab = () => {
 
       {/* Achievements */}
       {stats.milestones_achieved.length > 0 && (
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <h3 className="text-xl font-bold text-gray-800 mb-4">🏆 Achievements</h3>
+        <div className="bg-gradient-to-br from-white to-yellow-50 rounded-xl shadow-sm p-6 border border-yellow-100">
+          <h3 className="text-xl font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent mb-4">🏆 Achievements</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {stats.milestones_achieved.map((milestone, index) => (
