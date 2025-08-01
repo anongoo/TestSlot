@@ -164,12 +164,15 @@ const ProgressTab = () => {
       </div>
 
       {/* Learning Progress Chart */}
-      <div className="bg-white rounded-xl shadow-sm p-6">
+      <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl shadow-sm p-6 border border-blue-100">
         <div className="flex justify-between items-center mb-6">
-          <h3 className="text-xl font-bold text-gray-800">Learning Activity</h3>
+          <div className="flex items-center gap-3">
+            <img src="/english-fiesta-logo.png" alt="English Fiesta" className="w-8 h-8" />
+            <h3 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Learning Activity</h3>
+          </div>
           
           {/* Timeframe Selector */}
-          <div className="flex bg-gray-100 rounded-lg p-1">
+          <div className="flex bg-white/70 backdrop-blur rounded-lg p-1 shadow-sm">
             {[
               { key: 'week', label: '7 Days' },
               { key: 'month', label: '30 Days' },
@@ -178,10 +181,10 @@ const ProgressTab = () => {
               <button
                 key={key}
                 onClick={() => setActiveTimeframe(key)}
-                className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                className={`px-3 py-1 rounded-md text-sm font-medium transition-all ${
                   activeTimeframe === key
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-600 hover:text-gray-800'
+                    ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-sm'
+                    : 'text-gray-600 hover:text-gray-800 hover:bg-white/50'
                 }`}
               >
                 {label}
@@ -191,23 +194,28 @@ const ProgressTab = () => {
         </div>
 
         {/* Chart */}
-        <div className="h-64 flex items-end justify-between gap-1 bg-gray-50 rounded-lg p-4">
-          {chartData.map((day, index) => (
+        <div className="h-64 flex items-end justify-between gap-1 bg-white/60 backdrop-blur rounded-lg p-4 shadow-inner">
+          {chartData.length === 0 ? (
+            <div className="flex-1 flex flex-col items-center justify-center text-gray-500">
+              <div className="text-4xl mb-2">📊</div>
+              <p className="text-sm text-center">No activity data yet.<br />Start watching videos to see your progress!</p>
+            </div>
+          ) : chartData.map((day, index) => (
             <div key={day.date} className="flex flex-col items-center flex-1 max-w-[20px]">
               {/* Bar */}
               <div
-                className="bg-blue-500 rounded-t min-h-[2px] w-full mb-2 hover:bg-blue-600 transition-colors cursor-pointer relative group"
-                style={{ height: `${(day.minutes / maxMinutes) * 100}%` }}
+                className="bg-gradient-to-t from-blue-500 to-purple-500 rounded-t min-h-[2px] w-full mb-2 hover:from-blue-600 hover:to-purple-600 transition-all cursor-pointer relative group shadow-sm"
+                style={{ height: `${maxMinutes > 0 ? (day.minutes / maxMinutes) * 100 : 0}%` }}
                 title={`${day.dateLabel}: ${day.minutes}min`}
               >
                 {/* Tooltip */}
-                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap">
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap z-10">
                   {day.dateLabel}: {day.minutes}min
                 </div>
               </div>
               
               {/* Date Label */}
-              <div className="text-xs text-gray-500 transform -rotate-45 origin-top-left">
+              <div className="text-xs text-gray-600 transform -rotate-45 origin-top-left">
                 {activeTimeframe === 'week' ? day.dateLabel.split(' ')[1] : day.dateLabel.split(' ')[0]}
               </div>
             </div>
@@ -216,7 +224,10 @@ const ProgressTab = () => {
 
         {/* Chart Legend */}
         <div className="mt-4 text-center text-sm text-gray-600">
-          Daily minutes watched • Hover for details
+          <div className="flex items-center justify-center gap-2">
+            <div className="w-3 h-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded"></div>
+            <span>Daily minutes watched • Hover for details</span>
+          </div>
         </div>
       </div>
 
