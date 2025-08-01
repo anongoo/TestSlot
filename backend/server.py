@@ -1800,7 +1800,7 @@ async def log_manual_progress(
         await db.watch_progress.insert_one(progress.dict())
     
     # Update daily progress
-    await update_daily_progress(session_id, request.videoId, request.minutesWatched, user_id, watched_date.strftime("%Y-%m-%d"))
+    await update_daily_progress(session_id, request.videoId, request.minutesWatched, user_id)
     
     return {
         "message": "Progress logged successfully",
