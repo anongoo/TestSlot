@@ -347,6 +347,21 @@ class ManualActivityRequest(BaseModel):
 class MarkAsWatchedRequest(BaseModel):
     difficulty_level: Optional[ActivityLevel] = None
 
+# New models for the requested functionality
+class ManualProgressRequest(BaseModel):
+    videoId: str
+    watchedAt: str  # YYYY-MM-DD format
+    minutesWatched: int
+
+class UserListRequest(BaseModel):
+    video_id: str
+
+class UserListItem(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    video_id: str
+    added_at: datetime = Field(default_factory=datetime.utcnow)
+
 # ==========================================
 # FILE HANDLING UTILITIES
 # ==========================================
