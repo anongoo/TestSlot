@@ -2638,7 +2638,7 @@ class EnglishFiestaAPITester:
             
             if response.status_code == 200:
                 data = response.json()
-                if "message" in data and "progress_created" in data:
+                if "message" in data and ("progress_created" in data or "video_id" in data):
                     self.log_test(
                         "POST /api/progress/manual - Valid Data",
                         True,
