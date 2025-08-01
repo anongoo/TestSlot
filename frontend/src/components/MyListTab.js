@@ -38,9 +38,12 @@ const MyListTab = () => {
     setLoading(true);
     try {
       if (activeSection === 'saved') {
-        // Fetch saved videos (this would be a new endpoint)
-        // For now, we'll use a placeholder
-        setSavedVideos([]);
+        // Fetch saved videos from the new endpoint
+        const headers = sessionToken ? 
+          { 'Authorization': `Bearer ${sessionToken}` } : {};
+        
+        const response = await axios.get(`${API}/user/list`, { headers });
+        setSavedVideos(response.data.videos || []);
       } else if (activeSection === 'history') {
         // Fetch watch history from progress endpoint
         const response = await axios.get(`${API}/progress/${sessionId}`);
