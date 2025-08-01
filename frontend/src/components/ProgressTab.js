@@ -231,7 +231,7 @@ const ProgressTab = () => {
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-3">
                 <div className="w-4 h-4 bg-green-500 rounded"></div>
-                <span className="text-gray-700">Manual Activities</span>
+                <span className="text-gray-700">Outside Activities</span>
               </div>
               <span className="font-semibold text-green-600">{breakdown.manual_hours}h</span>
             </div>
