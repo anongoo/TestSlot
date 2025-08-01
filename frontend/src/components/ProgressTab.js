@@ -237,8 +237,8 @@ const ProgressTab = () => {
       {/* Learning Sources Breakdown */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Platform vs Manual */}
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <h3 className="text-xl font-bold text-gray-800 mb-4">Learning Sources</h3>
+        <div className="bg-gradient-to-br from-white to-green-50 rounded-xl shadow-sm p-6 border border-green-100">
+          <h3 className="text-xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent mb-4">Learning Sources</h3>
           
           <div className="space-y-4">
             <div className="flex justify-between items-center">
