@@ -180,7 +180,43 @@ const WatchVideoCard = ({ video, onVideoSelect }) => {
             </div>
           </div>
         )}
+
+        {/* Action Buttons */}
+        <div className="mt-3 flex gap-2">
+          {/* Mark as Watched Button */}
+          <button
+            onClick={handleMarkAsWatched}
+            className="flex-1 px-3 py-2 bg-gray-200 text-gray-700 text-xs rounded-lg hover:bg-gray-300 transition-colors"
+            title="Mark as already watched"
+          >
+            ✓ Watched
+          </button>
+          
+          {/* Add to My List Button (only for authenticated students+) */}
+          {isAuthenticated && isStudent && (
+            <button
+              onClick={handleToggleMyList}
+              disabled={isManagingList}
+              className={`flex-1 px-3 py-2 text-xs rounded-lg transition-colors disabled:opacity-50 ${
+                isInList 
+                  ? 'bg-red-100 text-red-700 hover:bg-red-200' 
+                  : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+              }`}
+              title={isInList ? "Remove from My List" : "Add to My List"}
+            >
+              {isManagingList ? '...' : (isInList ? '✕ Remove' : '+ My List')}
+            </button>
+          )}
+        </div>
       </div>
+      
+      {/* Mark as Watched Modal */}
+      <MarkAsWatchedModal
+        video={video}
+        isOpen={showMarkModal}
+        onClose={() => setShowMarkModal(false)}
+        onSuccess={handleMarkModalSuccess}
+      />
     </div>
   );
 };
