@@ -1,14 +1,14 @@
 {
-  "total": 85,
-  "passed": 78,
-  "failed": 7,
-  "success_rate": 91.76470588235294,
+  "total": 101,
+  "passed": 95,
+  "failed": 6,
+  "success_rate": 94.05940594059405,
   "results": [
     {
       "test": "GET /api/videos - Basic Retrieval",
       "success": true,
       "message": "Retrieved 5 videos successfully",
-      "timestamp": "2025-08-01T19:31:51.225110",
+      "timestamp": "2025-08-01T19:59:43.680489",
       "details": {
         "total_count": 5,
         "returned_count": 5
@@ -18,7 +18,7 @@
       "test": "Sample Data Validation",
       "success": true,
       "message": "All 5 sample videos have valid structure",
-      "timestamp": "2025-08-01T19:31:51.225431",
+      "timestamp": "2025-08-01T19:59:43.680811",
       "details": {
         "video_count": 5
       }
@@ -27,7 +27,7 @@
       "test": "Video Filter - level",
       "success": true,
       "message": "Filter returned 1 videos",
-      "timestamp": "2025-08-01T19:31:51.253444",
+      "timestamp": "2025-08-01T19:59:43.703624",
       "details": {
         "filter": {
           "level": "Beginner"
@@ -39,7 +39,7 @@
       "test": "Video Filter - category",
       "success": true,
       "message": "Filter returned 1 videos",
-      "timestamp": "2025-08-01T19:31:51.289939",
+      "timestamp": "2025-08-01T19:59:43.734144",
       "details": {
         "filter": {
           "category": "Grammar"
@@ -51,7 +51,7 @@
       "test": "Video Filter - accent",
       "success": true,
       "message": "Filter returned 2 videos",
-      "timestamp": "2025-08-01T19:31:51.324985",
+      "timestamp": "2025-08-01T19:59:43.757718",
       "details": {
         "filter": {
           "accent": "American"
@@ -63,7 +63,7 @@
       "test": "Video Filter - guide",
       "success": true,
       "message": "Filter returned 2 videos",
-      "timestamp": "2025-08-01T19:31:51.353959",
+      "timestamp": "2025-08-01T19:59:43.783812",
       "details": {
         "filter": {
           "guide": "Native Speaker"
@@ -75,7 +75,7 @@
       "test": "Video Filter - country",
       "success": true,
       "message": "Filter returned 2 videos",
-      "timestamp": "2025-08-01T19:31:51.380417",
+      "timestamp": "2025-08-01T19:59:43.809891",
       "details": {
         "filter": {
           "country": "United States"
@@ -87,7 +87,7 @@
       "test": "Video Filter - is_premium",
       "success": true,
       "message": "Filter returned 4 videos",
-      "timestamp": "2025-08-01T19:31:51.403817",
+      "timestamp": "2025-08-01T19:59:43.839363",
       "details": {
         "filter": {
           "is_premium": false
@@ -99,7 +99,7 @@
       "test": "Video Filter - is_premium",
       "success": true,
       "message": "Filter returned 1 videos",
-      "timestamp": "2025-08-01T19:31:51.427899",
+      "timestamp": "2025-08-01T19:59:43.864226",
       "details": {
         "filter": {
           "is_premium": true
@@ -111,7 +111,7 @@
       "test": "Video Filter - search",
       "success": true,
       "message": "Filter returned 3 videos",
-      "timestamp": "2025-08-01T19:31:51.454872",
+      "timestamp": "2025-08-01T19:59:43.885442",
       "details": {
         "filter": {
           "search": "English"
@@ -123,7 +123,7 @@
       "test": "Video Filter - max_duration",
       "success": true,
       "message": "Filter returned 1 videos",
-      "timestamp": "2025-08-01T19:31:51.483315",
+      "timestamp": "2025-08-01T19:59:43.905162",
       "details": {
         "filter": {
           "max_duration": 10
@@ -135,7 +135,7 @@
       "test": "Video Filter - sort_by",
       "success": true,
       "message": "Filter returned 5 videos",
-      "timestamp": "2025-08-01T19:31:51.506473",
+      "timestamp": "2025-08-01T19:59:43.928416",
       "details": {
         "filter": {
           "sort_by": "shortest"
@@ -147,7 +147,7 @@
       "test": "Video Filter - sort_by",
       "success": true,
       "message": "Filter returned 5 videos",
-      "timestamp": "2025-08-01T19:31:51.526717",
+      "timestamp": "2025-08-01T19:59:43.948099",
       "details": {
         "filter": {
           "sort_by": "longest"
@@ -159,7 +159,7 @@
       "test": "GET /api/videos/{video_id}",
       "success": true,
       "message": "Retrieved video 'Basic English Greetings' successfully",
-      "timestamp": "2025-08-01T19:31:51.546561",
+      "timestamp": "2025-08-01T19:59:43.966568",
       "details": {
         "video_id": "08d17401-8b09-4b35-a3a9-732339b382c5",
         "title": "Basic English Greetings"
@@ -169,7 +169,7 @@
       "test": "GET /api/videos/{invalid_id} - Error Handling",
       "success": true,
       "message": "Correctly returned 404 for invalid video ID",
-      "timestamp": "2025-08-01T19:31:51.568332",
+      "timestamp": "2025-08-01T19:59:43.998460",
       "details": {
         "invalid_id": "invalid-video-id-123"
       }
@@ -178,7 +178,7 @@
       "test": "GET /api/filters/options",
       "success": true,
       "message": "Retrieved all filter options successfully",
-      "timestamp": "2025-08-01T19:31:51.591532",
+      "timestamp": "2025-08-01T19:59:44.017861",
       "details": {
         "levels_count": 4,
         "categories_count": 9,
@@ -191,10 +191,10 @@
       "test": "POST /api/videos/{video_id}/watch",
       "success": true,
       "message": "Successfully recorded 5 minutes of watch progress",
-      "timestamp": "2025-08-01T19:31:51.646231",
+      "timestamp": "2025-08-01T19:59:44.089156",
       "details": {
         "video_id": "08d17401-8b09-4b35-a3a9-732339b382c5",
-        "session_id": "68e44304-091f-4116-a9df-0ba0a6228077",
+        "session_id": "f0857ab4-9d4c-4c78-8f04-71fa0e7d7a23",
         "watched_minutes": 5
       }
     },
@@ -202,7 +202,7 @@
       "test": "POST /api/videos/{invalid_id}/watch - Error Handling",
       "success": true,
       "message": "Correctly returned 404 for invalid video ID",
-      "timestamp": "2025-08-01T19:31:51.666653",
+      "timestamp": "2025-08-01T19:59:44.107861",
       "details": {
         "invalid_id": "invalid-video-id-123"
       }
@@ -211,7 +211,7 @@
       "test": "Multiple Watch Sessions",
       "success": false,
       "message": "Only 2/3 sessions recorded successfully",
-      "timestamp": "2025-08-01T19:31:53.250883",
+      "timestamp": "2025-08-01T19:59:45.688207",
       "details": {
         "sessions": [
           {
@@ -227,14 +227,14 @@
             "minutes": 15
           }
         ],
-        "session_id": "68e44304-091f-4116-a9df-0ba0a6228077"
+        "session_id": "f0857ab4-9d4c-4c78-8f04-71fa0e7d7a23"
       }
     },
     {
       "test": "GET /api/progress/{session_id}",
       "success": true,
       "message": "Retrieved progress stats: 23 minutes watched",
-      "timestamp": "2025-08-01T19:31:53.275635",
+      "timestamp": "2025-08-01T19:59:45.713705",
       "details": {
         "total_minutes": 23,
         "current_streak": 1,
@@ -246,7 +246,7 @@
       "test": "GET /api/progress/{invalid_session} - Error Handling",
       "success": true,
       "message": "Correctly returned empty stats for invalid session",
-      "timestamp": "2025-08-01T19:31:53.338417",
+      "timestamp": "2025-08-01T19:59:45.739846",
       "details": {
         "invalid_session": "invalid-session-id-123",
         "stats": {
@@ -270,7 +270,7 @@
       "test": "POST /api/email/subscribe - Valid Email with Name",
       "success": false,
       "message": "Unexpected status: existing",
-      "timestamp": "2025-08-01T19:31:53.374429",
+      "timestamp": "2025-08-01T19:59:45.768866",
       "details": {
         "response": {
           "message": "Email already subscribed",
@@ -282,7 +282,7 @@
       "test": "POST /api/email/subscribe - Email Only",
       "success": false,
       "message": "Unexpected status: existing",
-      "timestamp": "2025-08-01T19:31:53.395750",
+      "timestamp": "2025-08-01T19:59:45.790834",
       "details": {
         "response": {
           "message": "Email already subscribed",
@@ -294,7 +294,7 @@
       "test": "POST /api/email/subscribe - Invalid Email Format",
       "success": true,
       "message": "Correctly rejected invalid email format with 422",
-      "timestamp": "2025-08-01T19:31:53.415701",
+      "timestamp": "2025-08-01T19:59:45.850188",
       "details": {
         "invalid_email": "not-a-valid-email"
       }
@@ -303,7 +303,7 @@
       "test": "POST /api/email/subscribe - Duplicate Email",
       "success": true,
       "message": "Correctly handled duplicate email: Email already subscribed",
-      "timestamp": "2025-08-01T19:31:53.438798",
+      "timestamp": "2025-08-01T19:59:45.873492",
       "details": {
         "email": "sarah.johnson@example.com",
         "status": "existing"
@@ -313,7 +313,7 @@
       "test": "GET /api/email/subscriptions/{email} - Subscribed Email",
       "success": true,
       "message": "Correctly identified sarah.johnson@example.com as subscribed",
-      "timestamp": "2025-08-01T19:31:53.460632",
+      "timestamp": "2025-08-01T19:59:45.898615",
       "details": {
         "email": "sarah.johnson@example.com",
         "subscribed": true
@@ -323,7 +323,7 @@
       "test": "GET /api/email/subscriptions/{email} - Non-subscribed Email",
       "success": true,
       "message": "Correctly identified never.subscribed@example.com as not subscribed",
-      "timestamp": "2025-08-01T19:31:53.480057",
+      "timestamp": "2025-08-01T19:59:45.917347",
       "details": {
         "email": "never.subscribed@example.com",
         "subscribed": false
@@ -333,7 +333,7 @@
       "test": "GET /api/email/subscriptions/{email} - Invalid Email",
       "success": true,
       "message": "Handled invalid email format gracefully",
-      "timestamp": "2025-08-01T19:31:53.505994",
+      "timestamp": "2025-08-01T19:59:45.938801",
       "details": {
         "invalid_email": "not-a-valid-email",
         "response": {
@@ -345,7 +345,7 @@
       "test": "POST /api/auth/session - Mock Session (Service Unavailable)",
       "success": true,
       "message": "Authentication service unavailable (expected in test environment)",
-      "timestamp": "2025-08-01T19:31:53.639540",
+      "timestamp": "2025-08-01T19:59:46.116468",
       "details": {
         "mock_session_id": "mock_emergent_session_123"
       }
@@ -354,7 +354,7 @@
       "test": "GET /api/auth/profile - No Auth Token",
       "success": true,
       "message": "Correctly rejected request without authentication token",
-      "timestamp": "2025-08-01T19:31:53.659852",
+      "timestamp": "2025-08-01T19:59:46.136630",
       "details": {
         "expected_status": 401
       }
@@ -363,7 +363,7 @@
       "test": "GET /api/auth/profile - Invalid Token",
       "success": true,
       "message": "Correctly rejected invalid authentication token",
-      "timestamp": "2025-08-01T19:31:53.724118",
+      "timestamp": "2025-08-01T19:59:46.201264",
       "details": {
         "invalid_token": "invalid_token_123"
       }
@@ -372,7 +372,7 @@
       "test": "POST /api/auth/logout - No Auth Token",
       "success": true,
       "message": "Correctly rejected logout request without authentication token",
-      "timestamp": "2025-08-01T19:31:53.744007",
+      "timestamp": "2025-08-01T19:59:46.220727",
       "details": {
         "expected_status": 401
       }
@@ -381,7 +381,7 @@
       "test": "GET /api/admin/users - No Auth",
       "success": true,
       "message": "Correctly rejected admin request without authentication",
-      "timestamp": "2025-08-01T19:31:53.762618",
+      "timestamp": "2025-08-01T19:59:46.239056",
       "details": {
         "expected_status": 401
       }
@@ -390,7 +390,7 @@
       "test": "GET /api/admin/users - Invalid Token",
       "success": true,
       "message": "Correctly rejected admin request with invalid token",
-      "timestamp": "2025-08-01T19:31:53.785909",
+      "timestamp": "2025-08-01T19:59:46.262160",
       "details": {
         "invalid_token": "invalid_admin_token_123"
       }
@@ -399,7 +399,7 @@
       "test": "POST /api/admin/users/role - No Auth",
       "success": true,
       "message": "Correctly rejected role update without authentication",
-      "timestamp": "2025-08-01T19:31:53.805235",
+      "timestamp": "2025-08-01T19:59:46.281623",
       "details": {
         "expected_status": 401
       }
@@ -408,7 +408,7 @@
       "test": "Premium Video Access - Guest User",
       "success": true,
       "message": "Correctly blocked guest access to premium content",
-      "timestamp": "2025-08-01T19:31:53.866561",
+      "timestamp": "2025-08-01T19:59:46.342519",
       "details": {
         "video_id": "4b799c33-1532-4465-bba1-c208a9775606",
         "video_title": "Business Meeting Vocabulary"
@@ -418,7 +418,7 @@
       "test": "Free Video Access - Guest User",
       "success": true,
       "message": "Successfully allowed guest access to free content",
-      "timestamp": "2025-08-01T19:31:53.897941",
+      "timestamp": "2025-08-01T19:59:46.416132",
       "details": {
         "video_id": "08d17401-8b09-4b35-a3a9-732339b382c5",
         "video_title": "Basic English Greetings"
@@ -428,7 +428,7 @@
       "test": "Role Hierarchy Validation",
       "success": true,
       "message": "Role hierarchy defined: guest < student < instructor < admin",
-      "timestamp": "2025-08-01T19:31:53.898262",
+      "timestamp": "2025-08-01T19:59:46.416447",
       "details": {
         "hierarchy": [
           "guest",
@@ -447,7 +447,7 @@
       "test": "Session Token Format Validation",
       "success": true,
       "message": "All 5 invalid token formats correctly rejected",
-      "timestamp": "2025-08-01T19:31:54.041317",
+      "timestamp": "2025-08-01T19:59:46.563170",
       "details": {
         "tested_formats": 5
       }
@@ -456,7 +456,7 @@
       "test": "Authentication Endpoints Structure",
       "success": true,
       "message": "All 5 authentication endpoints exist and respond appropriately",
-      "timestamp": "2025-08-01T19:31:54.138443",
+      "timestamp": "2025-08-01T19:59:46.667665",
       "details": {
         "endpoints_tested": 5
       }
@@ -465,7 +465,7 @@
       "test": "GET /api/admin/videos - No Auth",
       "success": true,
       "message": "Correctly rejected admin video list request without authentication",
-      "timestamp": "2025-08-01T19:31:54.157592",
+      "timestamp": "2025-08-01T19:59:46.687689",
       "details": {
         "expected_status": 401
       }
@@ -474,7 +474,7 @@
       "test": "GET /api/admin/videos - Invalid Token",
       "success": true,
       "message": "Correctly rejected admin video list request with invalid token",
-      "timestamp": "2025-08-01T19:31:54.178364",
+      "timestamp": "2025-08-01T19:59:46.709030",
       "details": {
         "invalid_token": "invalid_admin_token_123"
       }
@@ -483,7 +483,7 @@
       "test": "POST /api/admin/videos/youtube - No Auth",
       "success": true,
       "message": "Correctly rejected YouTube video addition without authentication",
-      "timestamp": "2025-08-01T19:31:54.197114",
+      "timestamp": "2025-08-01T19:59:46.727964",
       "details": {
         "expected_status": 401
       }
@@ -492,7 +492,7 @@
       "test": "POST /api/admin/videos/youtube - Invalid Token",
       "success": true,
       "message": "Correctly rejected YouTube video addition with invalid token",
-      "timestamp": "2025-08-01T19:31:54.213987",
+      "timestamp": "2025-08-01T19:59:46.784809",
       "details": {
         "invalid_token": "invalid_admin_token_123"
       }
@@ -501,7 +501,7 @@
       "test": "PUT /api/admin/videos/{video_id} - No Auth",
       "success": true,
       "message": "Correctly rejected video update without authentication",
-      "timestamp": "2025-08-01T19:31:54.231515",
+      "timestamp": "2025-08-01T19:59:46.801635",
       "details": {
         "video_id": "08d17401-8b09-4b35-a3a9-732339b382c5",
         "expected_status": 401
@@ -511,7 +511,7 @@
       "test": "DELETE /api/admin/videos/{video_id} - No Auth",
       "success": true,
       "message": "Correctly rejected video deletion without authentication",
-      "timestamp": "2025-08-01T19:31:54.250946",
+      "timestamp": "2025-08-01T19:59:46.818973",
       "details": {
         "video_id": "fake-video-id-for-auth-test",
         "expected_status": 401
@@ -521,7 +521,7 @@
       "test": "Enhanced Video Model Fields",
       "success": true,
       "message": "Video model supports enhanced fields: 3/5 enhanced, 5/5 legacy",
-      "timestamp": "2025-08-01T19:31:54.251289",
+      "timestamp": "2025-08-01T19:59:46.819281",
       "details": {
         "field_support": {
           "accents": 1,
@@ -541,7 +541,7 @@
       "test": "Enhanced Filter Options - Countries",
       "success": true,
       "message": "Filter options include CountryType enum values: ['USA', 'UK', 'Canada', 'Australia']",
-      "timestamp": "2025-08-01T19:31:54.269918",
+      "timestamp": "2025-08-01T19:59:46.839729",
       "details": {
         "countries": [
           "USA",
@@ -561,7 +561,7 @@
       "test": "File Serving Endpoints Structure",
       "success": true,
       "message": "All 2 file serving endpoints exist and respond appropriately",
-      "timestamp": "2025-08-01T19:31:54.311668",
+      "timestamp": "2025-08-01T19:59:46.876082",
       "details": {
         "endpoints_tested": 2
       }
@@ -570,7 +570,7 @@
       "test": "Admin Endpoints Comprehensive Auth",
       "success": true,
       "message": "All 4 admin endpoints correctly require authentication",
-      "timestamp": "2025-08-01T19:31:54.431446",
+      "timestamp": "2025-08-01T19:59:46.992338",
       "details": {
         "endpoints_tested": 4
       }
@@ -579,7 +579,7 @@
       "test": "GET /api/files/videos/{filename} - Detailed Test",
       "success": true,
       "message": "Video file serving endpoint exists and returns 404 for non-existent file",
-      "timestamp": "2025-08-01T19:31:54.451709",
+      "timestamp": "2025-08-01T19:59:47.052505",
       "details": {
         "test_filename": "test_video.mp4"
       }
@@ -588,7 +588,7 @@
       "test": "GET /api/files/thumbnails/{filename} - Detailed Test",
       "success": true,
       "message": "Thumbnail file serving endpoint exists and returns 404 for non-existent file",
-      "timestamp": "2025-08-01T19:31:54.471829",
+      "timestamp": "2025-08-01T19:59:47.071742",
       "details": {
         "test_filename": "test_thumbnail.jpg"
       }
@@ -597,7 +597,7 @@
       "test": "YouTube Video Integration Flow - Authentication Check",
       "success": true,
       "message": "YouTube video endpoint correctly requires authentication",
-      "timestamp": "2025-08-01T19:31:54.490585",
+      "timestamp": "2025-08-01T19:59:47.093544",
       "details": {
         "youtube_url": "https://www.youtube.com/watch?v=YQHsXMglC9A"
       }
@@ -606,7 +606,7 @@
       "test": "Invalid YouTube URL Handling",
       "success": true,
       "message": "Correctly handled 5/5 invalid YouTube URLs",
-      "timestamp": "2025-08-01T19:31:54.637034",
+      "timestamp": "2025-08-01T19:59:47.187652",
       "details": {
         "tested_urls": 5,
         "handled_correctly": 5
@@ -616,7 +616,7 @@
       "test": "Admin Video Management - Pagination Parameters",
       "success": true,
       "message": "All 6 pagination parameter combinations correctly require authentication",
-      "timestamp": "2025-08-01T19:31:54.794708",
+      "timestamp": "2025-08-01T19:59:47.342060",
       "details": {
         "tested_combinations": 6
       }
@@ -625,7 +625,7 @@
       "test": "Video Model Backward Compatibility",
       "success": true,
       "message": "All 5 videos maintain backward compatibility with legacy fields",
-      "timestamp": "2025-08-01T19:31:54.794950",
+      "timestamp": "2025-08-01T19:59:47.342309",
       "details": {
         "videos_tested": 5,
         "legacy_fields": [
@@ -642,7 +642,7 @@
       "test": "Enhanced Video Fields Validation",
       "success": false,
       "message": "Low enhanced fields validation score: 28.00%",
-      "timestamp": "2025-08-01T19:31:54.795002",
+      "timestamp": "2025-08-01T19:59:47.342361",
       "details": {
         "validation_results": {
           "accents": {
@@ -678,7 +678,7 @@
       "test": "Phase 2 Integration Comprehensive",
       "success": true,
       "message": "Phase 2 integration checks: 5/5 passed",
-      "timestamp": "2025-08-01T19:31:54.930840",
+      "timestamp": "2025-08-01T19:59:47.436008",
       "details": {
         "integration_checks": {
           "admin_videos_endpoint": true,
@@ -693,7 +693,7 @@
       "test": "Content Management - Database Initialization",
       "success": false,
       "message": "Expected at least 3 content types, found 1",
-      "timestamp": "2025-08-01T19:31:54.948815",
+      "timestamp": "2025-08-01T19:59:47.494396",
       "details": {
         "content_types": [
           "hero_section"
@@ -704,7 +704,7 @@
       "test": "GET /api/content - Public Content Access",
       "success": true,
       "message": "Successfully retrieved organized content with 1 content types",
-      "timestamp": "2025-08-01T19:31:54.968250",
+      "timestamp": "2025-08-01T19:59:47.513915",
       "details": {
         "content_types": [
           "hero_section"
@@ -716,7 +716,7 @@
       "test": "GET /api/content/{content_type} - Multiple Types",
       "success": true,
       "message": "Successfully retrieved 5/5 content types",
-      "timestamp": "2025-08-01T19:31:55.085634",
+      "timestamp": "2025-08-01T19:59:47.623021",
       "details": {
         "successful_types": 5,
         "tested_types": 5
@@ -726,7 +726,7 @@
       "test": "GET /api/content/{content_type}/{section_key} - Specific Items",
       "success": true,
       "message": "Successfully retrieved 2/5 specific content items",
-      "timestamp": "2025-08-01T19:31:55.230288",
+      "timestamp": "2025-08-01T19:59:47.722479",
       "details": {
         "successful_items": 2,
         "tested_items": 5
@@ -736,7 +736,7 @@
       "test": "GET /api/admin/content - No Auth",
       "success": true,
       "message": "Correctly rejected admin content list request without authentication",
-      "timestamp": "2025-08-01T19:31:55.254744",
+      "timestamp": "2025-08-01T19:59:47.749475",
       "details": {
         "expected_status": 401
       }
@@ -745,7 +745,7 @@
       "test": "POST /api/admin/content - No Auth",
       "success": true,
       "message": "Correctly rejected admin content creation without authentication",
-      "timestamp": "2025-08-01T19:31:55.313614",
+      "timestamp": "2025-08-01T19:59:47.768041",
       "details": {
         "expected_status": 401
       }
@@ -754,7 +754,7 @@
       "test": "PUT /api/admin/content/{content_type}/{section_key} - No Auth",
       "success": true,
       "message": "Correctly rejected admin content update without authentication",
-      "timestamp": "2025-08-01T19:31:55.330522",
+      "timestamp": "2025-08-01T19:59:47.785534",
       "details": {
         "expected_status": 401
       }
@@ -763,7 +763,7 @@
       "test": "DELETE /api/admin/content/{content_type}/{section_key} - No Auth",
       "success": true,
       "message": "Correctly rejected admin content deletion without authentication",
-      "timestamp": "2025-08-01T19:31:55.350964",
+      "timestamp": "2025-08-01T19:59:47.801118",
       "details": {
         "expected_status": 401
       }
@@ -772,7 +772,7 @@
       "test": "Admin Content Endpoints - Invalid Token",
       "success": true,
       "message": "All 4 admin content endpoints correctly reject invalid tokens",
-      "timestamp": "2025-08-01T19:31:55.434317",
+      "timestamp": "2025-08-01T19:59:47.926712",
       "details": {
         "endpoints_tested": 4,
         "invalid_token": "invalid_admin_content_token_123"
@@ -782,12 +782,12 @@
       "test": "Content Management - Multilingual Support",
       "success": true,
       "message": "Multilingual support verified: 2/2 items (100.0%) with 3 languages",
-      "timestamp": "2025-08-01T19:31:55.453614",
+      "timestamp": "2025-08-01T19:59:47.944684",
       "details": {
         "languages_found": [
           "pt",
-          "es",
-          "en"
+          "en",
+          "es"
         ],
         "multilingual_ratio": 1.0
       }
@@ -796,7 +796,7 @@
       "test": "Content Management - Comprehensive Integration",
       "success": false,
       "message": "Content management integration checks: only 4/6 passed",
-      "timestamp": "2025-08-01T19:31:55.635142",
+      "timestamp": "2025-08-01T19:59:48.164457",
       "details": {
         "integration_checks": {
           "public_content_access": true,
@@ -810,22 +810,20 @@
     },
     {
       "test": "POST /api/progress/manual - Valid Data",
-      "success": false,
-      "message": "Unexpected response format",
-      "timestamp": "2025-08-01T19:31:55.669206",
+      "success": true,
+      "message": "Successfully logged manual progress: 25 minutes",
+      "timestamp": "2025-08-01T19:59:48.245569",
       "details": {
-        "response": {
-          "message": "Progress logged successfully",
-          "video_id": "08d17401-8b09-4b35-a3a9-732339b382c5",
-          "minutes_watched": 25
-        }
+        "video_id": "08d17401-8b09-4b35-a3a9-732339b382c5",
+        "date": "2024-01-15",
+        "minutes": 25
       }
     },
     {
       "test": "POST /api/progress/manual - Invalid Video ID",
       "success": true,
       "message": "Correctly returned 404 for invalid video ID",
-      "timestamp": "2025-08-01T19:31:55.690636",
+      "timestamp": "2025-08-01T19:59:48.266647",
       "details": {
         "invalid_video_id": "invalid-video-id-123"
       }
@@ -834,7 +832,7 @@
       "test": "POST /api/progress/manual - Invalid Date Format",
       "success": true,
       "message": "Correctly returned 422 for invalid date format",
-      "timestamp": "2025-08-01T19:31:55.710563",
+      "timestamp": "2025-08-01T19:59:48.327530",
       "details": {
         "invalid_date": "invalid-date-format"
       }
@@ -843,9 +841,9 @@
       "test": "POST /api/progress/manual - Guest User",
       "success": true,
       "message": "Successfully logged manual progress for guest user",
-      "timestamp": "2025-08-01T19:31:55.737476",
+      "timestamp": "2025-08-01T19:59:48.357047",
       "details": {
-        "guest_session_id": "86597635-90c5-4368-b568-5356a2b66586",
+        "guest_session_id": "08ecd816-7ce6-4a2c-bdb1-a8ac1c1b7abb",
         "video_id": "08d17401-8b09-4b35-a3a9-732339b382c5"
       }
     },
@@ -853,7 +851,7 @@
       "test": "POST /api/user/list - Unauthenticated",
       "success": true,
       "message": "Correctly returned 401 for unauthenticated request",
-      "timestamp": "2025-08-01T19:31:55.760454",
+      "timestamp": "2025-08-01T19:59:48.374928",
       "details": {
         "video_id": "08d17401-8b09-4b35-a3a9-732339b382c5"
       }
@@ -862,7 +860,7 @@
       "test": "POST /api/user/list - Invalid Video ID",
       "success": true,
       "message": "Endpoint exists and handles invalid video ID appropriately (status: 401)",
-      "timestamp": "2025-08-01T19:31:55.788782",
+      "timestamp": "2025-08-01T19:59:48.394440",
       "details": {
         "invalid_video_id": "invalid-video-id-123"
       }
@@ -871,7 +869,7 @@
       "test": "DELETE /api/user/list/{video_id} - Unauthenticated",
       "success": true,
       "message": "Correctly returned 401 for unauthenticated request",
-      "timestamp": "2025-08-01T19:31:55.808179",
+      "timestamp": "2025-08-01T19:59:48.453776",
       "details": {
         "video_id": "08d17401-8b09-4b35-a3a9-732339b382c5"
       }
@@ -880,7 +878,7 @@
       "test": "DELETE /api/user/list/{video_id} - Video Not In List",
       "success": true,
       "message": "Endpoint exists and handles request appropriately (status: 401)",
-      "timestamp": "2025-08-01T19:31:55.831141",
+      "timestamp": "2025-08-01T19:59:48.519220",
       "details": {
         "video_id": "08d17401-8b09-4b35-a3a9-732339b382c5"
       }
@@ -889,7 +887,7 @@
       "test": "GET /api/user/list - Unauthenticated",
       "success": true,
       "message": "Correctly returned 401 for unauthenticated request",
-      "timestamp": "2025-08-01T19:31:55.850597",
+      "timestamp": "2025-08-01T19:59:48.538024",
       "details": {
         "expected_status": 401
       }
@@ -898,7 +896,7 @@
       "test": "GET /api/user/list - Mock Authentication",
       "success": true,
       "message": "Endpoint exists and requires valid authentication (returned 401 for mock token)",
-      "timestamp": "2025-08-01T19:31:55.869468",
+      "timestamp": "2025-08-01T19:59:48.557309",
       "details": {
         "mock_token": "mock_student_token_123"
       }
@@ -907,7 +905,7 @@
       "test": "GET /api/user/list/status/{video_id} - Unauthenticated",
       "success": true,
       "message": "Correctly returned in_list: false for unauthenticated user",
-      "timestamp": "2025-08-01T19:31:55.886113",
+      "timestamp": "2025-08-01T19:59:48.572529",
       "details": {
         "video_id": "08d17401-8b09-4b35-a3a9-732339b382c5",
         "in_list": false
@@ -917,7 +915,7 @@
       "test": "GET /api/user/list/status/{video_id} - Mock Authentication",
       "success": true,
       "message": "Endpoint working, returned in_list: False",
-      "timestamp": "2025-08-01T19:31:55.906383",
+      "timestamp": "2025-08-01T19:59:48.631968",
       "details": {
         "video_id": "08d17401-8b09-4b35-a3a9-732339b382c5",
         "in_list": false
@@ -927,7 +925,7 @@
       "test": "User List Endpoints Structure",
       "success": true,
       "message": "All 4 user list endpoints exist and respond appropriately",
-      "timestamp": "2025-08-01T19:31:56.063236",
+      "timestamp": "2025-08-01T19:59:48.769486",
       "details": {
         "endpoints_tested": 4
       }
@@ -936,7 +934,7 @@
       "test": "Database Verification - User List Collection",
       "success": true,
       "message": "All 4 user list database operations have working endpoints",
-      "timestamp": "2025-08-01T19:31:56.184417",
+      "timestamp": "2025-08-01T19:59:48.923417",
       "details": {
         "operations_tested": 4
       }
@@ -945,9 +943,9 @@
       "test": "Database Verification - Watch Progress Manual Flag",
       "success": true,
       "message": "Manual progress correctly recorded in database: 30 minutes",
-      "timestamp": "2025-08-01T19:31:57.258887",
+      "timestamp": "2025-08-01T19:59:49.978623",
       "details": {
-        "test_session_id": "3786a650-e676-425a-8fbe-8a41ecceb6c3",
+        "test_session_id": "6531b88c-c53f-4306-b4f6-f6fa1d674392",
         "recorded_minutes": 30
       }
     },
@@ -955,10 +953,204 @@
       "test": "Database Verification - Daily Progress Update",
       "success": true,
       "message": "Daily progress update working (date may not appear in recent activity yet)",
-      "timestamp": "2025-08-01T19:31:58.312340",
+      "timestamp": "2025-08-01T19:59:51.037907",
       "details": {
-        "test_session_id": "72092c7e-9acd-43b0-a23a-76b7c5a81a2d",
+        "test_session_id": "3ec4023a-4bde-4578-9f60-92eaaa92d668",
         "date": "2024-01-18"
+      }
+    },
+    {
+      "test": "GET /api/user/daily-goal - Unauthenticated",
+      "success": true,
+      "message": "Correctly rejected request without authentication",
+      "timestamp": "2025-08-01T19:59:51.055485",
+      "details": {
+        "expected_status": 401
+      }
+    },
+    {
+      "test": "GET /api/user/daily-goal - Guest Role",
+      "success": true,
+      "message": "Correctly rejected guest role access (requires student+)",
+      "timestamp": "2025-08-01T19:59:51.079672",
+      "details": {
+        "guest_token": "mock_guest_token_123"
+      }
+    },
+    {
+      "test": "GET /api/user/daily-goal - Mock Authenticated",
+      "success": true,
+      "message": "Endpoint exists and requires valid authentication",
+      "timestamp": "2025-08-01T19:59:51.100902",
+      "details": {
+        "mock_token": "mock_student_token_123"
+      }
+    },
+    {
+      "test": "POST /api/user/daily-goal - Unauthenticated",
+      "success": true,
+      "message": "Correctly rejected goal setting without authentication",
+      "timestamp": "2025-08-01T19:59:51.159436",
+      "details": {
+        "goal_data": {
+          "daily_minutes_goal": 30
+        }
+      }
+    },
+    {
+      "test": "POST /api/user/daily-goal - Valid Values",
+      "success": true,
+      "message": "All 4 valid goal values accepted by endpoint structure",
+      "timestamp": "2025-08-01T19:59:51.276295",
+      "details": {
+        "valid_goals": [
+          15,
+          30,
+          60,
+          45
+        ],
+        "tested": 4
+      }
+    },
+    {
+      "test": "POST /api/user/daily-goal - Invalid Values",
+      "success": true,
+      "message": "All 4 invalid goal values properly rejected",
+      "timestamp": "2025-08-01T19:59:51.398030",
+      "details": {
+        "invalid_goals": [
+          0,
+          -5,
+          500,
+          1000
+        ],
+        "tested": 4
+      }
+    },
+    {
+      "test": "POST /api/user/daily-goal - Update Existing",
+      "success": true,
+      "message": "Endpoint handles both create and update operations consistently",
+      "timestamp": "2025-08-01T19:59:51.438822",
+      "details": {
+        "first_goal": 30,
+        "updated_goal": 60,
+        "status_code": 401
+      }
+    },
+    {
+      "test": "POST /api/user/unmark-watched - Valid Video",
+      "success": true,
+      "message": "Endpoint handles unmark request appropriately (status: 200)",
+      "timestamp": "2025-08-01T19:59:51.463410",
+      "details": {
+        "video_id": "08d17401-8b09-4b35-a3a9-732339b382c5",
+        "session_id": "f0857ab4-9d4c-4c78-8f04-71fa0e7d7a23",
+        "status": 200
+      }
+    },
+    {
+      "test": "POST /api/user/unmark-watched - Invalid Video",
+      "success": true,
+      "message": "Correctly returned 404 for invalid video ID",
+      "timestamp": "2025-08-01T19:59:51.481567",
+      "details": {
+        "invalid_video_id": "invalid-video-id-123"
+      }
+    },
+    {
+      "test": "POST /api/user/unmark-watched - Not Watched Video",
+      "success": true,
+      "message": "Correctly returned 404 for video that hasn't been watched",
+      "timestamp": "2025-08-01T19:59:51.503393",
+      "details": {
+        "video_id": "08d17401-8b09-4b35-a3a9-732339b382c5",
+        "clean_session_id": "4166e966-0c4a-4c24-86a1-ab457584e0a5"
+      }
+    },
+    {
+      "test": "POST /api/user/unmark-watched - No Session",
+      "success": true,
+      "message": "Correctly rejected request without session_id or auth (status: 422)",
+      "timestamp": "2025-08-01T19:59:51.521501",
+      "details": {
+        "video_id": "08d17401-8b09-4b35-a3a9-732339b382c5",
+        "status": 422
+      }
+    },
+    {
+      "test": "POST /api/user/unmark-watched - Guest with Session",
+      "success": true,
+      "message": "Successfully unmarked video for guest user with session_id",
+      "timestamp": "2025-08-01T19:59:51.571960",
+      "details": {
+        "video_id": "08d17401-8b09-4b35-a3a9-732339b382c5",
+        "guest_session_id": "784937f3-ad32-400c-8922-ece35df6d911"
+      }
+    },
+    {
+      "test": "Daily Goal Streak Calculation",
+      "success": true,
+      "message": "Endpoint exists for streak calculation (requires valid authentication)",
+      "timestamp": "2025-08-01T19:59:51.590070",
+      "details": {
+        "endpoint": "/api/user/daily-goal"
+      }
+    },
+    {
+      "test": "Daily Goal Progress Calculation",
+      "success": true,
+      "message": "Progress calculation logic validated for 4 test cases",
+      "timestamp": "2025-08-01T19:59:51.590353",
+      "details": {
+        "test_cases": [
+          {
+            "watched": 15,
+            "goal": 30,
+            "expected_percentage": 50.0
+          },
+          {
+            "watched": 30,
+            "goal": 30,
+            "expected_percentage": 100.0
+          },
+          {
+            "watched": 45,
+            "goal": 30,
+            "expected_percentage": 150.0
+          },
+          {
+            "watched": 0,
+            "goal": 30,
+            "expected_percentage": 0.0
+          }
+        ]
+      }
+    },
+    {
+      "test": "Daily Goal Database Integration",
+      "success": true,
+      "message": "Endpoint exists for daily_goals collection interaction",
+      "timestamp": "2025-08-01T19:59:51.612670",
+      "details": {
+        "endpoint": "/api/user/daily-goal",
+        "status": 401
+      }
+    },
+    {
+      "test": "Daily Goal Complete Flow",
+      "success": true,
+      "message": "Daily goal system flow working: 4/4 steps successful",
+      "timestamp": "2025-08-01T19:59:51.708268",
+      "details": {
+        "flow_steps": {
+          "set_goal": true,
+          "watch_video": true,
+          "check_progress": true,
+          "unmark_video": true
+        },
+        "session_id": "c8f80354-fc62-4870-94a1-d04bd81aba15",
+        "video_id": "08d17401-8b09-4b35-a3a9-732339b382c5"
       }
     }
   ]
