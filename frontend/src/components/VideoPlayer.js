@@ -165,6 +165,41 @@ const VideoPlayer = ({ video, onClose, onVideoEnd }) => {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const handleMarkAsWatched = () => {
+    setShowMarkModal(true);
+  };
+
+  const handleMarkModalSuccess = () => {
+    // Could notify parent or refresh data if needed
+  };
+
+  const handleToggleMyList = async () => {
+    if (!isAuthenticated || !isStudent || isManagingList) return;
+    
+    setIsManagingList(true);
+    
+    try {
+      const headers = { 'Authorization': `Bearer ${sessionToken}` };
+      
+      if (isInList) {
+        // Remove from list
+        await axios.delete(`${API}/user/list/${video.id}`, { headers });
+        setIsInList(false);
+      } else {
+        // Add to list
+        await axios.post(`${API}/user/list`, {
+          video_id: video.id
+        }, { headers });
+        setIsInList(true);
+      }
+    } catch (error) {
+      console.error('Error managing video list:', error);
+      alert(error.response?.data?.detail || 'Failed to update your list. Please try again.');
+    } finally {
+      setIsManagingList(false);
+    }
+  };
+
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
