@@ -1748,6 +1748,177 @@ async def get_admin_content_list(
         "content_types": [ct.value for ct in ContentType]
     }
 
+# ==========================================
+# NEW ENDPOINTS FOR VIDEO BUTTONS
+# ==========================================
+
+@api_router.post("/progress/manual")
+async def log_manual_progress(
+    request: ManualProgressRequest,
+    session_id: str = Query(...),
+    current_user: Optional[User] = Depends(get_current_user)
+):
+    """Log manual progress for a video (for Mark as Watched functionality)"""
+    
+    # Verify video exists
+    video = await db.videos.find_one({"id": request.videoId}, {"_id": 0})
+    if not video:
+        raise HTTPException(status_code=404, detail="Video not found")
+    
+    user_id = current_user.id if current_user else None
+    
+    # Parse the date
+    try:
+        watched_date = datetime.strptime(request.watchedAt, "%Y-%m-%d")
+    except ValueError:
+        raise HTTPException(status_code=422, detail="Invalid date format. Use YYYY-MM-DD")
+    
+    # Create or update watch progress
+    progress_data = {
+        "user_id": user_id,
+        "session_id": session_id,
+        "video_id": request.videoId,
+        "watched_minutes": request.minutesWatched,
+        "completed": request.minutesWatched >= video["duration_minutes"],
+        "watched_at": watched_date,
+        "marked_as_watched": True
+    }
+    
+    # Check if progress already exists
+    existing_progress = await db.watch_progress.find_one({
+        "session_id": session_id,
+        "video_id": request.videoId
+    })
+    
+    if existing_progress:
+        await db.watch_progress.update_one(
+            {"session_id": session_id, "video_id": request.videoId},
+            {"$set": progress_data}
+        )
+    else:
+        progress = WatchProgress(**{**progress_data, "id": str(uuid.uuid4())})
+        await db.watch_progress.insert_one(progress.dict())
+    
+    # Update daily progress
+    await update_daily_progress(session_id, request.videoId, request.minutesWatched, user_id, watched_date.strftime("%Y-%m-%d"))
+    
+    return {
+        "message": "Progress logged successfully",
+        "video_id": request.videoId,
+        "minutes_watched": request.minutesWatched
+    }
+
+@api_router.post("/user/list")
+async def add_to_user_list(
+    request: UserListRequest,
+    current_user: User = Depends(require_role(UserRole.STUDENT))
+):
+    """Add a video to user's list (requires student role or higher)"""
+    
+    # Verify video exists
+    video = await db.videos.find_one({"id": request.video_id}, {"_id": 0})
+    if not video:
+        raise HTTPException(status_code=404, detail="Video not found")
+    
+    # Check if already in list
+    existing_item = await db.user_list.find_one({
+        "user_id": current_user.id,
+        "video_id": request.video_id
+    })
+    
+    if existing_item:
+        return {"message": "Video already in your list", "already_added": True}
+    
+    # Add to list
+    list_item = UserListItem(
+        user_id=current_user.id,
+        video_id=request.video_id
+    )
+    
+    await db.user_list.insert_one(list_item.dict())
+    
+    return {
+        "message": "Video added to your list",
+        "video_id": request.video_id,
+        "already_added": False
+    }
+
+@api_router.delete("/user/list/{video_id}")
+async def remove_from_user_list(
+    video_id: str,
+    current_user: User = Depends(require_role(UserRole.STUDENT))
+):
+    """Remove a video from user's list (requires student role or higher)"""
+    
+    result = await db.user_list.delete_one({
+        "user_id": current_user.id,
+        "video_id": video_id
+    })
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Video not found in your list")
+    
+    return {
+        "message": "Video removed from your list",
+        "video_id": video_id
+    }
+
+@api_router.get("/user/list")
+async def get_user_list(
+    current_user: User = Depends(require_role(UserRole.STUDENT))
+):
+    """Get user's saved video list (requires student role or higher)"""
+    
+    # Get list items
+    list_items = await db.user_list.find(
+        {"user_id": current_user.id},
+        {"_id": 0}
+    ).sort("added_at", -1).to_list(1000)
+    
+    # Get video IDs
+    video_ids = [item["video_id"] for item in list_items]
+    
+    if not video_ids:
+        return {"videos": [], "total": 0}
+    
+    # Fetch video details
+    videos = await db.videos.find(
+        {"id": {"$in": video_ids}},
+        {"_id": 0}
+    ).to_list(1000)
+    
+    # Add metadata from list items
+    video_dict = {v["id"]: v for v in videos}
+    result_videos = []
+    
+    for item in list_items:
+        if item["video_id"] in video_dict:
+            video = video_dict[item["video_id"]]
+            video["added_to_list_at"] = item["added_at"]
+            result_videos.append(video)
+    
+    return {
+        "videos": result_videos,
+        "total": len(result_videos)
+    }
+
+@api_router.get("/user/list/status/{video_id}")
+async def check_video_in_list(
+    video_id: str,
+    current_user: Optional[User] = Depends(get_current_user)
+):
+    """Check if a video is in user's list"""
+    
+    if not current_user:
+        return {"in_list": False}
+    
+    list_item = await db.user_list.find_one({
+        "user_id": current_user.id,
+        "video_id": video_id
+    })
+    
+    return {"in_list": list_item is not None}
+
 # Initialize sample data on startup
 @app.on_event("startup")
 async def startup_event():
