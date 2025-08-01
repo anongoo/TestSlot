@@ -63,7 +63,7 @@ const ProgressTab = () => {
     }
   };
 
-  // Generate sample data for the chart (in a real app, this would come from the API)
+  // Generate chart data from actual user progress data
   const generateChartData = () => {
     const days = [];
     const today = new Date();
@@ -73,12 +73,19 @@ const ProgressTab = () => {
     for (let i = daysToShow - 1; i >= 0; i--) {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0];
       
-      // Generate sample data (in real app, this would be actual user data)
-      const minutesWatched = Math.floor(Math.random() * 60) + (i < 7 ? 20 : 0); // More recent activity
+      // Try to find actual progress data for this date
+      let minutesWatched = 0;
+      if (progress && progress.daily_breakdown) {
+        const dayData = progress.daily_breakdown.find(d => d.date === dateStr);
+        if (dayData) {
+          minutesWatched = dayData.total_minutes_watched || 0;
+        }
+      }
       
       days.push({
-        date: date.toISOString().split('T')[0],
+        date: dateStr,
         dateLabel: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
         minutes: minutesWatched
       });
