@@ -1940,6 +1940,163 @@ async def check_video_in_list(
     
     return {"in_list": list_item is not None}
 
+# ==========================================
+# DAILY GOAL SYSTEM ENDPOINTS
+# ==========================================
+
+@api_router.get("/user/daily-goal")
+async def get_user_daily_goal(
+    current_user: User = Depends(require_role(UserRole.STUDENT))
+):
+    """Get user's daily goal and today's progress"""
+    
+    # Get or create user's daily goal
+    user_goal = await db.daily_goals.find_one({"user_id": current_user.id}, {"_id": 0})
+    if not user_goal:
+        # Create default goal
+        default_goal = DailyGoal(user_id=current_user.id, daily_minutes_goal=30)
+        await db.daily_goals.insert_one(default_goal.dict())
+        daily_goal_minutes = 30
+    else:
+        daily_goal_minutes = user_goal["daily_minutes_goal"]
+    
+    # Get today's progress
+    today = datetime.utcnow().strftime("%Y-%m-%d")
+    today_progress = await db.daily_progress.find_one({
+        "user_id": current_user.id,
+        "date": today
+    }, {"_id": 0})
+    
+    minutes_watched_today = today_progress["total_minutes_watched"] if today_progress else 0
+    progress_percentage = min((minutes_watched_today / daily_goal_minutes) * 100, 100)
+    goal_completed = minutes_watched_today >= daily_goal_minutes
+    
+    # Calculate streak (consecutive days meeting goal)
+    streak_days = await calculate_goal_streak(current_user.id, daily_goal_minutes)
+    
+    return DailyGoalProgressResponse(
+        daily_goal=daily_goal_minutes,
+        minutes_watched_today=minutes_watched_today,
+        progress_percentage=progress_percentage,
+        goal_completed=goal_completed,
+        streak_days=streak_days
+    )
+
+@api_router.post("/user/daily-goal")
+async def set_user_daily_goal(
+    request: SetDailyGoalRequest,
+    current_user: User = Depends(require_role(UserRole.STUDENT))
+):
+    """Set or update user's daily goal"""
+    
+    goal_data = {
+        "user_id": current_user.id,
+        "daily_minutes_goal": request.daily_minutes_goal,
+        "updated_at": datetime.utcnow()
+    }
+    
+    # Update existing goal or create new one
+    existing_goal = await db.daily_goals.find_one({"user_id": current_user.id})
+    if existing_goal:
+        await db.daily_goals.update_one(
+            {"user_id": current_user.id},
+            {"$set": goal_data}
+        )
+    else:
+        goal = DailyGoal(**{**goal_data, "id": str(uuid.uuid4()), "created_at": datetime.utcnow()})
+        await db.daily_goals.insert_one(goal.dict())
+    
+    return {
+        "message": "Daily goal updated successfully",
+        "daily_minutes_goal": request.daily_minutes_goal
+    }
+
+@api_router.post("/user/unmark-watched")
+async def unmark_video_as_watched(
+    request: UnmarkVideoRequest,
+    session_id: str = Query(...),
+    current_user: Optional[User] = Depends(get_current_user)
+):
+    """Unmark a video as watched (remove from progress)"""
+    
+    # Verify video exists
+    video = await db.videos.find_one({"id": request.video_id}, {"_id": 0})
+    if not video:
+        raise HTTPException(status_code=404, detail="Video not found")
+    
+    user_id = current_user.id if current_user else None
+    
+    # Find existing progress
+    existing_progress = await db.watch_progress.find_one({
+        "session_id": session_id,
+        "video_id": request.video_id
+    })
+    
+    if not existing_progress:
+        raise HTTPException(status_code=404, detail="No watch progress found for this video")
+    
+    # Get the minutes to subtract from daily progress
+    minutes_to_subtract = existing_progress.get("watched_minutes", 0)
+    
+    # Remove from watch progress
+    await db.watch_progress.delete_one({
+        "session_id": session_id,
+        "video_id": request.video_id
+    })
+    
+    # Update daily progress (subtract the minutes)
+    if minutes_to_subtract > 0:
+        today = datetime.utcnow().strftime("%Y-%m-%d")
+        daily_progress = await db.daily_progress.find_one({
+            "session_id": session_id,
+            "date": today
+        })
+        
+        if daily_progress:
+            new_total = max(0, daily_progress["total_minutes_watched"] - minutes_to_subtract)
+            videos_watched = daily_progress.get("videos_watched", [])
+            if request.video_id in videos_watched:
+                videos_watched.remove(request.video_id)
+            
+            await db.daily_progress.update_one(
+                {"session_id": session_id, "date": today},
+                {
+                    "$set": {
+                        "total_minutes_watched": new_total,
+                        "videos_watched": videos_watched,
+                        "updated_at": datetime.utcnow()
+                    }
+                }
+            )
+    
+    return {
+        "message": "Video unmarked as watched successfully",
+        "video_id": request.video_id,
+        "minutes_subtracted": minutes_to_subtract
+    }
+
+async def calculate_goal_streak(user_id: str, daily_goal_minutes: int) -> int:
+    """Calculate consecutive days the user has met their daily goal"""
+    streak = 0
+    current_date = datetime.utcnow().date()
+    
+    # Check backwards from today
+    for i in range(365):  # Check up to a year back
+        check_date = current_date - timedelta(days=i)
+        date_str = check_date.strftime("%Y-%m-%d")
+        
+        daily_progress = await db.daily_progress.find_one({
+            "user_id": user_id,
+            "date": date_str
+        })
+        
+        if daily_progress and daily_progress["total_minutes_watched"] >= daily_goal_minutes:
+            streak += 1
+        else:
+            break  # Streak is broken
+    
+    return streak
+
 # Initialize sample data on startup
 @app.on_event("startup")
 async def startup_event():
