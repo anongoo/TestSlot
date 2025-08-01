@@ -719,6 +719,18 @@ backend:
           agent: "main"
           comment: "Implemented user list endpoints: POST /api/user/list (add video), DELETE /api/user/list/{video_id} (remove video), GET /api/user/list (get user's list), GET /api/user/list/status/{video_id} (check if video in list). Requires student role or higher. Supports video existence validation and duplicate prevention."
 
+  - task: "NEW Daily Goal System - Backend APIs"
+    implemented: true
+    working: false
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: false
+          agent: "main"
+          comment: "Implemented daily goal system backend: GET /api/user/daily-goal (get goal and today's progress with streak calculation), POST /api/user/daily-goal (set/update daily goal with validation 1-480 minutes), POST /api/user/unmark-watched (remove video from progress and subtract minutes from daily progress). Added DailyGoal model, goal streak calculation, and enhanced daily progress tracking integration."
+
 frontend:
   - task: "Phase 2 - Admin Upload Interface & Dashboard"
     implemented: true
