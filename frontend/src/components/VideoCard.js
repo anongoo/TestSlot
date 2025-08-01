@@ -214,6 +214,14 @@ const VideoCard = ({ video, onWatchProgress, sessionId }) => {
           </div>
         </div>
       </div>
+      
+      {/* Mark as Watched Modal */}
+      <MarkAsWatchedModal
+        video={video}
+        isOpen={showMarkModal}
+        onClose={() => setShowMarkModal(false)}
+        onSuccess={handleMarkModalSuccess}
+      />
     </div>
   );
 };
