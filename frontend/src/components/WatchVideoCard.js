@@ -69,11 +69,40 @@ const WatchVideoCard = ({ video, onVideoSelect }) => {
   };
 
   const handleMarkAsWatched = () => {
-    setShowMarkModal(true);
+    if (isWatched) {
+      handleUnmarkAsWatched();
+    } else {
+      setShowMarkModal(true);
+    }
+  };
+
+  const handleUnmarkAsWatched = async () => {
+    if (isToggling) return;
+    
+    setIsToggling(true);
+    
+    try {
+      const headers = sessionToken ? 
+        { 'Authorization': `Bearer ${sessionToken}` } : {};
+      
+      await axios.post(`${API}/user/unmark-watched`, {
+        video_id: video.id
+      }, {
+        params: { session_id: sessionId },
+        headers
+      });
+
+      setIsWatched(false);
+    } catch (error) {
+      console.error('Error unmarking video as watched:', error);
+      alert(error.response?.data?.detail || 'Failed to unmark video. Please try again.');
+    } finally {
+      setIsToggling(false);
+    }
   };
 
   const handleMarkModalSuccess = () => {
-    // Could notify parent or refresh data if needed
+    setIsWatched(true);
   };
 
   const handleToggleMyList = async () => {
