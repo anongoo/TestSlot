@@ -11,6 +11,7 @@ import { AuthProvider } from './contexts/AuthContext';
 // Components
 import Header from './components/Header';
 import Footer from './components/Footer';
+import DailyGoalProgressBar from './components/DailyGoalProgressBar';
 
 // Pages
 import HomePage from './pages/HomePage';
