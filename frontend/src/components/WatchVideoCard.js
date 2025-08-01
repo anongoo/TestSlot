@@ -17,7 +17,11 @@ const getSessionId = () => {
 };
 
 const WatchVideoCard = ({ video, onVideoSelect }) => {
-  const { isAuthenticated, isStudent } = useAuth();
+  const { isAuthenticated, isStudent, sessionToken } = useAuth();
+  const [showMarkModal, setShowMarkModal] = useState(false);
+  const [isInList, setIsInList] = useState(false);
+  const [isManagingList, setIsManagingList] = useState(false);
+  const [sessionId] = useState(getSessionId());
 
   const levelColors = {
     'New Beginner': 'bg-green-100 text-green-800',
