@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Test the English Fiesta language learning platform backend thoroughly. The platform includes video management APIs, progress tracking APIs, sample data initialization, email subscription endpoints for ConvertKit integration, and NEW comprehensive content management system for dynamic site content editing."
+user_problem_statement: "Implement two buttons on each video: 'Mark as Watched' and 'Add to My List'. For 'Mark as Watched': Opens modal with date (default: today) and duration (default: full video length), submits to POST /api/progress/manual with specific JSON format. For 'Add to My List': Toggles between Add/Remove, sends POST /api/user/list and DELETE /api/user/list/:videoId, reflects saved state per user session, available to logged-in users only (student role or higher). Use modular components and make mobile-friendly."
 
 backend:
   - task: "Content Management System - Database Initialization"
