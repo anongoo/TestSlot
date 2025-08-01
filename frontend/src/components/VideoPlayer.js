@@ -33,6 +33,28 @@ const VideoPlayer = ({ video, onClose, onVideoEnd }) => {
   const trackingIntervalRef = useRef(null);
   const lastTrackedMinute = useRef(0);
 
+  // Check if video is in user's list on component mount
+  useEffect(() => {
+    if (isAuthenticated && isStudent) {
+      checkVideoInList();
+    }
+  }, [isAuthenticated, isStudent, video.id]);
+
+  const checkVideoInList = async () => {
+    try {
+      const headers = sessionToken ? 
+        { 'Authorization': `Bearer ${sessionToken}` } : {};
+      
+      const response = await axios.get(`${API}/user/list/status/${video.id}`, {
+        headers
+      });
+      
+      setIsInList(response.data.in_list);
+    } catch (error) {
+      console.error('Error checking video list status:', error);
+    }
+  };
+
   useEffect(() => {
     // Start tracking when video starts playing (only for authenticated users)
     if (playing && isAuthenticated) {
