@@ -21,6 +21,8 @@ const WatchVideoCard = ({ video, onVideoSelect }) => {
   const [showMarkModal, setShowMarkModal] = useState(false);
   const [isInList, setIsInList] = useState(false);
   const [isManagingList, setIsManagingList] = useState(false);
+  const [isWatched, setIsWatched] = useState(false);
+  const [isToggling, setIsToggling] = useState(false);
   const [sessionId] = useState(getSessionId());
 
   // Check if video is in user's list on component mount
