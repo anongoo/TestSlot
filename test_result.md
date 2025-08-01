@@ -814,7 +814,7 @@ metadata:
   run_ui: false
 
 test_plan:
-  current_focus: ["NEW Daily Goal System - Backend APIs", "NEW Daily Goal Progress Bar Component", "NEW Set Daily Goal Modal Component", "NEW Mark as Unwatched Toggle Functionality", "NEW Daily Goals Integration - App Structure"]
+  current_focus: ["NEW Language Levels Section - Dreaming Spanish System", "NEW Daily Goal System - Backend APIs", "NEW Daily Goal Progress Bar Component", "NEW Set Daily Goal Modal Component", "NEW Mark as Unwatched Toggle Functionality", "NEW Daily Goals Integration - App Structure"]
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
