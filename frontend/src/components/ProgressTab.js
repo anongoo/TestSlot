@@ -330,8 +330,8 @@ const ProgressTab = () => {
 
       {/* Manual Activity Breakdown */}
       {Object.keys(stats.manual_activity_breakdown || {}).some(key => stats.manual_activity_breakdown[key] > 0) && (
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <h3 className="text-xl font-bold text-gray-800 mb-4">Outside Learning Videos</h3>
+        <div className="bg-gradient-to-br from-white to-purple-50 rounded-xl shadow-sm p-6 border border-purple-100">
+          <h3 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-4">Outside Learning Videos</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {Object.entries(stats.manual_activity_breakdown || {}).map(([activity, minutes]) => (
