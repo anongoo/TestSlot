@@ -85,12 +85,29 @@ const CommentItem = ({ comment, onCommentDeleted, onCommentPinToggled }) => {
 
   return (
     <motion.div 
-      className="bg-white rounded-xl shadow-md p-4 border-l-4 border-fiesta-blue hover:shadow-lg transition-shadow duration-200"
+      className={`rounded-xl shadow-md p-4 border-l-4 hover:shadow-lg transition-shadow duration-200 ${
+        comment.pinned 
+          ? 'bg-gradient-to-r from-fiesta-yellow from-5% to-white border-fiesta-yellow shadow-lg' 
+          : 'bg-white border-fiesta-blue'
+      }`}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
       whileHover={{ scale: 1.01 }}
     >
+      {/* Pinned Badge */}
+      {comment.pinned && (
+        <motion.div 
+          className="flex items-center gap-1 mb-3 text-fiesta-orange font-semibold text-sm"
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: "spring", stiffness: 200 }}
+        >
+          <span className="text-lg">📌</span>
+          <span className="font-poppins">Pinned</span>
+        </motion.div>
+      )}
+
       <div className="flex items-start gap-3">
         {/* User Avatar Placeholder */}
         <motion.div 
