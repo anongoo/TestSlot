@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Implement Daily Goal system similar to Dreaming Spanish: 1) Daily Goal Progress Bar showing minutes watched today vs goal, always visible on Watch page and across all pages. 2) Set/Edit Daily Goal Modal with preset options (Casual 15min, Learner 30min, Serious 60min) and custom input. 3) Track minutes watched automatically tied to user ID. 4) 'Mark as Unwatched' toggle button functionality. 5) Keep existing My List functionality as-is."
+user_problem_statement: "🚀 English Fiesta Final Launch: Implement final features for platform launch: 1) Visual Theme Overhaul - Apply vibrant colors (Yellow #facc15, Pink #ec4899, Sky Blue #38bdf8, Purple, Green, Orange), use rounded fonts (Poppins/Baloo 2), add framer-motion animations for buttons and page transitions. 2) Join the Fiesta Button - Add 6th grid card on homepage CTA routing to /watch. 3) Donate Button - Add '💖 Help English Fiesta Grow' buttons in header & footer linking to buymeacoffee.com/englishfiesta. 4) Join the Team Page - Create /join page with team recruitment content and email contact. 5) Video Commenting System - Full commenting functionality with authenticated students can post, guests can view, admin moderation, emoji support, reverse chronological order."
 
 backend:
   - task: "Content Management System - Database Initialization"
