@@ -61,11 +61,14 @@ const Header = () => {
               </motion.a>
               <motion.a 
                 href="/book" 
-                className="text-gray-600 hover:text-fiesta-orange transition-colors font-medium"
+                className="flex items-center justify-center text-gray-600 hover:text-fiesta-orange transition-colors font-medium px-2 py-1 rounded-lg"
                 whileHover={{ y: -2 }}
                 transition={{ type: "spring", stiffness: 300 }}
               >
-                🎯 Join a Class
+                <span className="flex items-center gap-1">
+                  <span>🎯</span>
+                  <span>Join a Class</span>
+                </span>
               </motion.a>
             </nav>
 
