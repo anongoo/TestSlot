@@ -383,6 +383,18 @@ class DailyGoalProgressResponse(BaseModel):
 class UnmarkVideoRequest(BaseModel):
     video_id: str
 
+# Video Commenting System Models
+class Comment(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    video_id: str
+    user_id: str
+    user_name: str
+    text: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class CommentRequest(BaseModel):
+    text: str = Field(min_length=1, max_length=500)  # Limit comment length
+
 # ==========================================
 # FILE HANDLING UTILITIES
 # ==========================================
