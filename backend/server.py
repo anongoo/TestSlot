@@ -1221,11 +1221,11 @@ async def get_video_comments(video_id: str):
     if not video:
         raise HTTPException(status_code=404, detail="Video not found")
     
-    # Get comments in reverse chronological order (newest first)
+    # Get comments sorted by pinned status first, then by creation date (newest first)
     comments = await db.comments.find(
         {"video_id": video_id},
         {"_id": 0}
-    ).sort("created_at", -1).to_list(100)  # Limit to 100 comments
+    ).sort([("pinned", -1), ("created_at", -1)]).to_list(100)  # Limit to 100 comments
     
     return {
         "video_id": video_id,
