@@ -227,7 +227,4 @@ const FilterPanel = ({ filters, onFilterChange, onSearch }) => {
     </motion.div>
   );
 };
-
-export default FilterPanel;
-
 export default FilterPanel;
