@@ -3048,20 +3048,31 @@ async def initialize_filter_collections():
         # Sample Guides (based on existing instructor names if any exist)
         guide_count = await db.guides.count_documents({})
         if guide_count == 0:
-            # Try to get unique instructor names from videos
-            pipeline = [
-                {"$group": {"_id": "$instructor_name"}},
-                {"$match": {"_id": {"$ne": None}}},
-                {"$limit": 10}
-            ]
-            
             unique_instructors = []
+            
+            # Try to get unique instructor names from videos
             try:
+                pipeline = [
+                    {"$group": {"_id": "$instructor_name"}},
+                    {"$match": {"_id": {"$ne": None, "$ne": ""}}},
+                    {"$limit": 10}
+                ]
                 cursor = db.videos.aggregate(pipeline)
                 unique_instructors = [doc["_id"] for doc in await cursor.to_list(length=10)]
-            except:
-                # If no videos exist, use sample data
-                unique_instructors = ["Sample Instructor 1", "Sample Instructor 2"]
+                logger.info(f"Found {len(unique_instructors)} instructor names from videos")
+            except Exception as e:
+                logger.warning(f"Could not fetch instructor names: {e}")
+            
+            # If no instructors found from videos, use sample data
+            if not unique_instructors:
+                unique_instructors = [
+                    "Greg Martinez", 
+                    "Sarah Johnson", 
+                    "Mike Thompson",
+                    "Emma Wilson",
+                    "David Rodriguez"
+                ]
+                logger.info("Using sample instructor names for guides initialization")
             
             for instructor_name in unique_instructors:
                 guide = Guide(
