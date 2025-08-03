@@ -1209,6 +1209,74 @@ async def get_filter_options():
     }
 
 # ==========================================
+# VIDEO COMMENTING SYSTEM ENDPOINTS
+# ==========================================
+
+@api_router.get("/comments/{video_id}")
+async def get_video_comments(video_id: str):
+    """Get comments for a specific video (public access)"""
+    # Verify video exists
+    video = await db.videos.find_one({"id": video_id}, {"_id": 0})
+    if not video:
+        raise HTTPException(status_code=404, detail="Video not found")
+    
+    # Get comments in reverse chronological order (newest first)
+    comments = await db.comments.find(
+        {"video_id": video_id},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(100)  # Limit to 100 comments
+    
+    return {
+        "video_id": video_id,
+        "comments": comments,
+        "total": len(comments)
+    }
+
+@api_router.post("/comments/{video_id}")
+async def post_video_comment(
+    video_id: str,
+    comment_request: CommentRequest,
+    current_user: User = Depends(require_role(UserRole.STUDENT))
+):
+    """Post a comment on a video (requires student role or higher)"""
+    # Verify video exists
+    video = await db.videos.find_one({"id": video_id}, {"_id": 0})
+    if not video:
+        raise HTTPException(status_code=404, detail="Video not found")
+    
+    # Create comment
+    comment_data = {
+        "id": str(uuid.uuid4()),
+        "video_id": video_id,
+        "user_id": current_user.id,
+        "user_name": current_user.name,
+        "text": comment_request.text.strip(),
+        "created_at": datetime.utcnow()
+    }
+    
+    comment = Comment(**comment_data)
+    await db.comments.insert_one(comment.dict())
+    
+    return {
+        "message": "Comment posted successfully",
+        "comment": comment_data
+    }
+
+@api_router.delete("/admin/comments/{comment_id}")
+async def delete_comment(
+    comment_id: str,
+    current_user: User = Depends(require_role(UserRole.ADMIN))
+):
+    """Delete a comment (admin only)"""
+    # Find and delete the comment
+    result = await db.comments.delete_one({"id": comment_id})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    
+    return {"message": "Comment deleted successfully"}
+
+# ==========================================
 # ADMIN VIDEO UPLOAD ENDPOINTS
 # ==========================================
 
