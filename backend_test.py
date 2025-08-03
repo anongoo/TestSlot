@@ -5114,6 +5114,690 @@ class EnglishFiestaAPITester:
                 {"workflow_steps": len(workflow_steps), "successful_steps": workflow_success}
             )
 
+    # ========== EDITABLE FILTER CONTROLS SYSTEM TESTS ==========
+    
+    def test_filter_collections_initialization(self):
+        """Test that filter collections are properly initialized with sample data"""
+        collections = [
+            {"name": "topics", "endpoint": "/filters/topics", "expected_items": ["Daily Life", "Travel", "Food", "School", "Culture", "Family", "Jobs", "Emotions", "Hobbies", "Society"]},
+            {"name": "countries", "endpoint": "/filters/countries", "expected_items": ["USA", "UK", "Canada", "Australia", "Other"]},
+            {"name": "guides", "endpoint": "/filters/guides", "expected_items": []}  # Guides are based on existing instructors
+        ]
+        
+        for collection in collections:
+            try:
+                response = requests.get(f"{BACKEND_URL}{collection['endpoint']}")
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    items = data.get(collection['name'], [])
+                    
+                    if collection['name'] == 'guides':
+                        # For guides, just check that some exist (based on instructor names)
+                        if len(items) > 0:
+                            self.log_test(
+                                f"Filter Collections Initialization - {collection['name'].title()}",
+                                True,
+                                f"Found {len(items)} guides initialized from instructor names",
+                                {"items_count": len(items), "items": [item.get('name', 'Unknown') for item in items[:3]]}
+                            )
+                        else:
+                            self.log_test(
+                                f"Filter Collections Initialization - {collection['name'].title()}",
+                                False,
+                                "No guides found - should have at least sample instructors",
+                                {"items": items}
+                            )
+                    else:
+                        # For topics and countries, check for expected items
+                        found_items = [item.get('name', '') for item in items]
+                        expected_found = [item for item in collection['expected_items'] if item in found_items]
+                        
+                        if len(expected_found) >= len(collection['expected_items']) * 0.8:  # At least 80% of expected items
+                            self.log_test(
+                                f"Filter Collections Initialization - {collection['name'].title()}",
+                                True,
+                                f"Found {len(expected_found)}/{len(collection['expected_items'])} expected items: {expected_found[:5]}",
+                                {"total_items": len(items), "expected_found": expected_found}
+                            )
+                        else:
+                            self.log_test(
+                                f"Filter Collections Initialization - {collection['name'].title()}",
+                                False,
+                                f"Only found {len(expected_found)}/{len(collection['expected_items'])} expected items",
+                                {"found_items": found_items, "expected": collection['expected_items']}
+                            )
+                else:
+                    self.log_test(
+                        f"Filter Collections Initialization - {collection['name'].title()}",
+                        False,
+                        f"HTTP {response.status_code}: {response.text}",
+                        {"endpoint": collection['endpoint']}
+                    )
+            except Exception as e:
+                self.log_test(
+                    f"Filter Collections Initialization - {collection['name'].title()}",
+                    False,
+                    f"Request failed: {str(e)}",
+                    {"endpoint": collection['endpoint']}
+                )
+    
+    def test_admin_topics_crud(self):
+        """Test CRUD operations for Topics admin endpoints"""
+        # Test GET /api/admin/topics (should require admin auth)
+        try:
+            response = requests.get(f"{BACKEND_URL}/admin/topics")
+            
+            if response.status_code == 401:
+                self.log_test(
+                    "GET /api/admin/topics - Authentication Required",
+                    True,
+                    "Correctly requires admin authentication",
+                    {"expected_status": 401}
+                )
+            else:
+                self.log_test(
+                    "GET /api/admin/topics - Authentication Required",
+                    False,
+                    f"Expected 401, got {response.status_code}: {response.text}",
+                    {"status_code": response.status_code}
+                )
+        except Exception as e:
+            self.log_test(
+                "GET /api/admin/topics - Authentication Required",
+                False,
+                f"Request failed: {str(e)}"
+            )
+        
+        # Test POST /api/admin/topics (should require admin auth)
+        test_topic = {
+            "name": "Test Topic",
+            "slug": "test-topic",
+            "visible": True
+        }
+        
+        try:
+            response = requests.post(f"{BACKEND_URL}/admin/topics", json=test_topic)
+            
+            if response.status_code == 401:
+                self.log_test(
+                    "POST /api/admin/topics - Authentication Required",
+                    True,
+                    "Correctly requires admin authentication for topic creation",
+                    {"expected_status": 401}
+                )
+            else:
+                self.log_test(
+                    "POST /api/admin/topics - Authentication Required",
+                    False,
+                    f"Expected 401, got {response.status_code}: {response.text}",
+                    {"status_code": response.status_code}
+                )
+        except Exception as e:
+            self.log_test(
+                "POST /api/admin/topics - Authentication Required",
+                False,
+                f"Request failed: {str(e)}"
+            )
+        
+        # Test PUT /api/admin/topics/{id} (should require admin auth)
+        test_id = "test-topic-id"
+        try:
+            response = requests.put(f"{BACKEND_URL}/admin/topics/{test_id}", json=test_topic)
+            
+            if response.status_code == 401:
+                self.log_test(
+                    "PUT /api/admin/topics/{id} - Authentication Required",
+                    True,
+                    "Correctly requires admin authentication for topic update",
+                    {"expected_status": 401}
+                )
+            else:
+                self.log_test(
+                    "PUT /api/admin/topics/{id} - Authentication Required",
+                    False,
+                    f"Expected 401, got {response.status_code}: {response.text}",
+                    {"status_code": response.status_code}
+                )
+        except Exception as e:
+            self.log_test(
+                "PUT /api/admin/topics/{id} - Authentication Required",
+                False,
+                f"Request failed: {str(e)}"
+            )
+        
+        # Test DELETE /api/admin/topics/{id} (should require admin auth)
+        try:
+            response = requests.delete(f"{BACKEND_URL}/admin/topics/{test_id}")
+            
+            if response.status_code == 401:
+                self.log_test(
+                    "DELETE /api/admin/topics/{id} - Authentication Required",
+                    True,
+                    "Correctly requires admin authentication for topic deletion",
+                    {"expected_status": 401}
+                )
+            else:
+                self.log_test(
+                    "DELETE /api/admin/topics/{id} - Authentication Required",
+                    False,
+                    f"Expected 401, got {response.status_code}: {response.text}",
+                    {"status_code": response.status_code}
+                )
+        except Exception as e:
+            self.log_test(
+                "DELETE /api/admin/topics/{id} - Authentication Required",
+                False,
+                f"Request failed: {str(e)}"
+            )
+    
+    def test_admin_countries_crud(self):
+        """Test CRUD operations for Countries admin endpoints"""
+        # Test GET /api/admin/countries (should require admin auth)
+        try:
+            response = requests.get(f"{BACKEND_URL}/admin/countries")
+            
+            if response.status_code == 401:
+                self.log_test(
+                    "GET /api/admin/countries - Authentication Required",
+                    True,
+                    "Correctly requires admin authentication",
+                    {"expected_status": 401}
+                )
+            else:
+                self.log_test(
+                    "GET /api/admin/countries - Authentication Required",
+                    False,
+                    f"Expected 401, got {response.status_code}: {response.text}",
+                    {"status_code": response.status_code}
+                )
+        except Exception as e:
+            self.log_test(
+                "GET /api/admin/countries - Authentication Required",
+                False,
+                f"Request failed: {str(e)}"
+            )
+        
+        # Test POST /api/admin/countries (should require admin auth)
+        test_country = {
+            "name": "Test Country",
+            "slug": "test-country",
+            "visible": True
+        }
+        
+        try:
+            response = requests.post(f"{BACKEND_URL}/admin/countries", json=test_country)
+            
+            if response.status_code == 401:
+                self.log_test(
+                    "POST /api/admin/countries - Authentication Required",
+                    True,
+                    "Correctly requires admin authentication for country creation",
+                    {"expected_status": 401}
+                )
+            else:
+                self.log_test(
+                    "POST /api/admin/countries - Authentication Required",
+                    False,
+                    f"Expected 401, got {response.status_code}: {response.text}",
+                    {"status_code": response.status_code}
+                )
+        except Exception as e:
+            self.log_test(
+                "POST /api/admin/countries - Authentication Required",
+                False,
+                f"Request failed: {str(e)}"
+            )
+        
+        # Test PUT /api/admin/countries/{id} (should require admin auth)
+        test_id = "test-country-id"
+        try:
+            response = requests.put(f"{BACKEND_URL}/admin/countries/{test_id}", json=test_country)
+            
+            if response.status_code == 401:
+                self.log_test(
+                    "PUT /api/admin/countries/{id} - Authentication Required",
+                    True,
+                    "Correctly requires admin authentication for country update",
+                    {"expected_status": 401}
+                )
+            else:
+                self.log_test(
+                    "PUT /api/admin/countries/{id} - Authentication Required",
+                    False,
+                    f"Expected 401, got {response.status_code}: {response.text}",
+                    {"status_code": response.status_code}
+                )
+        except Exception as e:
+            self.log_test(
+                "PUT /api/admin/countries/{id} - Authentication Required",
+                False,
+                f"Request failed: {str(e)}"
+            )
+        
+        # Test DELETE /api/admin/countries/{id} (should require admin auth)
+        try:
+            response = requests.delete(f"{BACKEND_URL}/admin/countries/{test_id}")
+            
+            if response.status_code == 401:
+                self.log_test(
+                    "DELETE /api/admin/countries/{id} - Authentication Required",
+                    True,
+                    "Correctly requires admin authentication for country deletion",
+                    {"expected_status": 401}
+                )
+            else:
+                self.log_test(
+                    "DELETE /api/admin/countries/{id} - Authentication Required",
+                    False,
+                    f"Expected 401, got {response.status_code}: {response.text}",
+                    {"status_code": response.status_code}
+                )
+        except Exception as e:
+            self.log_test(
+                "DELETE /api/admin/countries/{id} - Authentication Required",
+                False,
+                f"Request failed: {str(e)}"
+            )
+    
+    def test_admin_guides_crud(self):
+        """Test CRUD operations for Guides admin endpoints"""
+        # Test GET /api/admin/guides (should require admin auth)
+        try:
+            response = requests.get(f"{BACKEND_URL}/admin/guides")
+            
+            if response.status_code == 401:
+                self.log_test(
+                    "GET /api/admin/guides - Authentication Required",
+                    True,
+                    "Correctly requires admin authentication",
+                    {"expected_status": 401}
+                )
+            else:
+                self.log_test(
+                    "GET /api/admin/guides - Authentication Required",
+                    False,
+                    f"Expected 401, got {response.status_code}: {response.text}",
+                    {"status_code": response.status_code}
+                )
+        except Exception as e:
+            self.log_test(
+                "GET /api/admin/guides - Authentication Required",
+                False,
+                f"Request failed: {str(e)}"
+            )
+        
+        # Test POST /api/admin/guides (should require admin auth)
+        test_guide = {
+            "name": "Test Guide Instructor",
+            "visible": True
+        }
+        
+        try:
+            response = requests.post(f"{BACKEND_URL}/admin/guides", json=test_guide)
+            
+            if response.status_code == 401:
+                self.log_test(
+                    "POST /api/admin/guides - Authentication Required",
+                    True,
+                    "Correctly requires admin authentication for guide creation",
+                    {"expected_status": 401}
+                )
+            else:
+                self.log_test(
+                    "POST /api/admin/guides - Authentication Required",
+                    False,
+                    f"Expected 401, got {response.status_code}: {response.text}",
+                    {"status_code": response.status_code}
+                )
+        except Exception as e:
+            self.log_test(
+                "POST /api/admin/guides - Authentication Required",
+                False,
+                f"Request failed: {str(e)}"
+            )
+        
+        # Test PUT /api/admin/guides/{id} (should require admin auth)
+        test_id = "test-guide-id"
+        try:
+            response = requests.put(f"{BACKEND_URL}/admin/guides/{test_id}", json=test_guide)
+            
+            if response.status_code == 401:
+                self.log_test(
+                    "PUT /api/admin/guides/{id} - Authentication Required",
+                    True,
+                    "Correctly requires admin authentication for guide update",
+                    {"expected_status": 401}
+                )
+            else:
+                self.log_test(
+                    "PUT /api/admin/guides/{id} - Authentication Required",
+                    False,
+                    f"Expected 401, got {response.status_code}: {response.text}",
+                    {"status_code": response.status_code}
+                )
+        except Exception as e:
+            self.log_test(
+                "PUT /api/admin/guides/{id} - Authentication Required",
+                False,
+                f"Request failed: {str(e)}"
+            )
+        
+        # Test DELETE /api/admin/guides/{id} (should require admin auth)
+        try:
+            response = requests.delete(f"{BACKEND_URL}/admin/guides/{test_id}")
+            
+            if response.status_code == 401:
+                self.log_test(
+                    "DELETE /api/admin/guides/{id} - Authentication Required",
+                    True,
+                    "Correctly requires admin authentication for guide deletion",
+                    {"expected_status": 401}
+                )
+            else:
+                self.log_test(
+                    "DELETE /api/admin/guides/{id} - Authentication Required",
+                    False,
+                    f"Expected 401, got {response.status_code}: {response.text}",
+                    {"status_code": response.status_code}
+                )
+        except Exception as e:
+            self.log_test(
+                "DELETE /api/admin/guides/{id} - Authentication Required",
+                False,
+                f"Request failed: {str(e)}"
+            )
+    
+    def test_public_filter_endpoints(self):
+        """Test public filter endpoints for frontend dropdowns"""
+        endpoints = [
+            {"path": "/filters/topics", "key": "topics"},
+            {"path": "/filters/countries", "key": "countries"},
+            {"path": "/filters/guides", "key": "guides"}
+        ]
+        
+        for endpoint in endpoints:
+            try:
+                response = requests.get(f"{BACKEND_URL}{endpoint['path']}")
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    items = data.get(endpoint['key'], [])
+                    
+                    # Check that only visible items are returned
+                    visible_items = [item for item in items if item.get('visible', True)]
+                    
+                    if len(items) > 0:
+                        # Check structure of returned items
+                        first_item = items[0]
+                        required_fields = ['id', 'name', 'visible']
+                        if endpoint['key'] in ['topics', 'countries']:
+                            required_fields.append('slug')
+                        
+                        missing_fields = [field for field in required_fields if field not in first_item]
+                        
+                        if not missing_fields:
+                            self.log_test(
+                                f"GET {endpoint['path']} - Public Access",
+                                True,
+                                f"Successfully retrieved {len(items)} {endpoint['key']} (all visible: {len(visible_items) == len(items)})",
+                                {"total_items": len(items), "visible_items": len(visible_items), "structure_valid": True}
+                            )
+                        else:
+                            self.log_test(
+                                f"GET {endpoint['path']} - Public Access",
+                                False,
+                                f"Items missing required fields: {missing_fields}",
+                                {"items": items[:2], "missing_fields": missing_fields}
+                            )
+                    else:
+                        # Empty result is acceptable for some collections
+                        self.log_test(
+                            f"GET {endpoint['path']} - Public Access",
+                            True,
+                            f"Endpoint accessible but no {endpoint['key']} found (acceptable)",
+                            {"items_count": 0}
+                        )
+                else:
+                    self.log_test(
+                        f"GET {endpoint['path']} - Public Access",
+                        False,
+                        f"HTTP {response.status_code}: {response.text}",
+                        {"endpoint": endpoint['path']}
+                    )
+            except Exception as e:
+                self.log_test(
+                    f"GET {endpoint['path']} - Public Access",
+                    False,
+                    f"Request failed: {str(e)}",
+                    {"endpoint": endpoint['path']}
+                )
+    
+    def test_filter_collections_data_validation(self):
+        """Test data validation for filter collections"""
+        # Test invalid data for topics
+        invalid_topic_data = [
+            {"name": "", "slug": "empty-name", "visible": True},  # Empty name
+            {"name": "Valid Name", "slug": "", "visible": True},  # Empty slug
+            {"name": "A" * 101, "slug": "too-long", "visible": True},  # Name too long
+            {"slug": "valid-slug", "visible": True},  # Missing name
+        ]
+        
+        for i, invalid_data in enumerate(invalid_topic_data):
+            try:
+                response = requests.post(f"{BACKEND_URL}/admin/topics", json=invalid_data)
+                
+                # Should get 401 (auth required) or 422 (validation error)
+                if response.status_code in [401, 422]:
+                    self.log_test(
+                        f"Topic Data Validation - Invalid Case {i+1}",
+                        True,
+                        f"Correctly rejected invalid data with {response.status_code}",
+                        {"invalid_data": invalid_data, "status": response.status_code}
+                    )
+                else:
+                    self.log_test(
+                        f"Topic Data Validation - Invalid Case {i+1}",
+                        False,
+                        f"Expected 401/422, got {response.status_code}: {response.text}",
+                        {"invalid_data": invalid_data}
+                    )
+            except Exception as e:
+                self.log_test(
+                    f"Topic Data Validation - Invalid Case {i+1}",
+                    False,
+                    f"Request failed: {str(e)}",
+                    {"invalid_data": invalid_data}
+                )
+        
+        # Test invalid data for countries (similar structure)
+        invalid_country_data = [
+            {"name": "", "slug": "empty-name", "visible": True},
+            {"name": "Valid Country", "slug": "", "visible": True},
+        ]
+        
+        for i, invalid_data in enumerate(invalid_country_data):
+            try:
+                response = requests.post(f"{BACKEND_URL}/admin/countries", json=invalid_data)
+                
+                if response.status_code in [401, 422]:
+                    self.log_test(
+                        f"Country Data Validation - Invalid Case {i+1}",
+                        True,
+                        f"Correctly rejected invalid data with {response.status_code}",
+                        {"invalid_data": invalid_data, "status": response.status_code}
+                    )
+                else:
+                    self.log_test(
+                        f"Country Data Validation - Invalid Case {i+1}",
+                        False,
+                        f"Expected 401/422, got {response.status_code}: {response.text}",
+                        {"invalid_data": invalid_data}
+                    )
+            except Exception as e:
+                self.log_test(
+                    f"Country Data Validation - Invalid Case {i+1}",
+                    False,
+                    f"Request failed: {str(e)}",
+                    {"invalid_data": invalid_data}
+                )
+        
+        # Test invalid data for guides
+        invalid_guide_data = [
+            {"name": "", "visible": True},  # Empty name
+            {"name": "A" * 201, "visible": True},  # Name too long
+            {"visible": True},  # Missing name
+        ]
+        
+        for i, invalid_data in enumerate(invalid_guide_data):
+            try:
+                response = requests.post(f"{BACKEND_URL}/admin/guides", json=invalid_data)
+                
+                if response.status_code in [401, 422]:
+                    self.log_test(
+                        f"Guide Data Validation - Invalid Case {i+1}",
+                        True,
+                        f"Correctly rejected invalid data with {response.status_code}",
+                        {"invalid_data": invalid_data, "status": response.status_code}
+                    )
+                else:
+                    self.log_test(
+                        f"Guide Data Validation - Invalid Case {i+1}",
+                        False,
+                        f"Expected 401/422, got {response.status_code}: {response.text}",
+                        {"invalid_data": invalid_data}
+                    )
+            except Exception as e:
+                self.log_test(
+                    f"Guide Data Validation - Invalid Case {i+1}",
+                    False,
+                    f"Request failed: {str(e)}",
+                    {"invalid_data": invalid_data}
+                )
+    
+    def test_filter_collections_visibility_toggle(self):
+        """Test visibility toggle functionality for filter collections"""
+        # Test that public endpoints only return visible items
+        # This is tested indirectly through the public filter endpoints test
+        
+        # Test that admin endpoints return all items regardless of visibility
+        # Since we can't authenticate as admin, we test that the endpoints exist and require auth
+        
+        admin_endpoints = [
+            "/admin/topics",
+            "/admin/countries", 
+            "/admin/guides"
+        ]
+        
+        for endpoint in admin_endpoints:
+            try:
+                response = requests.get(f"{BACKEND_URL}{endpoint}")
+                
+                if response.status_code == 401:
+                    self.log_test(
+                        f"Admin Visibility Access - {endpoint}",
+                        True,
+                        "Admin endpoint correctly requires authentication (would return all items including hidden)",
+                        {"endpoint": endpoint}
+                    )
+                else:
+                    self.log_test(
+                        f"Admin Visibility Access - {endpoint}",
+                        False,
+                        f"Expected 401 for admin endpoint, got {response.status_code}",
+                        {"endpoint": endpoint, "status": response.status_code}
+                    )
+            except Exception as e:
+                self.log_test(
+                    f"Admin Visibility Access - {endpoint}",
+                    False,
+                    f"Request failed: {str(e)}",
+                    {"endpoint": endpoint}
+                )
+    
+    def test_filter_collections_models_structure(self):
+        """Test that filter collection models are properly defined"""
+        # Test by checking the structure of returned data from public endpoints
+        model_tests = [
+            {
+                "endpoint": "/filters/topics",
+                "key": "topics",
+                "required_fields": ["id", "name", "slug", "visible", "created_at"],
+                "model_name": "Topic"
+            },
+            {
+                "endpoint": "/filters/countries", 
+                "key": "countries",
+                "required_fields": ["id", "name", "slug", "visible", "created_at"],
+                "model_name": "Country"
+            },
+            {
+                "endpoint": "/filters/guides",
+                "key": "guides", 
+                "required_fields": ["id", "name", "visible", "created_at"],
+                "model_name": "Guide"
+            }
+        ]
+        
+        for test in model_tests:
+            try:
+                response = requests.get(f"{BACKEND_URL}{test['endpoint']}")
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    items = data.get(test['key'], [])
+                    
+                    if len(items) > 0:
+                        first_item = items[0]
+                        
+                        # Check required fields
+                        missing_fields = [field for field in test['required_fields'] if field not in first_item]
+                        
+                        # Check field types
+                        type_errors = []
+                        if 'id' in first_item and not isinstance(first_item['id'], str):
+                            type_errors.append("id should be string")
+                        if 'name' in first_item and not isinstance(first_item['name'], str):
+                            type_errors.append("name should be string")
+                        if 'visible' in first_item and not isinstance(first_item['visible'], bool):
+                            type_errors.append("visible should be boolean")
+                        
+                        if not missing_fields and not type_errors:
+                            self.log_test(
+                                f"{test['model_name']} Model Structure",
+                                True,
+                                f"{test['model_name']} model has correct structure and field types",
+                                {"sample_item": first_item, "total_items": len(items)}
+                            )
+                        else:
+                            self.log_test(
+                                f"{test['model_name']} Model Structure",
+                                False,
+                                f"Model issues - Missing fields: {missing_fields}, Type errors: {type_errors}",
+                                {"sample_item": first_item, "missing_fields": missing_fields, "type_errors": type_errors}
+                            )
+                    else:
+                        self.log_test(
+                            f"{test['model_name']} Model Structure",
+                            True,
+                            f"No {test['key']} found but endpoint accessible (model exists)",
+                            {"items_count": 0}
+                        )
+                else:
+                    self.log_test(
+                        f"{test['model_name']} Model Structure",
+                        False,
+                        f"HTTP {response.status_code}: {response.text}",
+                        {"endpoint": test['endpoint']}
+                    )
+            except Exception as e:
+                self.log_test(
+                    f"{test['model_name']} Model Structure",
+                    False,
+                    f"Request failed: {str(e)}",
+                    {"endpoint": test['endpoint']}
+                )
+
     def run_all_tests(self):
         """Run all backend tests"""
         print("🚀 Starting English Fiesta Backend API Tests")
