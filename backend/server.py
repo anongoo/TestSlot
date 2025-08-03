@@ -417,6 +417,21 @@ class Comment(BaseModel):
 class CommentRequest(BaseModel):
     text: str = Field(min_length=1, max_length=500)  # Limit comment length
 
+# Filter Collections Request Models
+class TopicRequest(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
+    slug: str = Field(min_length=1, max_length=100)
+    visible: bool = True
+
+class CountryRequest(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
+    slug: str = Field(min_length=1, max_length=100)
+    visible: bool = True
+
+class GuideRequest(BaseModel):
+    name: str = Field(min_length=1, max_length=200)
+    visible: bool = True
+
 # ==========================================
 # FILE HANDLING UTILITIES
 # ==========================================
