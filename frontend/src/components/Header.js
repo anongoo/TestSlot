@@ -57,6 +57,14 @@ const Header = () => {
               >
                 FAQ
               </motion.a>
+              <motion.a 
+                href="/book" 
+                className="text-gray-600 hover:text-fiesta-orange transition-colors font-medium"
+                whileHover={{ y: -2 }}
+                transition={{ type: "spring", stiffness: 300 }}
+              >
+                🎯 Join a Class
+              </motion.a>
             </nav>
             
             {/* Donate Button */}
