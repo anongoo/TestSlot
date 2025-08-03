@@ -89,14 +89,17 @@ const Header = () => {
               href="https://buymeacoffee.com/englishfiesta"
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden sm:block bg-gradient-to-r from-fiesta-pink to-pink-500 text-white px-3 py-2 rounded-full font-semibold text-xs md:text-sm shadow-lg hover:shadow-xl transition-all duration-300"
+              className="hidden sm:flex items-center justify-center bg-gradient-to-r from-fiesta-pink to-pink-500 text-white px-3 py-2 rounded-full font-semibold text-xs md:text-sm shadow-lg hover:shadow-xl transition-all duration-300 whitespace-nowrap"
               whileHover={{ 
                 scale: 1.05,
                 boxShadow: "0 10px 25px rgba(236, 72, 153, 0.4)"
               }}
               whileTap={{ scale: 0.95 }}
             >
-              💖 Help English Fiesta Grow
+              <span className="flex items-center gap-1">
+                <span>💖</span>
+                <span>Help English Fiesta Grow</span>
+              </span>
             </motion.a>
             
             {isAuthenticated ? (
