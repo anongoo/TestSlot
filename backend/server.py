@@ -1278,6 +1278,52 @@ async def delete_comment(
     
     return {"message": "Comment deleted successfully"}
 
+@api_router.put("/comments/{comment_id}/pin")
+async def pin_comment(
+    comment_id: str,
+    current_user: User = Depends(require_role(UserRole.ADMIN))
+):
+    """Pin a comment (admin only)"""
+    # Find and update the comment
+    result = await db.comments.update_one(
+        {"id": comment_id},
+        {"$set": {"pinned": True}}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    
+    # Get the updated comment
+    comment = await db.comments.find_one({"id": comment_id}, {"_id": 0})
+    
+    return {
+        "message": "Comment pinned successfully",
+        "comment": comment
+    }
+
+@api_router.put("/comments/{comment_id}/unpin")
+async def unpin_comment(
+    comment_id: str,
+    current_user: User = Depends(require_role(UserRole.ADMIN))
+):
+    """Unpin a comment (admin only)"""
+    # Find and update the comment
+    result = await db.comments.update_one(
+        {"id": comment_id},
+        {"$set": {"pinned": False}}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    
+    # Get the updated comment
+    comment = await db.comments.find_one({"id": comment_id}, {"_id": 0})
+    
+    return {
+        "message": "Comment unpinned successfully",
+        "comment": comment
+    }
+
 # ==========================================
 # ADMIN VIDEO UPLOAD ENDPOINTS
 # ==========================================
