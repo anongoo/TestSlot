@@ -370,7 +370,77 @@ frontend:
           agent: "main"
           comment: "Created comprehensive Language Levels section for Progress tab implementing Dreaming Spanish 7-level system. Features: Level cards (1-7) with hours/words/video type, expandable modal with full descriptions, three-section summary (What you can do/need to do/are learning), tooltip for related vs unrelated languages, attribution to Dreaming Spanish with PDF download link. Updated ProgressTab text: 'Manual Activities' → 'Outside Activities', 'Platform Videos' → 'English Fiesta'. All level descriptions and recommendations included with proper 'New Beginner' terminology."
 
-  - task: "EmailSubscriptionBanner Translation Integration"
+  - task: "LAUNCH Phase 1 - Visual Theme Overhaul"
+    implemented: false
+    working: false
+    file: "/app/frontend/package.json, tailwind.config.js, src/App.css"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: false
+          agent: "main"
+          comment: "Starting Phase 1 implementation: Install framer-motion, Poppins/Baloo 2 fonts, apply vibrant color palette (#facc15 yellow, #ec4899 pink, #38bdf8 sky blue + purple, green, orange), add button hover animations and page transitions. Target all components for visual overhaul."
+
+  - task: "LAUNCH Phase 2 - Join the Fiesta Button"
+    implemented: false
+    working: false
+    file: "/app/frontend/src/components/HeroSection.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: false
+          agent: "main"
+          comment: "Add 6th grid card (row 2, column 3) with '🎯 Join the Fiesta' text, bright yellow styling, standout bounce animation, click sound, routing to /watch page without breaking layout."
+
+  - task: "LAUNCH Phase 3 - Donate Button Integration"
+    implemented: false
+    working: false
+    file: "/app/frontend/src/components/Header.js, Footer.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: false
+          agent: "main"
+          comment: "Add '💖 Help English Fiesta Grow' donate buttons in header (top-right) and footer sections linking to https://buymeacoffee.com/englishfiesta with rounded style and pink tones."
+
+  - task: "LAUNCH Phase 4 - Join the Team Page"
+    implemented: false
+    working: false
+    file: "/app/frontend/src/App.js, components/JoinTeam.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: false
+          agent: "main"
+          comment: "Create new /join route and JoinTeam component with header 'Join the English Fiesta Team', recruitment blurb about seeking creative collaborators (instructors, designers, developers, translators, supporters), email contact englishfiestateam@gmail.com, and footer link integration."
+
+  - task: "LAUNCH Phase 5 - Video Commenting System Backend"
+    implemented: false
+    working: false
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: false
+          agent: "main"
+          comment: "Implement Comment model with UUID, video_id, user_id, user_name, text, created_at fields. Add GET /api/comments/{video_id} and POST /api/comments/{video_id} endpoints with authentication (students can post, guests view-only), admin moderation features."
+
+  - task: "LAUNCH Phase 5 - Video Commenting System Frontend"
+    implemented: false
+    working: false
+    file: "/app/frontend/src/components/CommentForm.js, CommentList.js, CommentItem.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: false
+          agent: "main"
+          comment: "Create commenting interface components: CommentForm for authenticated students, CommentList for reverse chronological display, CommentItem with user info and admin delete functionality. Integrate emoji support, Tailwind styling, animations, and auth-based permissions."
     implemented: true
     working: true
     file: "/app/frontend/src/components/EmailSubscriptionBanner.js"
