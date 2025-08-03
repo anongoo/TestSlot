@@ -158,6 +158,27 @@ class VideoSeries(BaseModel):
     total_duration_minutes: int
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
+# New Filter Collections Models
+class Topic(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    slug: str
+    visible: bool = True
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class Country(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    slug: str
+    visible: bool = True
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class Guide(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    visible: bool = True
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
 class WatchProgress(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     user_id: Optional[str] = None  # For guest users, this will be None
