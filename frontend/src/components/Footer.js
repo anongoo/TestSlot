@@ -53,14 +53,23 @@ const Footer = () => {
           
           {/* Brand Section */}
           <div className="md:col-span-2">
-            <motion.h3 
-              className="text-xl font-bold mb-4 bg-gradient-to-r from-fiesta-yellow to-fiesta-orange bg-clip-text text-transparent font-baloo"
+            <motion.div 
+              className="flex items-center gap-3 mb-4"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
-              🎉 English Fiesta
-            </motion.h3>
+              <motion.img 
+                src="/english-fiesta-logo-hq.png" 
+                alt="English Fiesta Logo" 
+                className="w-8 h-8"
+                whileHover={{ rotate: 360 }}
+                transition={{ duration: 0.6 }}
+              />
+              <h3 className="text-xl font-bold bg-gradient-to-r from-fiesta-yellow to-fiesta-orange bg-clip-text text-transparent font-baloo">
+                English Fiesta
+              </h3>
+            </motion.div>
             <motion.p 
               className="text-gray-300 leading-relaxed mb-4 font-poppins"
               initial={{ opacity: 0, y: 20 }}
