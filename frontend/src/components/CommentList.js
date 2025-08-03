@@ -164,6 +164,7 @@ const CommentList = ({ videoId }) => {
                 <CommentItem 
                   comment={comment} 
                   onCommentDeleted={handleCommentDeleted}
+                  onCommentPinToggled={handleCommentPinToggled}
                 />
               </motion.div>
             ))}
