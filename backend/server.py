@@ -2994,6 +2994,91 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Initialize filter collections with sample data
+async def initialize_filter_collections():
+    """Initialize filter collections with sample data if they don't exist"""
+    try:
+        # Sample Topics
+        topics_data = [
+            {"name": "Daily Life", "slug": "daily-life"},
+            {"name": "Travel", "slug": "travel"}, 
+            {"name": "Food", "slug": "food"},
+            {"name": "School", "slug": "school"},
+            {"name": "Culture", "slug": "culture"},
+            {"name": "Family", "slug": "family"},
+            {"name": "Jobs", "slug": "jobs"},
+            {"name": "Emotions", "slug": "emotions"},
+            {"name": "Hobbies", "slug": "hobbies"},
+            {"name": "Society", "slug": "society"}
+        ]
+        
+        # Check if topics collection is empty
+        topic_count = await db.topics.count_documents({})
+        if topic_count == 0:
+            for topic_data in topics_data:
+                topic = Topic(
+                    name=topic_data["name"],
+                    slug=topic_data["slug"],
+                    visible=True
+                )
+                await db.topics.insert_one(topic.dict())
+            logger.info(f"Initialized {len(topics_data)} topics")
+        
+        # Sample Countries
+        countries_data = [
+            {"name": "USA", "slug": "usa"},
+            {"name": "UK", "slug": "uk"},
+            {"name": "Canada", "slug": "canada"},
+            {"name": "Australia", "slug": "australia"},
+            {"name": "Other", "slug": "other"}
+        ]
+        
+        # Check if countries collection is empty
+        country_count = await db.countries.count_documents({})
+        if country_count == 0:
+            for country_data in countries_data:
+                country = Country(
+                    name=country_data["name"],
+                    slug=country_data["slug"],
+                    visible=True
+                )
+                await db.countries.insert_one(country.dict())
+            logger.info(f"Initialized {len(countries_data)} countries")
+        
+        # Sample Guides (based on existing instructor names if any exist)
+        guide_count = await db.guides.count_documents({})
+        if guide_count == 0:
+            # Try to get unique instructor names from videos
+            pipeline = [
+                {"$group": {"_id": "$instructor_name"}},
+                {"$match": {"_id": {"$ne": None}}},
+                {"$limit": 10}
+            ]
+            
+            unique_instructors = []
+            try:
+                cursor = db.videos.aggregate(pipeline)
+                unique_instructors = [doc["_id"] for doc in await cursor.to_list(length=10)]
+            except:
+                # If no videos exist, use sample data
+                unique_instructors = ["Sample Instructor 1", "Sample Instructor 2"]
+            
+            for instructor_name in unique_instructors:
+                guide = Guide(
+                    name=instructor_name,
+                    visible=True
+                )
+                await db.guides.insert_one(guide.dict())
+            logger.info(f"Initialized {len(unique_instructors)} guides")
+        
+    except Exception as e:
+        logger.error(f"Error initializing filter collections: {e}")
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize collections on startup"""
+    await initialize_filter_collections()
+
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
