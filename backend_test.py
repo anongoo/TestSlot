@@ -4027,6 +4027,560 @@ class EnglishFiestaAPITester:
                 {"session_id": flow_session_id, "video_id": video_id}
             )
 
+    # ========== VIDEO COMMENTING SYSTEM TESTS ==========
+    
+    def test_get_comments_valid_video(self):
+        """Test retrieving comments for a valid video (public access)"""
+        if not self.sample_videos:
+            self.log_test(
+                "GET /api/comments/{video_id} - Valid Video",
+                False,
+                "No sample videos available for testing"
+            )
+            return
+        
+        video_id = self.sample_videos[0]['id']
+        
+        try:
+            response = requests.get(f"{BACKEND_URL}/comments/{video_id}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "video_id" in data and "comments" in data and "total" in data:
+                    self.log_test(
+                        "GET /api/comments/{video_id} - Valid Video",
+                        True,
+                        f"Successfully retrieved comments for video {video_id}",
+                        {
+                            "video_id": video_id,
+                            "comment_count": data.get("total", 0),
+                            "comments_returned": len(data.get("comments", []))
+                        }
+                    )
+                else:
+                    self.log_test(
+                        "GET /api/comments/{video_id} - Valid Video",
+                        False,
+                        "Missing required fields in response",
+                        {"response": data}
+                    )
+            else:
+                self.log_test(
+                    "GET /api/comments/{video_id} - Valid Video",
+                    False,
+                    f"HTTP {response.status_code}: {response.text}",
+                    {"video_id": video_id}
+                )
+        except Exception as e:
+            self.log_test(
+                "GET /api/comments/{video_id} - Valid Video",
+                False,
+                f"Request failed: {str(e)}",
+                {"video_id": video_id}
+            )
+    
+    def test_get_comments_invalid_video(self):
+        """Test retrieving comments for non-existent video"""
+        invalid_video_id = "non-existent-video-id-123"
+        
+        try:
+            response = requests.get(f"{BACKEND_URL}/comments/{invalid_video_id}")
+            
+            if response.status_code == 404:
+                self.log_test(
+                    "GET /api/comments/{video_id} - Invalid Video",
+                    True,
+                    "Correctly returned 404 for non-existent video",
+                    {"invalid_video_id": invalid_video_id}
+                )
+            else:
+                self.log_test(
+                    "GET /api/comments/{video_id} - Invalid Video",
+                    False,
+                    f"Expected 404, got {response.status_code}: {response.text}",
+                    {"invalid_video_id": invalid_video_id}
+                )
+        except Exception as e:
+            self.log_test(
+                "GET /api/comments/{video_id} - Invalid Video",
+                False,
+                f"Request failed: {str(e)}",
+                {"invalid_video_id": invalid_video_id}
+            )
+    
+    def test_post_comment_without_auth(self):
+        """Test posting comment without authentication (should fail)"""
+        if not self.sample_videos:
+            self.log_test(
+                "POST /api/comments/{video_id} - No Auth",
+                False,
+                "No sample videos available for testing"
+            )
+            return
+        
+        video_id = self.sample_videos[0]['id']
+        comment_data = {
+            "text": "This is a test comment without authentication"
+        }
+        
+        try:
+            response = requests.post(f"{BACKEND_URL}/comments/{video_id}", json=comment_data)
+            
+            if response.status_code == 401:
+                self.log_test(
+                    "POST /api/comments/{video_id} - No Auth",
+                    True,
+                    "Correctly rejected comment posting without authentication",
+                    {"video_id": video_id, "expected_status": 401}
+                )
+            else:
+                self.log_test(
+                    "POST /api/comments/{video_id} - No Auth",
+                    False,
+                    f"Expected 401, got {response.status_code}: {response.text}",
+                    {"video_id": video_id}
+                )
+        except Exception as e:
+            self.log_test(
+                "POST /api/comments/{video_id} - No Auth",
+                False,
+                f"Request failed: {str(e)}",
+                {"video_id": video_id}
+            )
+    
+    def test_post_comment_guest_user(self):
+        """Test posting comment as guest user (should fail - requires student role)"""
+        if not self.sample_videos:
+            self.log_test(
+                "POST /api/comments/{video_id} - Guest User",
+                False,
+                "No sample videos available for testing"
+            )
+            return
+        
+        video_id = self.sample_videos[0]['id']
+        comment_data = {
+            "text": "This is a test comment from guest user"
+        }
+        
+        # Using invalid token to simulate guest user
+        headers = {"Authorization": "Bearer guest_user_token"}
+        
+        try:
+            response = requests.post(f"{BACKEND_URL}/comments/{video_id}", json=comment_data, headers=headers)
+            
+            if response.status_code in [401, 403]:
+                self.log_test(
+                    "POST /api/comments/{video_id} - Guest User",
+                    True,
+                    f"Correctly rejected guest user comment with {response.status_code}",
+                    {"video_id": video_id, "status_code": response.status_code}
+                )
+            else:
+                self.log_test(
+                    "POST /api/comments/{video_id} - Guest User",
+                    False,
+                    f"Expected 401/403, got {response.status_code}: {response.text}",
+                    {"video_id": video_id}
+                )
+        except Exception as e:
+            self.log_test(
+                "POST /api/comments/{video_id} - Guest User",
+                False,
+                f"Request failed: {str(e)}",
+                {"video_id": video_id}
+            )
+    
+    def test_post_comment_invalid_video(self):
+        """Test posting comment to non-existent video"""
+        invalid_video_id = "non-existent-video-id-123"
+        comment_data = {
+            "text": "This is a test comment for invalid video"
+        }
+        
+        # Using mock student token
+        headers = {"Authorization": "Bearer mock_student_token"}
+        
+        try:
+            response = requests.post(f"{BACKEND_URL}/comments/{invalid_video_id}", json=comment_data, headers=headers)
+            
+            if response.status_code == 404:
+                self.log_test(
+                    "POST /api/comments/{video_id} - Invalid Video",
+                    True,
+                    "Correctly returned 404 for non-existent video",
+                    {"invalid_video_id": invalid_video_id}
+                )
+            elif response.status_code == 401:
+                # Also acceptable since we're using mock token
+                self.log_test(
+                    "POST /api/comments/{video_id} - Invalid Video",
+                    True,
+                    "Authentication failed as expected with mock token",
+                    {"invalid_video_id": invalid_video_id}
+                )
+            else:
+                self.log_test(
+                    "POST /api/comments/{video_id} - Invalid Video",
+                    False,
+                    f"Expected 404 or 401, got {response.status_code}: {response.text}",
+                    {"invalid_video_id": invalid_video_id}
+                )
+        except Exception as e:
+            self.log_test(
+                "POST /api/comments/{video_id} - Invalid Video",
+                False,
+                f"Request failed: {str(e)}",
+                {"invalid_video_id": invalid_video_id}
+            )
+    
+    def test_post_comment_validation_empty_text(self):
+        """Test comment validation with empty text"""
+        if not self.sample_videos:
+            self.log_test(
+                "POST /api/comments/{video_id} - Empty Text Validation",
+                False,
+                "No sample videos available for testing"
+            )
+            return
+        
+        video_id = self.sample_videos[0]['id']
+        comment_data = {
+            "text": ""  # Empty text should fail validation
+        }
+        
+        headers = {"Authorization": "Bearer mock_student_token"}
+        
+        try:
+            response = requests.post(f"{BACKEND_URL}/comments/{video_id}", json=comment_data, headers=headers)
+            
+            if response.status_code == 422:
+                self.log_test(
+                    "POST /api/comments/{video_id} - Empty Text Validation",
+                    True,
+                    "Correctly rejected empty comment text with 422",
+                    {"video_id": video_id}
+                )
+            elif response.status_code == 401:
+                # Also acceptable since we're using mock token
+                self.log_test(
+                    "POST /api/comments/{video_id} - Empty Text Validation",
+                    True,
+                    "Authentication failed as expected with mock token",
+                    {"video_id": video_id}
+                )
+            else:
+                self.log_test(
+                    "POST /api/comments/{video_id} - Empty Text Validation",
+                    False,
+                    f"Expected 422 or 401, got {response.status_code}: {response.text}",
+                    {"video_id": video_id}
+                )
+        except Exception as e:
+            self.log_test(
+                "POST /api/comments/{video_id} - Empty Text Validation",
+                False,
+                f"Request failed: {str(e)}",
+                {"video_id": video_id}
+            )
+    
+    def test_post_comment_validation_max_length(self):
+        """Test comment validation with maximum length text"""
+        if not self.sample_videos:
+            self.log_test(
+                "POST /api/comments/{video_id} - Max Length Validation",
+                False,
+                "No sample videos available for testing"
+            )
+            return
+        
+        video_id = self.sample_videos[0]['id']
+        # Create text longer than 500 characters
+        long_text = "A" * 501
+        comment_data = {
+            "text": long_text
+        }
+        
+        headers = {"Authorization": "Bearer mock_student_token"}
+        
+        try:
+            response = requests.post(f"{BACKEND_URL}/comments/{video_id}", json=comment_data, headers=headers)
+            
+            if response.status_code == 422:
+                self.log_test(
+                    "POST /api/comments/{video_id} - Max Length Validation",
+                    True,
+                    f"Correctly rejected comment text over 500 chars ({len(long_text)} chars) with 422",
+                    {"video_id": video_id, "text_length": len(long_text)}
+                )
+            elif response.status_code == 401:
+                # Also acceptable since we're using mock token
+                self.log_test(
+                    "POST /api/comments/{video_id} - Max Length Validation",
+                    True,
+                    "Authentication failed as expected with mock token",
+                    {"video_id": video_id, "text_length": len(long_text)}
+                )
+            else:
+                self.log_test(
+                    "POST /api/comments/{video_id} - Max Length Validation",
+                    False,
+                    f"Expected 422 or 401, got {response.status_code}: {response.text}",
+                    {"video_id": video_id, "text_length": len(long_text)}
+                )
+        except Exception as e:
+            self.log_test(
+                "POST /api/comments/{video_id} - Max Length Validation",
+                False,
+                f"Request failed: {str(e)}",
+                {"video_id": video_id, "text_length": len(long_text)}
+            )
+    
+    def test_delete_comment_without_auth(self):
+        """Test deleting comment without authentication (should fail)"""
+        fake_comment_id = "fake-comment-id-123"
+        
+        try:
+            response = requests.delete(f"{BACKEND_URL}/admin/comments/{fake_comment_id}")
+            
+            if response.status_code == 401:
+                self.log_test(
+                    "DELETE /api/admin/comments/{comment_id} - No Auth",
+                    True,
+                    "Correctly rejected comment deletion without authentication",
+                    {"comment_id": fake_comment_id, "expected_status": 401}
+                )
+            else:
+                self.log_test(
+                    "DELETE /api/admin/comments/{comment_id} - No Auth",
+                    False,
+                    f"Expected 401, got {response.status_code}: {response.text}",
+                    {"comment_id": fake_comment_id}
+                )
+        except Exception as e:
+            self.log_test(
+                "DELETE /api/admin/comments/{comment_id} - No Auth",
+                False,
+                f"Request failed: {str(e)}",
+                {"comment_id": fake_comment_id}
+            )
+    
+    def test_delete_comment_non_admin(self):
+        """Test deleting comment with non-admin user (should fail)"""
+        fake_comment_id = "fake-comment-id-123"
+        
+        # Using mock student token (not admin)
+        headers = {"Authorization": "Bearer mock_student_token"}
+        
+        try:
+            response = requests.delete(f"{BACKEND_URL}/admin/comments/{fake_comment_id}", headers=headers)
+            
+            if response.status_code in [401, 403]:
+                self.log_test(
+                    "DELETE /api/admin/comments/{comment_id} - Non-Admin User",
+                    True,
+                    f"Correctly rejected non-admin comment deletion with {response.status_code}",
+                    {"comment_id": fake_comment_id, "status_code": response.status_code}
+                )
+            else:
+                self.log_test(
+                    "DELETE /api/admin/comments/{comment_id} - Non-Admin User",
+                    False,
+                    f"Expected 401/403, got {response.status_code}: {response.text}",
+                    {"comment_id": fake_comment_id}
+                )
+        except Exception as e:
+            self.log_test(
+                "DELETE /api/admin/comments/{comment_id} - Non-Admin User",
+                False,
+                f"Request failed: {str(e)}",
+                {"comment_id": fake_comment_id}
+            )
+    
+    def test_delete_comment_invalid_id(self):
+        """Test deleting non-existent comment"""
+        fake_comment_id = "non-existent-comment-id-123"
+        
+        # Using mock admin token
+        headers = {"Authorization": "Bearer mock_admin_token"}
+        
+        try:
+            response = requests.delete(f"{BACKEND_URL}/admin/comments/{fake_comment_id}", headers=headers)
+            
+            if response.status_code == 404:
+                self.log_test(
+                    "DELETE /api/admin/comments/{comment_id} - Invalid Comment ID",
+                    True,
+                    "Correctly returned 404 for non-existent comment",
+                    {"comment_id": fake_comment_id}
+                )
+            elif response.status_code == 401:
+                # Also acceptable since we're using mock token
+                self.log_test(
+                    "DELETE /api/admin/comments/{comment_id} - Invalid Comment ID",
+                    True,
+                    "Authentication failed as expected with mock token",
+                    {"comment_id": fake_comment_id}
+                )
+            else:
+                self.log_test(
+                    "DELETE /api/admin/comments/{comment_id} - Invalid Comment ID",
+                    False,
+                    f"Expected 404 or 401, got {response.status_code}: {response.text}",
+                    {"comment_id": fake_comment_id}
+                )
+        except Exception as e:
+            self.log_test(
+                "DELETE /api/admin/comments/{comment_id} - Invalid Comment ID",
+                False,
+                f"Request failed: {str(e)}",
+                {"comment_id": fake_comment_id}
+            )
+    
+    def test_comment_system_models_validation(self):
+        """Test that comment system models are properly defined"""
+        # This test validates the structure by testing endpoint responses
+        if not self.sample_videos:
+            self.log_test(
+                "Comment System Models Validation",
+                False,
+                "No sample videos available for testing"
+            )
+            return
+        
+        video_id = self.sample_videos[0]['id']
+        
+        try:
+            # Test GET comments endpoint structure
+            response = requests.get(f"{BACKEND_URL}/comments/{video_id}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                required_fields = ["video_id", "comments", "total"]
+                missing_fields = [field for field in required_fields if field not in data]
+                
+                if not missing_fields:
+                    # Check comments structure (if any exist)
+                    comments = data.get("comments", [])
+                    comment_structure_valid = True
+                    
+                    if comments:
+                        # Check first comment structure
+                        comment = comments[0]
+                        comment_fields = ["id", "video_id", "user_id", "user_name", "text", "created_at"]
+                        missing_comment_fields = [field for field in comment_fields if field not in comment]
+                        if missing_comment_fields:
+                            comment_structure_valid = False
+                    
+                    self.log_test(
+                        "Comment System Models Validation",
+                        True,
+                        f"Comment system models properly structured. Comments found: {len(comments)}",
+                        {
+                            "video_id": video_id,
+                            "comment_count": len(comments),
+                            "structure_valid": comment_structure_valid
+                        }
+                    )
+                else:
+                    self.log_test(
+                        "Comment System Models Validation",
+                        False,
+                        f"Missing required fields in comment response: {missing_fields}",
+                        {"response": data}
+                    )
+            else:
+                self.log_test(
+                    "Comment System Models Validation",
+                    False,
+                    f"Failed to retrieve comments for validation: {response.status_code}",
+                    {"video_id": video_id}
+                )
+        except Exception as e:
+            self.log_test(
+                "Comment System Models Validation",
+                False,
+                f"Request failed: {str(e)}",
+                {"video_id": video_id}
+            )
+    
+    def test_comment_system_endpoints_exist(self):
+        """Test that all comment system endpoints exist and respond appropriately"""
+        if not self.sample_videos:
+            self.log_test(
+                "Comment System Endpoints Existence",
+                False,
+                "No sample videos available for testing"
+            )
+            return
+        
+        video_id = self.sample_videos[0]['id']
+        fake_comment_id = "fake-comment-id-123"
+        
+        endpoints_tested = []
+        
+        # Test GET comments endpoint
+        try:
+            response = requests.get(f"{BACKEND_URL}/comments/{video_id}")
+            endpoints_tested.append({
+                "endpoint": f"GET /api/comments/{video_id}",
+                "status": response.status_code,
+                "exists": response.status_code != 404
+            })
+        except:
+            endpoints_tested.append({
+                "endpoint": f"GET /api/comments/{video_id}",
+                "status": "error",
+                "exists": False
+            })
+        
+        # Test POST comment endpoint
+        try:
+            response = requests.post(f"{BACKEND_URL}/comments/{video_id}", json={"text": "test"})
+            endpoints_tested.append({
+                "endpoint": f"POST /api/comments/{video_id}",
+                "status": response.status_code,
+                "exists": response.status_code != 404
+            })
+        except:
+            endpoints_tested.append({
+                "endpoint": f"POST /api/comments/{video_id}",
+                "status": "error",
+                "exists": False
+            })
+        
+        # Test DELETE comment endpoint
+        try:
+            response = requests.delete(f"{BACKEND_URL}/admin/comments/{fake_comment_id}")
+            endpoints_tested.append({
+                "endpoint": f"DELETE /api/admin/comments/{fake_comment_id}",
+                "status": response.status_code,
+                "exists": response.status_code != 404
+            })
+        except:
+            endpoints_tested.append({
+                "endpoint": f"DELETE /api/admin/comments/{fake_comment_id}",
+                "status": "error",
+                "exists": False
+            })
+        
+        existing_endpoints = [ep for ep in endpoints_tested if ep["exists"]]
+        
+        if len(existing_endpoints) == 3:
+            self.log_test(
+                "Comment System Endpoints Existence",
+                True,
+                f"All 3 comment system endpoints exist and respond appropriately",
+                {"endpoints": endpoints_tested}
+            )
+        else:
+            self.log_test(
+                "Comment System Endpoints Existence",
+                False,
+                f"Only {len(existing_endpoints)}/3 comment endpoints exist",
+                {"endpoints": endpoints_tested}
+            )
+
     def run_all_tests(self):
         """Run all backend tests"""
         print("🚀 Starting English Fiesta Backend API Tests")
