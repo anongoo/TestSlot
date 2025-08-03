@@ -70,6 +70,15 @@ const App = () => {
                   <FAQ />
                 </motion.div>
               } />
+              <Route path="/join" element={
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.6, ease: "easeOut" }}
+                >
+                  <JoinTeam />
+                </motion.div>
+              } />
             </Routes>
           </motion.main>
           
