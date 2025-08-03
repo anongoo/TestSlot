@@ -94,6 +94,9 @@ const App = () => {
           </motion.main>
           
           <Footer />
+          
+          {/* Email Capture Modal */}
+          <EmailCaptureModal />
         </div>
       </Router>
     </AuthProvider>
