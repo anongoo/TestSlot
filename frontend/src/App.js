@@ -80,6 +80,15 @@ const App = () => {
                   <JoinTeam />
                 </motion.div>
               } />
+              <Route path="/book" element={
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.6, ease: "easeOut" }}
+                >
+                  <BookClassPage />
+                </motion.div>
+              } />
             </Routes>
           </motion.main>
           
