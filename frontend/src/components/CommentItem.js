@@ -27,6 +27,33 @@ const CommentItem = ({ comment, onCommentDeleted, onCommentPinToggled }) => {
     });
   };
 
+  const handlePinToggle = async () => {
+    setIsPinToggling(true);
+    try {
+      const endpoint = comment.pinned ? 'unpin' : 'pin';
+      const response = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/api/comments/${comment.id}/${endpoint}`,
+        {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${user.sessionToken}`
+          }
+        }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+        onCommentPinToggled(result.comment);
+      } else {
+        console.error('Failed to toggle pin status');
+      }
+    } catch (error) {
+      console.error('Error toggling pin status:', error);
+    } finally {
+      setIsPinToggling(false);
+    }
+  };
+
   const handleDelete = async () => {
     if (!confirm('Are you sure you want to delete this comment?')) return;
 
