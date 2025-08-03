@@ -19,6 +19,7 @@ import WatchPage from './pages/WatchPage';
 import About from './components/About';
 import FAQ from './components/FAQ';
 import JoinTeam from './components/JoinTeam';
+import BookClassPage from './components/BookClassPage';
 
 const App = () => {
   return (
