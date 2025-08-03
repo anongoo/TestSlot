@@ -1934,6 +1934,271 @@ async def get_admin_content_list(
     }
 
 # ==========================================
+# FILTER COLLECTIONS MANAGEMENT ENDPOINTS (ADMIN)
+# ==========================================
+
+# Topics Management
+@api_router.get("/admin/topics")
+async def get_topics_admin(current_user: User = Depends(require_role(UserRole.ADMIN))):
+    """Get all topics for admin management"""
+    topics = await db.topics.find({}, {"_id": 0}).sort("name", 1).to_list(100)
+    return {"topics": topics, "total": len(topics)}
+
+@api_router.post("/admin/topics")
+async def create_topic(
+    topic_data: TopicRequest,
+    current_user: User = Depends(require_role(UserRole.ADMIN))
+):
+    """Create a new topic"""
+    # Check if topic with same name or slug exists
+    existing = await db.topics.find_one({
+        "$or": [
+            {"name": topic_data.name},
+            {"slug": topic_data.slug}
+        ]
+    })
+    
+    if existing:
+        raise HTTPException(status_code=400, detail="Topic with this name or slug already exists")
+    
+    topic = Topic(
+        name=topic_data.name,
+        slug=topic_data.slug,
+        visible=topic_data.visible
+    )
+    
+    await db.topics.insert_one(topic.dict())
+    return {"message": "Topic created successfully", "topic": topic.dict()}
+
+@api_router.put("/admin/topics/{topic_id}")
+async def update_topic(
+    topic_id: str,
+    topic_data: TopicRequest,
+    current_user: User = Depends(require_role(UserRole.ADMIN))
+):
+    """Update an existing topic"""
+    # Check if another topic with same name or slug exists
+    existing = await db.topics.find_one({
+        "$and": [
+            {"id": {"$ne": topic_id}},
+            {"$or": [
+                {"name": topic_data.name},
+                {"slug": topic_data.slug}
+            ]}
+        ]
+    })
+    
+    if existing:
+        raise HTTPException(status_code=400, detail="Another topic with this name or slug already exists")
+    
+    result = await db.topics.update_one(
+        {"id": topic_id},
+        {"$set": {
+            "name": topic_data.name,
+            "slug": topic_data.slug,
+            "visible": topic_data.visible
+        }}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Topic not found")
+    
+    return {"message": "Topic updated successfully"}
+
+@api_router.delete("/admin/topics/{topic_id}")
+async def delete_topic(
+    topic_id: str,
+    current_user: User = Depends(require_role(UserRole.ADMIN))
+):
+    """Delete a topic"""
+    result = await db.topics.delete_one({"id": topic_id})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Topic not found")
+    
+    return {"message": "Topic deleted successfully"}
+
+# Countries Management
+@api_router.get("/admin/countries")
+async def get_countries_admin(current_user: User = Depends(require_role(UserRole.ADMIN))):
+    """Get all countries for admin management"""
+    countries = await db.countries.find({}, {"_id": 0}).sort("name", 1).to_list(100)
+    return {"countries": countries, "total": len(countries)}
+
+@api_router.post("/admin/countries")
+async def create_country(
+    country_data: CountryRequest,
+    current_user: User = Depends(require_role(UserRole.ADMIN))
+):
+    """Create a new country"""
+    # Check if country with same name or slug exists
+    existing = await db.countries.find_one({
+        "$or": [
+            {"name": country_data.name},
+            {"slug": country_data.slug}
+        ]
+    })
+    
+    if existing:
+        raise HTTPException(status_code=400, detail="Country with this name or slug already exists")
+    
+    country = Country(
+        name=country_data.name,
+        slug=country_data.slug,
+        visible=country_data.visible
+    )
+    
+    await db.countries.insert_one(country.dict())
+    return {"message": "Country created successfully", "country": country.dict()}
+
+@api_router.put("/admin/countries/{country_id}")
+async def update_country(
+    country_id: str,
+    country_data: CountryRequest,
+    current_user: User = Depends(require_role(UserRole.ADMIN))
+):
+    """Update an existing country"""
+    # Check if another country with same name or slug exists
+    existing = await db.countries.find_one({
+        "$and": [
+            {"id": {"$ne": country_id}},
+            {"$or": [
+                {"name": country_data.name},
+                {"slug": country_data.slug}
+            ]}
+        ]
+    })
+    
+    if existing:
+        raise HTTPException(status_code=400, detail="Another country with this name or slug already exists")
+    
+    result = await db.countries.update_one(
+        {"id": country_id},
+        {"$set": {
+            "name": country_data.name,
+            "slug": country_data.slug,
+            "visible": country_data.visible
+        }}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Country not found")
+    
+    return {"message": "Country updated successfully"}
+
+@api_router.delete("/admin/countries/{country_id}")
+async def delete_country(
+    country_id: str,
+    current_user: User = Depends(require_role(UserRole.ADMIN))
+):
+    """Delete a country"""
+    result = await db.countries.delete_one({"id": country_id})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Country not found")
+    
+    return {"message": "Country deleted successfully"}
+
+# Guides Management
+@api_router.get("/admin/guides")
+async def get_guides_admin(current_user: User = Depends(require_role(UserRole.ADMIN))):
+    """Get all guides for admin management"""
+    guides = await db.guides.find({}, {"_id": 0}).sort("name", 1).to_list(100)
+    return {"guides": guides, "total": len(guides)}
+
+@api_router.post("/admin/guides")
+async def create_guide(
+    guide_data: GuideRequest,
+    current_user: User = Depends(require_role(UserRole.ADMIN))
+):
+    """Create a new guide"""
+    # Check if guide with same name exists
+    existing = await db.guides.find_one({"name": guide_data.name})
+    
+    if existing:
+        raise HTTPException(status_code=400, detail="Guide with this name already exists")
+    
+    guide = Guide(
+        name=guide_data.name,
+        visible=guide_data.visible
+    )
+    
+    await db.guides.insert_one(guide.dict())
+    return {"message": "Guide created successfully", "guide": guide.dict()}
+
+@api_router.put("/admin/guides/{guide_id}")
+async def update_guide(
+    guide_id: str,
+    guide_data: GuideRequest,
+    current_user: User = Depends(require_role(UserRole.ADMIN))
+):
+    """Update an existing guide"""
+    # Check if another guide with same name exists
+    existing = await db.guides.find_one({
+        "$and": [
+            {"id": {"$ne": guide_id}},
+            {"name": guide_data.name}
+        ]
+    })
+    
+    if existing:
+        raise HTTPException(status_code=400, detail="Another guide with this name already exists")
+    
+    result = await db.guides.update_one(
+        {"id": guide_id},
+        {"$set": {
+            "name": guide_data.name,
+            "visible": guide_data.visible
+        }}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Guide not found")
+    
+    return {"message": "Guide updated successfully"}
+
+@api_router.delete("/admin/guides/{guide_id}")
+async def delete_guide(
+    guide_id: str,
+    current_user: User = Depends(require_role(UserRole.ADMIN))
+):
+    """Delete a guide"""
+    result = await db.guides.delete_one({"id": guide_id})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Guide not found")
+    
+    return {"message": "Guide deleted successfully"}
+
+# Public Filter Endpoints (for frontend dropdowns)
+@api_router.get("/filters/topics")
+async def get_visible_topics():
+    """Get visible topics for frontend filter dropdown"""
+    topics = await db.topics.find(
+        {"visible": True}, 
+        {"_id": 0}
+    ).sort("name", 1).to_list(100)
+    return {"topics": topics}
+
+@api_router.get("/filters/countries")
+async def get_visible_countries():
+    """Get visible countries for frontend filter dropdown"""
+    countries = await db.countries.find(
+        {"visible": True}, 
+        {"_id": 0}
+    ).sort("name", 1).to_list(100)
+    return {"countries": countries}
+
+@api_router.get("/filters/guides")
+async def get_visible_guides():
+    """Get visible guides for frontend filter dropdown"""
+    guides = await db.guides.find(
+        {"visible": True}, 
+        {"_id": 0}
+    ).sort("name", 1).to_list(100)
+    return {"guides": guides}
+
+# ==========================================
 # NEW ENDPOINTS FOR VIDEO BUTTONS
 # ==========================================
 
