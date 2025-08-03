@@ -32,7 +32,8 @@ const Header = () => {
           </motion.div>
           
           {/* Navigation */}
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-4">
+            {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center gap-6">
               <motion.a 
                 href="/" 
@@ -67,13 +68,25 @@ const Header = () => {
                 🎯 Join a Class
               </motion.a>
             </nav>
+
+            {/* Mobile Menu Button */}
+            <motion.button
+              className="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </motion.button>
             
             {/* Donate Button */}
             <motion.a
               href="https://buymeacoffee.com/englishfiesta"
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-gradient-to-r from-fiesta-pink to-pink-500 text-white px-4 py-2 rounded-full font-semibold text-sm shadow-lg hover:shadow-xl transition-all duration-300"
+              className="hidden sm:block bg-gradient-to-r from-fiesta-pink to-pink-500 text-white px-3 py-2 rounded-full font-semibold text-xs md:text-sm shadow-lg hover:shadow-xl transition-all duration-300"
               whileHover={{ 
                 scale: 1.05,
                 boxShadow: "0 10px 25px rgba(236, 72, 153, 0.4)"
