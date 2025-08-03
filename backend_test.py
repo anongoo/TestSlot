@@ -5954,6 +5954,18 @@ class EnglishFiestaAPITester:
         self.test_comments_role_based_permissions()
         self.test_pinned_comments_workflow_integration()
         
+        # NEW: Editable Filter Controls System Tests
+        print("\n🎛️ Testing NEW Editable Filter Controls System")
+        print("-" * 40)
+        self.test_filter_collections_initialization()
+        self.test_admin_topics_crud()
+        self.test_admin_countries_crud()
+        self.test_admin_guides_crud()
+        self.test_public_filter_endpoints()
+        self.test_filter_collections_data_validation()
+        self.test_filter_collections_visibility_toggle()
+        self.test_filter_collections_models_structure()
+        
         # Summary
         print("\n" + "=" * 60)
         print("📊 TEST SUMMARY")
