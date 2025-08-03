@@ -1,5 +1,6 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { motion } from "framer-motion";
 import "./App.css";
 
 // i18n setup
@@ -22,17 +23,54 @@ const App = () => {
   return (
     <AuthProvider>
       <Router>
-        <div className="min-h-screen bg-gray-50 flex flex-col">
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex flex-col font-poppins">
           <Header />
           
-          <main className="flex-1">
+          <motion.main 
+            className="flex-1"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+          >
             <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/watch" element={<WatchPage />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/faq" element={<FAQ />} />
+              <Route path="/" element={
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.6, ease: "easeOut" }}
+                >
+                  <HomePage />
+                </motion.div>
+              } />
+              <Route path="/watch" element={
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.6, ease: "easeOut" }}
+                >
+                  <WatchPage />
+                </motion.div>
+              } />
+              <Route path="/about" element={
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.6, ease: "easeOut" }}
+                >
+                  <About />
+                </motion.div>
+              } />
+              <Route path="/faq" element={
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.6, ease: "easeOut" }}
+                >
+                  <FAQ />
+                </motion.div>
+              } />
             </Routes>
-          </main>
+          </motion.main>
           
           <Footer />
         </div>
