@@ -18,6 +18,7 @@ import HomePage from './pages/HomePage';
 import WatchPage from './pages/WatchPage';
 import About from './components/About';
 import FAQ from './components/FAQ';
+import JoinTeam from './components/JoinTeam';
 
 const App = () => {
   return (
