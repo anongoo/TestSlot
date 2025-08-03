@@ -884,10 +884,10 @@ metadata:
   run_ui: false
 
 test_plan:
-  current_focus: ["NEW Language Levels Section - Dreaming Spanish System", "NEW Daily Goal System - Backend APIs", "NEW Daily Goal Progress Bar Component", "NEW Set Daily Goal Modal Component", "NEW Mark as Unwatched Toggle Functionality", "NEW Daily Goals Integration - App Structure"]
+  current_focus: ["LAUNCH Phase 1 - Visual Theme Overhaul", "LAUNCH Phase 2 - Join the Fiesta Button", "LAUNCH Phase 3 - Donate Button Integration", "LAUNCH Phase 4 - Join the Team Page", "LAUNCH Phase 5 - Video Commenting System Backend", "LAUNCH Phase 5 - Video Commenting System Frontend"]
   stuck_tasks: []
   test_all: false
-  test_priority: "high_first"
+  test_priority: "sequential"
 
 agent_communication:
     - agent: "testing"
