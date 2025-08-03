@@ -390,6 +390,7 @@ class Comment(BaseModel):
     user_id: str
     user_name: str
     text: str
+    pinned: bool = False  # New field for pinned comments
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class CommentRequest(BaseModel):
