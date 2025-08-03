@@ -51,6 +51,13 @@ const WatchTab = () => {
     }));
   };
 
+  const handleSearch = (searchTerm) => {
+    setFilters(prev => ({
+      ...prev,
+      search: searchTerm
+    }));
+  };
+
   const handleVideoSelect = (video) => {
     setSelectedVideo(video);
   };
