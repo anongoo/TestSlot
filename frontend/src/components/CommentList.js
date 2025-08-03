@@ -39,6 +39,18 @@ const CommentList = ({ videoId }) => {
     setComments(prev => prev.filter(comment => comment.id !== commentId));
   };
 
+  const handleCommentPinToggled = (updatedComment) => {
+    setComments(prev => prev.map(comment => 
+      comment.id === updatedComment.id ? updatedComment : comment
+    ).sort((a, b) => {
+      // Sort by pinned status first, then by creation date
+      if (a.pinned !== b.pinned) {
+        return b.pinned - a.pinned; // Pinned comments first
+      }
+      return new Date(b.created_at) - new Date(a.created_at); // Newest first
+    }));
+  };
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
