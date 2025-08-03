@@ -66,15 +66,24 @@ const HeroSection = () => {
 
       <div className="container mx-auto px-4 py-16 relative z-10">
         <div className="text-center max-w-4xl mx-auto">
-          {/* Hero Title */}
-          <motion.h1 
-            className="text-4xl md:text-6xl font-bold mb-6 hero-title font-baloo"
+          {/* Hero Title with Logo */}
+          <motion.div 
+            className="flex items-center justify-center gap-4 mb-6"
             initial={{ y: 50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.8, ease: "easeOut" }}
           >
-            {heroTitle}
-          </motion.h1>
+            <motion.img 
+              src="/english-fiesta-logo-hq.png" 
+              alt="English Fiesta Logo" 
+              className="w-16 h-16 md:w-20 md:h-20"
+              whileHover={{ rotate: [0, -10, 10, 0] }}
+              transition={{ duration: 0.5 }}
+            />
+            <h1 className="text-4xl md:text-6xl font-bold hero-title font-baloo">
+              {heroTitle}
+            </h1>
+          </motion.div>
           
           {/* Hero Subtitle */}
           <motion.h2 
