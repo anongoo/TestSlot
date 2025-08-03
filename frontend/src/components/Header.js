@@ -18,9 +18,14 @@ const Header = () => {
             whileHover={{ scale: 1.05 }}
             transition={{ type: "spring", stiffness: 300 }}
           >
-            <a href="/" className="flex items-center">
+            <a href="/" className="flex items-center gap-3">
+              <img 
+                src="/english-fiesta-logo-hq.png" 
+                alt="English Fiesta Logo" 
+                className="w-8 h-8 md:w-10 md:h-10"
+              />
               <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-fiesta-pink to-fiesta-purple bg-clip-text text-transparent font-baloo">
-                🎉 English Fiesta
+                English Fiesta
               </h1>
             </a>
           </motion.div>
