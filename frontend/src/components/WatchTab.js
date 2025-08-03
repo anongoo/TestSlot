@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import WatchVideoCard from './WatchVideoCard';
 import VideoPlayer from './VideoPlayer';
+import FilterPanel from './FilterPanel';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -13,6 +14,9 @@ const WatchTab = () => {
   const [filters, setFilters] = useState({
     level: '',
     category: '',
+    country: '',
+    guide: '',
+    topic: '',
     search: '',
     sort_by: 'newest'
   });
