@@ -27,10 +27,8 @@ const HomePage = () => {
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
         
-        {/* Admin Dashboard */}
-        <RoleGate allowedRoles={['admin']}>
-          <AdminDashboard />
-        </RoleGate>
+        {/* Admin Dashboard - Only show for admin users, no error message for others */}
+        {isAuthenticated && user.role === 'admin' && <AdminDashboard />}
         
         {/* Email Subscription Banner (only for non-authenticated users) */}
         {!isAuthenticated && (
