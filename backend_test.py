@@ -4724,6 +4724,19 @@ class EnglishFiestaAPITester:
         self.test_comment_system_models_validation()
         self.test_comment_system_endpoints_exist()
         
+        # NEW: Pinned Comments Functionality Tests
+        print("\n📌 Testing NEW Pinned Comments Functionality")
+        print("-" * 40)
+        self.test_comment_model_pinned_field()
+        self.test_comments_get_sorting_by_pinned_status()
+        self.test_comments_post_default_pinned_false()
+        self.test_comments_pin_admin_only()
+        self.test_comments_unpin_admin_only()
+        self.test_comments_pin_invalid_comment_id()
+        self.test_comments_authentication_requirements()
+        self.test_comments_role_based_permissions()
+        self.test_pinned_comments_workflow_integration()
+        
         # Summary
         print("\n" + "=" * 60)
         print("📊 TEST SUMMARY")
