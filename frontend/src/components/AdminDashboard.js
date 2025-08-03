@@ -5,6 +5,9 @@ import AdminVideoUpload from './AdminVideoUpload';
 import AdminYouTubeAdd from './AdminYouTubeAdd';
 import AdminVideoManagement from './AdminVideoManagement';
 import ContentManagement from './ContentManagement';
+import ManageTopics from './ManageTopics';
+import ManageCountries from './ManageCountries';
+import ManageGuides from './ManageGuides';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
