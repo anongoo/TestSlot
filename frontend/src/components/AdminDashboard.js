@@ -264,6 +264,19 @@ const AdminDashboard = () => {
           </div>
         </div>
       )}
+
+      {/* Filter Management Tabs */}
+      {activeTab === 'topics' && (
+        <ManageTopics />
+      )}
+
+      {activeTab === 'countries' && (
+        <ManageCountries />
+      )}
+
+      {activeTab === 'guides' && (
+        <ManageGuides />
+      )}
     </div>
   );
 };
