@@ -145,6 +145,67 @@ const Header = () => {
             )}
           </div>
         </div>
+
+        {/* Mobile Menu */}
+        <AnimatePresence>
+          {isMobileMenuOpen && (
+            <motion.div 
+              className="md:hidden bg-white border-t border-gray-200"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="px-4 py-4 space-y-3">
+                <motion.a 
+                  href="/"
+                  className="block text-gray-600 hover:text-fiesta-pink transition-colors font-medium py-2"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  whileHover={{ x: 5 }}
+                >
+                  Home
+                </motion.a>
+                <motion.a 
+                  href="/about"
+                  className="block text-gray-600 hover:text-fiesta-blue transition-colors font-medium py-2"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  whileHover={{ x: 5 }}
+                >
+                  About
+                </motion.a>
+                <motion.a 
+                  href="/faq"
+                  className="block text-gray-600 hover:text-fiesta-purple transition-colors font-medium py-2"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  whileHover={{ x: 5 }}
+                >
+                  FAQ
+                </motion.a>
+                <motion.a 
+                  href="/book"
+                  className="block text-gray-600 hover:text-fiesta-orange transition-colors font-medium py-2"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  whileHover={{ x: 5 }}
+                >
+                  🎯 Join a Class
+                </motion.a>
+                
+                {/* Mobile Donate Button */}
+                <motion.a
+                  href="https://buymeacoffee.com/englishfiesta"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block sm:hidden bg-gradient-to-r from-fiesta-pink to-pink-500 text-white px-4 py-3 rounded-lg font-semibold text-sm text-center shadow-lg mt-4"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  💖 Help English Fiesta Grow
+                </motion.a>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </motion.div>
   );
