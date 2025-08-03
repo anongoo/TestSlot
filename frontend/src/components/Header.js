@@ -189,11 +189,14 @@ const Header = () => {
                 </motion.a>
                 <motion.a 
                   href="/book"
-                  className="block text-gray-600 hover:text-fiesta-orange transition-colors font-medium py-2"
+                  className="flex items-center text-gray-600 hover:text-fiesta-orange transition-colors font-medium py-2"
                   onClick={() => setIsMobileMenuOpen(false)}
                   whileHover={{ x: 5 }}
                 >
-                  🎯 Join a Class
+                  <span className="flex items-center gap-2">
+                    <span>🎯</span>
+                    <span>Join a Class</span>
+                  </span>
                 </motion.a>
                 
                 {/* Mobile Donate Button */}
@@ -201,12 +204,15 @@ const Header = () => {
                   href="https://buymeacoffee.com/englishfiesta"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block sm:hidden bg-gradient-to-r from-fiesta-pink to-pink-500 text-white px-4 py-3 rounded-lg font-semibold text-sm text-center shadow-lg mt-4"
+                  className="flex sm:hidden items-center justify-center bg-gradient-to-r from-fiesta-pink to-pink-500 text-white px-4 py-3 rounded-lg font-semibold text-sm shadow-lg mt-4"
                   onClick={() => setIsMobileMenuOpen(false)}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  💖 Help English Fiesta Grow
+                  <span className="flex items-center gap-2">
+                    <span>💖</span>
+                    <span>Help English Fiesta Grow</span>
+                  </span>
                 </motion.a>
               </div>
             </motion.div>
