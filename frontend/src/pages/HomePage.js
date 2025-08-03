@@ -5,7 +5,6 @@ import GuestHomepage from '../components/GuestHomepage';
 import AdminDashboard from '../components/AdminDashboard';
 import EmailSubscriptionModal from '../components/EmailSubscriptionModal';
 import EmailSubscriptionBanner from '../components/EmailSubscriptionBanner';
-import RoleGate from '../components/RoleGate';
 
 const HomePage = () => {
   const [showEmailModal, setShowEmailModal] = useState(false);
