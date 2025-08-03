@@ -256,48 +256,50 @@ const VideoPlayer = ({ video, onClose, onVideoEnd }) => {
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center">
-      <div 
-        ref={playerContainerRef}
-        className="relative w-full max-w-6xl mx-4 bg-black rounded-lg overflow-hidden"
-      >
+    <div className="fixed inset-0 z-50 bg-black bg-opacity-90 flex items-start justify-center overflow-y-auto">
+      <div className="w-full max-w-6xl bg-white min-h-full">
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 z-10 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 transition-opacity"
+          className="absolute top-4 right-4 z-60 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-colors"
         >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
           </svg>
         </button>
 
-        {/* Video Element */}
-        <div className="relative">
-          {video.video_type === 'youtube' ? (
-            /* YouTube Embed */
-            <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
+        {/* Video Section */}
+        <div className="relative bg-black" ref={playerContainerRef}>
+          {/* YouTube Video */}
+          {video.video_type === 'youtube' && video.youtube_video_id && (
+            <div className="aspect-video">
               <iframe
-                className="absolute inset-0 w-full h-full"
                 src={`https://www.youtube.com/embed/${video.youtube_video_id}?autoplay=1&rel=0`}
-                title={video.title}
+                className="w-full h-full"
                 frameBorder="0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
+                title={video.title}
               />
             </div>
-          ) : (
-            /* Local Video File */
+          )}
+
+          {/* Local Video */}
+          {video.video_type !== 'youtube' && (
             <video
               ref={videoRef}
-              className="w-full h-auto max-h-screen"
-              onPlay={() => setPlaying(true)}
-              onPause={() => setPlaying(false)}
+              className="w-full aspect-video bg-black"
               onTimeUpdate={handleTimeUpdate}
               onLoadedMetadata={handleLoadedMetadata}
-              onEnded={handleEnded}
-              onClick={playing ? handlePause : handlePlay}
+              onEnded={handleVideoEnd}
+              preload="metadata"
+              controls={false}
+              playsInline
             >
-              <source src={video.video_url} type="video/mp4" />
+              <source 
+                src={`${BACKEND_URL}${video.video_url || `/api/files/videos/${video.id}.mp4`}`} 
+                type="video/mp4" 
+              />
               Your browser does not support the video tag.
             </video>
           )}
@@ -367,63 +369,94 @@ const VideoPlayer = ({ video, onClose, onVideoEnd }) => {
               </div>
             </div>
           )}
-        </div>
 
-        {/* Video Info Overlay */}
-        <div className="absolute top-4 left-4 bg-black bg-opacity-75 text-white p-4 rounded-lg max-w-md">
-          <h2 className="text-xl font-bold mb-2">{video.title}</h2>
-          <div className="text-sm space-y-1">
-            <div>👨‍🏫 {video.instructor_name}</div>
-            <div>📊 {video.level}</div>
-            <div>🌍 {video.country}</div>
-            {video.accents && video.accents.length > 0 && (
-              <div>🗣️ {video.accents.join(', ')}</div>
-            )}
-            <div>⏱️ {video.duration_minutes} minutes</div>
-            {video.is_premium && <div>💎 Premium Content</div>}
-          </div>
-          
-          {/* Action Buttons */}
-          <div className="mt-3 flex gap-2">
-            {/* Mark as Watched/Unwatched Button */}
-            <button
-              onClick={handleMarkAsWatched}
-              disabled={isToggling}
-              className={`px-3 py-2 text-sm rounded-lg transition-colors disabled:opacity-50 ${
-                isWatched 
-                  ? 'bg-green-500 bg-opacity-80 hover:bg-opacity-100 text-white' 
-                  : 'bg-white bg-opacity-20 hover:bg-opacity-30 text-white'
-              }`}
-              title={isWatched ? "Mark as unwatched" : "Mark as watched"}
-            >
-              {isToggling ? '...' : (isWatched ? '✓ Watched' : '+ Watched')}
-            </button>
+          {/* Video Info Overlay */}
+          <div className="absolute top-4 left-4 bg-black bg-opacity-75 text-white p-4 rounded-lg max-w-md">
+            <h2 className="text-xl font-bold mb-2">{video.title}</h2>
+            <div className="text-sm space-y-1">
+              <div>👨‍🏫 {video.instructor_name}</div>
+              <div>📊 {video.level}</div>
+              <div>🌍 {video.country}</div>
+              {video.accents && video.accents.length > 0 && (
+                <div>🗣️ {video.accents.join(', ')}</div>
+              )}
+              <div>⏱️ {video.duration_minutes} minutes</div>
+              {video.is_premium && <div>💎 Premium Content</div>}
+            </div>
             
-            {/* Add to My List Button (only for authenticated students+) */}
-            {isAuthenticated && isStudent && (
+            {/* Action Buttons */}
+            <div className="mt-3 flex gap-2">
+              {/* Mark as Watched/Unwatched Button */}
               <button
-                onClick={handleToggleMyList}
-                disabled={isManagingList}
+                onClick={handleMarkAsWatched}
+                disabled={isToggling}
                 className={`px-3 py-2 text-sm rounded-lg transition-colors disabled:opacity-50 ${
-                  isInList 
-                    ? 'bg-red-500 bg-opacity-80 hover:bg-opacity-100 text-white' 
-                    : 'bg-blue-500 bg-opacity-80 hover:bg-opacity-100 text-white'
+                  isWatched 
+                    ? 'bg-green-500 bg-opacity-80 hover:bg-opacity-100 text-white' 
+                    : 'bg-white bg-opacity-20 hover:bg-opacity-30 text-white'
                 }`}
-                title={isInList ? "Remove from My List" : "Add to My List"}
+                title={isWatched ? "Mark as unwatched" : "Mark as watched"}
               >
-                {isManagingList ? '...' : (isInList ? '✕ Remove' : '+ My List')}
+                {isToggling ? '...' : (isWatched ? '✓ Watched' : '+ Watched')}
               </button>
-            )}
+              
+              {/* Add to My List Button (only for authenticated students+) */}
+              {isAuthenticated && isStudent && (
+                <button
+                  onClick={handleToggleMyList}
+                  disabled={isManagingList}
+                  className={`px-3 py-2 text-sm rounded-lg transition-colors disabled:opacity-50 ${
+                    isInList 
+                      ? 'bg-red-500 bg-opacity-80 hover:bg-opacity-100 text-white' 
+                      : 'bg-blue-500 bg-opacity-80 hover:bg-opacity-100 text-white'
+                  }`}
+                  title={isInList ? "Remove from My List" : "Add to My List"}
+                >
+                  {isManagingList ? '...' : (isInList ? '✕ Remove' : '+ My List')}
+                </button>
+              )}
+            </div>
           </div>
+
+          {/* Guest Tracking Notice */}
+          {!isAuthenticated && (
+            <div className="absolute bottom-20 left-4 right-4 bg-blue-600 text-white p-3 rounded-lg text-center">
+              <div className="font-semibold mb-1">🔐 Want to track your progress?</div>
+              <div className="text-sm">Sign up to save your watch time and unlock the Progress tab!</div>
+            </div>
+          )}
         </div>
 
-        {/* Guest Tracking Notice */}
-        {!isAuthenticated && (
-          <div className="absolute bottom-20 left-4 right-4 bg-blue-600 text-white p-3 rounded-lg text-center">
-            <div className="font-semibold mb-1">🔐 Want to track your progress?</div>
-            <div className="text-sm">Sign up to save your watch time and unlock the Progress tab!</div>
+        {/* Video Details and Comments Section */}
+        <div className="bg-white p-6">
+          {/* Video Title and Description */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-800 mb-4 font-baloo">{video.title}</h1>
+            <div className="flex flex-wrap gap-4 mb-4">
+              <span className="bg-fiesta-blue text-white px-3 py-1 rounded-full text-sm font-poppins">
+                📊 {video.level}
+              </span>
+              <span className="bg-fiesta-green text-white px-3 py-1 rounded-full text-sm font-poppins">
+                📂 {video.category}
+              </span>
+              <span className="bg-fiesta-purple text-white px-3 py-1 rounded-full text-sm font-poppins">
+                👨‍🏫 {video.instructor_name}
+              </span>
+              <span className="bg-fiesta-orange text-white px-3 py-1 rounded-full text-sm font-poppins">
+                🌍 {video.country}
+              </span>
+              {video.is_premium && (
+                <span className="bg-fiesta-yellow text-gray-800 px-3 py-1 rounded-full text-sm font-poppins font-bold">
+                  💎 Premium
+                </span>
+              )}
+            </div>
+            <p className="text-gray-600 leading-relaxed font-poppins">{video.description}</p>
           </div>
-        )}
+
+          {/* Comments Section */}
+          <CommentList videoId={video.id} />
+        </div>
       </div>
       
       {/* Mark as Watched Modal */}
