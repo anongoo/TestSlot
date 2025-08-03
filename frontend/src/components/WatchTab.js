@@ -81,72 +81,12 @@ const WatchTab = () => {
 
   return (
     <div>
-      {/* Quick Filters */}
-      <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
-        <h2 className="text-xl font-bold text-gray-800 mb-4">Browse All Videos</h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {/* Search */}
-          <div>
-            <input
-              type="text"
-              placeholder="Search videos..."
-              value={filters.search}
-              onChange={(e) => handleFilterChange('search', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          {/* Level Filter */}
-          <div>
-            <select
-              value={filters.level}
-              onChange={(e) => handleFilterChange('level', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">All Levels</option>
-              <option value="New Beginner">New Beginner</option>
-              <option value="Beginner">Beginner</option>
-              <option value="Intermediate">Intermediate</option>
-              <option value="Advanced">Advanced</option>
-            </select>
-          </div>
-
-          {/* Category Filter */}
-          <div>
-            <select
-              value={filters.category}
-              onChange={(e) => handleFilterChange('category', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">All Categories</option>
-              <option value="Conversation">Conversation</option>
-              <option value="Grammar">Grammar</option>
-              <option value="Vocabulary">Vocabulary</option>
-              <option value="Pronunciation">Pronunciation</option>
-              <option value="Culture">Culture</option>
-              <option value="Business">Business</option>
-              <option value="Interview">Interview</option>
-              <option value="Travel">Travel</option>
-              <option value="Tutorial">Tutorial</option>
-            </select>
-          </div>
-
-          {/* Sort */}
-          <div>
-            <select
-              value={filters.sort_by}
-              onChange={(e) => handleFilterChange('sort_by', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="newest">Newest First</option>
-              <option value="popular">Most Popular</option>
-              <option value="shortest">Shortest First</option>
-              <option value="longest">Longest First</option>
-            </select>
-          </div>
-        </div>
-      </div>
+      {/* New Comprehensive Filter Panel */}
+      <FilterPanel 
+        filters={filters}
+        onFilterChange={handleFilterChange}
+        onSearch={handleSearch}
+      />
 
       {/* Videos Grid */}
       <div>
