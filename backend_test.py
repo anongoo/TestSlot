@@ -4154,6 +4154,22 @@ class EnglishFiestaAPITester:
         self.test_daily_goal_database_integration()
         self.test_daily_goal_complete_flow()
         
+        # NEW: Video Commenting System Tests
+        print("\n💬 Testing NEW Video Commenting System")
+        print("-" * 40)
+        self.test_get_comments_valid_video()
+        self.test_get_comments_invalid_video()
+        self.test_post_comment_without_auth()
+        self.test_post_comment_guest_user()
+        self.test_post_comment_invalid_video()
+        self.test_post_comment_validation_empty_text()
+        self.test_post_comment_validation_max_length()
+        self.test_delete_comment_without_auth()
+        self.test_delete_comment_non_admin()
+        self.test_delete_comment_invalid_id()
+        self.test_comment_system_models_validation()
+        self.test_comment_system_endpoints_exist()
+        
         # Summary
         print("\n" + "=" * 60)
         print("📊 TEST SUMMARY")
