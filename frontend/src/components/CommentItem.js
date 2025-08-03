@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 
-const CommentItem = ({ comment, onCommentDeleted }) => {
+const CommentItem = ({ comment, onCommentDeleted, onCommentPinToggled }) => {
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isPinToggling, setIsPinToggling] = useState(false);
   const { user, isAuthenticated } = useAuth();
 
   const formatDate = (dateString) => {
