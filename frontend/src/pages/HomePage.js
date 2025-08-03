@@ -9,7 +9,7 @@ import RoleGate from '../components/RoleGate';
 
 const HomePage = () => {
   const [showEmailModal, setShowEmailModal] = useState(false);
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
   const handleEmailSubscriptionSuccess = () => {
     localStorage.setItem('email_subscribed', 'true');
