@@ -291,7 +291,7 @@ const VideoPlayer = ({ video, onClose, onVideoEnd }) => {
               className="w-full aspect-video bg-black"
               onTimeUpdate={handleTimeUpdate}
               onLoadedMetadata={handleLoadedMetadata}
-              onEnded={handleVideoEnd}
+              onEnded={handleEnded}
               preload="metadata"
               controls={false}
               playsInline
