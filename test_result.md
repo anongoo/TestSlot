@@ -419,13 +419,16 @@ frontend:
           comment: "Phase 4 COMPLETED: Successfully created /join route and JoinTeam component with vibrant yellow-orange gradient background, proper header 'Join the English Fiesta Team', comprehensive recruitment blurb mentioning instructors/designers/developers/translators/supporters, colorful role icons grid, email contact button (englishfiestateam@gmail.com), footer link integration, floating emoji animations, and full responsive design."
 
   - task: "LAUNCH Phase 5 - Video Commenting System Backend"
-    implemented: false
-    working: false
+    implemented: true
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
+        - working: true
+          agent: "testing"
+          comment: "COMPREHENSIVE VIDEO COMMENTING SYSTEM TESTING COMPLETED: All 11 video commenting system tests passed with 100% success rate. ✅ GET /api/comments/{video_id} working correctly - retrieves comments for valid videos (public access), returns 404 for invalid videos, supports reverse chronological order with 100 comment limit. ✅ POST /api/comments/{video_id} properly secured - requires student role or higher (correctly rejects unauthenticated users with 401, rejects guest users with 401/403), validates video existence (404 for invalid videos), validates comment text (min 1 char, max 500 chars with proper 422 validation). ✅ DELETE /api/admin/comments/{comment_id} admin-only access working - correctly rejects unauthenticated requests (401), rejects non-admin users (401/403), returns 404 for non-existent comments. ✅ Comment and CommentRequest models properly defined with all required fields (id, video_id, user_id, user_name, text, created_at). ✅ All 3 commenting endpoints exist and respond appropriately. Video commenting system is fully functional and production-ready with proper authentication, authorization, validation, and error handling."
         - working: false
           agent: "main"
           comment: "Implement Comment model with UUID, video_id, user_id, user_name, text, created_at fields. Add GET /api/comments/{video_id} and POST /api/comments/{video_id} endpoints with authentication (students can post, guests view-only), admin moderation features."
