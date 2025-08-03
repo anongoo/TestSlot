@@ -12,6 +12,7 @@ import { AuthProvider } from './contexts/AuthContext';
 // Components
 import Header from './components/Header';
 import Footer from './components/Footer';
+import EmailCaptureModal from './components/EmailCaptureModal';
 
 // Pages
 import HomePage from './pages/HomePage';
