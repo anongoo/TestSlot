@@ -1252,6 +1252,7 @@ async def post_video_comment(
         "user_id": current_user.id,
         "user_name": current_user.name,
         "text": comment_request.text.strip(),
+        "pinned": False,  # New comments are not pinned by default
         "created_at": datetime.utcnow()
     }
     
