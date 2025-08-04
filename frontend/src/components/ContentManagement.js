@@ -14,6 +14,9 @@ const ContentManagement = () => {
     content: ''
   });
 
+  // Get the session token from localStorage using the correct key
+  const getSessionToken = () => localStorage.getItem('english_fiesta_token');
+
   const contentTypes = [
     { value: 'hero_section', label: 'Hero Section' },
     { value: 'about_page', label: 'About Page' },
