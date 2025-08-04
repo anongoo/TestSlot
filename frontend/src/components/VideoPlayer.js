@@ -30,6 +30,7 @@ const VideoPlayer = ({ video, onClose, onVideoEnd }) => {
   const [isManagingList, setIsManagingList] = useState(false);
   const [isWatched, setIsWatched] = useState(false);
   const [isToggling, setIsToggling] = useState(false);
+  const [showOverlay, setShowOverlay] = useState(true);
   
   const videoRef = useRef(null);
   const playerContainerRef = useRef(null);
