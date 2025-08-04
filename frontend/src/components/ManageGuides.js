@@ -21,7 +21,7 @@ const ManageGuides = () => {
         `${process.env.REACT_APP_BACKEND_URL}/api/admin/guides`,
         {
           headers: {
-            'Authorization': `Bearer ${user.sessionToken}`
+            'Authorization': `Bearer ${sessionToken}`
           }
         }
       );
