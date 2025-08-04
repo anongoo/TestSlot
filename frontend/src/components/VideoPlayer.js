@@ -130,6 +130,8 @@ const VideoPlayer = ({ video, onClose, onVideoEnd }) => {
     if (videoRef.current) {
       videoRef.current.play();
       setPlaying(true);
+      // Hide overlay when video starts playing
+      setShowOverlay(false);
     }
   };
 
