@@ -120,7 +120,7 @@ const ManageCountries = () => {
         {
           method: 'DELETE',
           headers: {
-            'Authorization': `Bearer ${user.sessionToken}`
+            'Authorization': `Bearer ${sessionToken}`
           }
         }
       );
