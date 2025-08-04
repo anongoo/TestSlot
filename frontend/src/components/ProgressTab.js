@@ -77,10 +77,10 @@ const ProgressTab = () => {
       
       // Try to find actual progress data for this date
       let minutesWatched = 0;
-      if (progress && progress.daily_breakdown) {
-        const dayData = progress.daily_breakdown.find(d => d.date === dateStr);
+      if (progress && progress.recent_activity) {
+        const dayData = progress.recent_activity.find(d => d.date === dateStr);
         if (dayData) {
-          minutesWatched = dayData.total_minutes_watched || 0;
+          minutesWatched = dayData.minutes || 0;
         }
       }
       
