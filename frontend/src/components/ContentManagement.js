@@ -39,7 +39,7 @@ const ContentManagement = () => {
     try {
       const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/admin/content`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('session_token')}`
+          'Authorization': `Bearer ${getSessionToken()}`
         }
       });
       const data = await response.json();
