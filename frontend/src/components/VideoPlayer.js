@@ -374,52 +374,64 @@ const VideoPlayer = ({ video, onClose, onVideoEnd }) => {
           )}
 
           {/* Video Info Overlay */}
-          <div className="absolute top-4 left-4 bg-black bg-opacity-75 text-white p-4 rounded-lg max-w-md">
-            <h2 className="text-xl font-bold mb-2">{video.title}</h2>
-            <div className="text-sm space-y-1">
-              <div>👨‍🏫 {video.instructor_name}</div>
-              <div>📊 {video.level}</div>
-              <div>🌍 {video.country}</div>
-              {video.accents && video.accents.length > 0 && (
-                <div>🗣️ {video.accents.join(', ')}</div>
-              )}
-              <div>⏱️ {video.duration_minutes} minutes</div>
-              {video.is_premium && <div>💎 Premium Content</div>}
-            </div>
-            
-            {/* Action Buttons */}
-            <div className="mt-3 flex gap-2">
-              {/* Mark as Watched/Unwatched Button */}
+          {showOverlay && (
+            <div className="absolute top-4 left-4 bg-black bg-opacity-75 text-white p-4 rounded-lg max-w-md">
+              {/* Close Overlay Button */}
               <button
-                onClick={handleMarkAsWatched}
-                disabled={isToggling}
-                className={`px-3 py-2 text-sm rounded-lg transition-colors disabled:opacity-50 ${
-                  isWatched 
-                    ? 'bg-green-500 bg-opacity-80 hover:bg-opacity-100 text-white' 
-                    : 'bg-white bg-opacity-20 hover:bg-opacity-30 text-white'
-                }`}
-                title={isWatched ? "Mark as unwatched" : "Mark as watched"}
+                onClick={() => setShowOverlay(false)}
+                className="absolute top-2 right-2 text-white hover:text-gray-300 transition-colors"
               >
-                {isToggling ? '...' : (isWatched ? '✓ Watched' : '+ Watched')}
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                </svg>
               </button>
               
-              {/* Add to My List Button (only for authenticated students+) */}
-              {isAuthenticated && isStudent && (
+              <h2 className="text-xl font-bold mb-2">{video.title}</h2>
+              <div className="text-sm space-y-1">
+                <div>👨‍🏫 {video.instructor_name}</div>
+                <div>📊 {video.level}</div>
+                <div>🌍 {video.country}</div>
+                {video.accents && video.accents.length > 0 && (
+                  <div>🗣️ {video.accents.join(', ')}</div>
+                )}
+                <div>⏱️ {video.duration_minutes} minutes</div>
+                {video.is_premium && <div>💎 Premium Content</div>}
+              </div>
+              
+              {/* Action Buttons */}
+              <div className="mt-3 flex gap-2">
+                {/* Mark as Watched/Unwatched Button */}
                 <button
-                  onClick={handleToggleMyList}
-                  disabled={isManagingList}
+                  onClick={handleMarkAsWatched}
+                  disabled={isToggling}
                   className={`px-3 py-2 text-sm rounded-lg transition-colors disabled:opacity-50 ${
-                    isInList 
-                      ? 'bg-red-500 bg-opacity-80 hover:bg-opacity-100 text-white' 
-                      : 'bg-blue-500 bg-opacity-80 hover:bg-opacity-100 text-white'
+                    isWatched 
+                      ? 'bg-green-500 bg-opacity-80 hover:bg-opacity-100 text-white' 
+                      : 'bg-white bg-opacity-20 hover:bg-opacity-30 text-white'
                   }`}
-                  title={isInList ? "Remove from My List" : "Add to My List"}
+                  title={isWatched ? "Mark as unwatched" : "Mark as watched"}
                 >
-                  {isManagingList ? '...' : (isInList ? '✕ Remove' : '+ My List')}
+                  {isToggling ? '...' : (isWatched ? '✓ Watched' : '+ Watched')}
                 </button>
-              )}
+                
+                {/* Add to My List Button (only for authenticated students+) */}
+                {isAuthenticated && isStudent && (
+                  <button
+                    onClick={handleToggleMyList}
+                    disabled={isManagingList}
+                    className={`px-3 py-2 text-sm rounded-lg transition-colors disabled:opacity-50 ${
+                      isInList 
+                        ? 'bg-red-500 bg-opacity-80 hover:bg-opacity-100 text-white' 
+                        : 'bg-blue-500 bg-opacity-80 hover:bg-opacity-100 text-white'
+                    }`}
+                    title={isInList ? "Remove from My List" : "Add to My List"}
+                  >
+                    {isManagingList ? '...' : (isInList ? '✕ Remove' : '+ My List')}
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Guest Tracking Notice */}
           {!isAuthenticated && (
