@@ -296,8 +296,13 @@ const VideoPlayer = ({ video, onClose, onVideoEnd }) => {
               onLoadedMetadata={handleLoadedMetadata}
               onEnded={handleEnded}
               preload="metadata"
-              controls={false}
+              controls={true}
               playsInline
+              onPlay={() => {
+                setPlaying(true);
+                setShowOverlay(false);
+              }}
+              onPause={() => setPlaying(false)}
             >
               <source 
                 src={`${BACKEND_URL}${video.video_url || `/api/files/videos/${video.id}.mp4`}`} 
