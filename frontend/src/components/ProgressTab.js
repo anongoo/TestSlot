@@ -95,7 +95,7 @@ const ProgressTab = () => {
   };
 
   const chartData = generateChartData();
-  const maxMinutes = Math.max(...chartData.map(d => d.minutes), 60);
+  const maxMinutes = Math.max(...chartData.map(d => d.minutes), 30); // Lower baseline for better visibility
 
   if (!isAuthenticated) {
     return (
