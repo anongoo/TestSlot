@@ -22,7 +22,7 @@ const ManageTopics = () => {
         `${process.env.REACT_APP_BACKEND_URL}/api/admin/topics`,
         {
           headers: {
-            'Authorization': `Bearer ${user.sessionToken}`
+            'Authorization': `Bearer ${sessionToken}`
           }
         }
       );
