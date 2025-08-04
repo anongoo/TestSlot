@@ -79,7 +79,7 @@ const ManageTopics = () => {
         method,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user.sessionToken}`
+          'Authorization': `Bearer ${sessionToken}`
         },
         body: JSON.stringify(formData)
       });
