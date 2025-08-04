@@ -197,32 +197,56 @@ const ProgressTab = () => {
         </div>
 
         {/* Chart */}
-        <div className="h-64 flex items-end justify-between gap-1 bg-white/60 backdrop-blur rounded-lg p-4 shadow-inner">
+        <div className="h-80 flex items-end justify-between gap-2 bg-white/60 backdrop-blur rounded-lg p-6 shadow-inner">
           {chartData.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center text-gray-500">
               <div className="text-4xl mb-2">📊</div>
               <p className="text-sm text-center">No activity data yet.<br />Start watching videos to see your progress!</p>
             </div>
-          ) : chartData.map((day, index) => (
-            <div key={day.date} className="flex flex-col items-center flex-1 max-w-[20px]">
-              {/* Bar */}
-              <div
-                className="bg-gradient-to-t from-blue-500 to-purple-500 rounded-t min-h-[2px] w-full mb-2 hover:from-blue-600 hover:to-purple-600 transition-all cursor-pointer relative group shadow-sm"
-                style={{ height: `${maxMinutes > 0 ? (day.minutes / maxMinutes) * 100 : 0}%` }}
-                title={`${day.dateLabel}: ${day.minutes}min`}
-              >
-                {/* Tooltip */}
-                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap z-10">
-                  {day.dateLabel}: {day.minutes}min
+          ) : chartData.map((day, index) => {
+            // Calculate bar height with minimum visibility
+            const barHeightPercent = day.minutes > 0 
+              ? Math.max((day.minutes / maxMinutes) * 100, 8) // Minimum 8% height for visibility
+              : 3; // Small height for 0 minutes days
+            
+            return (
+              <div key={day.date} className="flex flex-col items-center flex-1 min-w-[16px] max-w-[32px]">
+                {/* Bar */}
+                <div
+                  className={`rounded-t w-full mb-2 hover:shadow-lg transition-all cursor-pointer relative group ${
+                    day.minutes > 0 
+                      ? 'bg-gradient-to-t from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600' 
+                      : 'bg-gray-200 hover:bg-gray-300'
+                  }`}
+                  style={{ 
+                    height: `${barHeightPercent}%`,
+                    minHeight: '4px'
+                  }}
+                  title={`${day.dateLabel}: ${day.minutes}min`}
+                >
+                  {/* Tooltip */}
+                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap z-10">
+                    {day.dateLabel}: {day.minutes}min
+                  </div>
+                  
+                  {/* Value label for non-zero bars */}
+                  {day.minutes > 0 && (
+                    <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs font-bold text-gray-700 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {day.minutes}m
+                    </div>
+                  )}
+                </div>
+                
+                {/* Date Label */}
+                <div className="text-xs text-gray-600 text-center leading-tight">
+                  {activeTimeframe === 'week' ? 
+                    day.dateLabel.split(' ')[1] : 
+                    day.dateLabel.split(' ')[0].slice(0, 3)
+                  }
                 </div>
               </div>
-              
-              {/* Date Label */}
-              <div className="text-xs text-gray-600 transform -rotate-45 origin-top-left">
-                {activeTimeframe === 'week' ? day.dateLabel.split(' ')[1] : day.dateLabel.split(' ')[0]}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Chart Legend */}
