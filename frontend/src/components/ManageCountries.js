@@ -22,7 +22,7 @@ const ManageCountries = () => {
         `${process.env.REACT_APP_BACKEND_URL}/api/admin/countries`,
         {
           headers: {
-            'Authorization': `Bearer ${user.sessionToken}`
+            'Authorization': `Bearer ${sessionToken}`
           }
         }
       );
