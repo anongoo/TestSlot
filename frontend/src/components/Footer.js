@@ -186,7 +186,9 @@ const Footer = () => {
               </li>
               <li>
                 <motion.a 
-                  href="#" 
+                  href="https://www.youtube.com/@englishfiesta" 
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="hover:text-red-400 transition-colors flex items-center font-poppins"
                   whileHover={{ x: 5 }}
                   transition={{ type: "spring", stiffness: 300 }}
@@ -196,12 +198,26 @@ const Footer = () => {
               </li>
               <li>
                 <motion.a 
-                  href="#" 
+                  href="https://instagram.com/fiestaenglish" 
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="hover:text-pink-400 transition-colors flex items-center font-poppins"
                   whileHover={{ x: 5 }}
                   transition={{ type: "spring", stiffness: 300 }}
                 >
                   <span className="mr-2">📸</span> Instagram
+                </motion.a>
+              </li>
+              <li>
+                <motion.a 
+                  href="https://www.tiktok.com/@english_fiesta" 
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-purple-400 transition-colors flex items-center font-poppins"
+                  whileHover={{ x: 5 }}
+                  transition={{ type: "spring", stiffness: 300 }}
+                >
+                  <span className="mr-2">🎵</span> TikTok
                 </motion.a>
               </li>
             </ul>
