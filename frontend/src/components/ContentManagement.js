@@ -150,7 +150,7 @@ const ContentManagement = () => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('session_token')}`
+            'Authorization': `Bearer ${getSessionToken()}`
           },
           body: JSON.stringify({
             languages: {
