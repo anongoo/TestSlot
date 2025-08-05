@@ -35,8 +35,22 @@ const CommentList = ({ videoId }) => {
     setComments(prev => [newComment, ...prev]);
   };
 
-  const handleCommentDeleted = (commentId) => {
-    setComments(prev => prev.filter(comment => comment.id !== commentId));
+  const handleCommentUpdated = (updatedComment) => {
+    setComments(prev => prev.map(comment => {
+      if (comment.id === updatedComment.id) {
+        return updatedComment;
+      }
+      // Check if this is a reply being updated
+      if (comment.replies) {
+        const updatedReplies = comment.replies.map(reply => 
+          reply.id === updatedComment.id ? updatedComment : reply
+        );
+        if (updatedReplies.some(reply => reply.id === updatedComment.id)) {
+          return { ...comment, replies: updatedReplies };
+        }
+      }
+      return comment;
+    }));
   };
 
   const handleCommentPinToggled = (updatedComment) => {
