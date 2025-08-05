@@ -7622,7 +7622,7 @@ class EnglishFiestaAPITester:
         self.test_up_next_recommendations()
         self.test_session_stats_calculation()
         
-        self.print_summary()
+        self.print_test_summary()
 
 if __name__ == "__main__":
     tester = EnglishFiestaAPITester()
