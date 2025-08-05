@@ -146,7 +146,7 @@ backend:
 
 frontend:
   - task: "MOBILE LOGIN BUG FIX - Authentication State Persistence"
-    implemented: false
+    implemented: true
     working: false
     file: "/app/frontend/src/contexts/AuthContext.js"
     stuck_count: 0
@@ -155,10 +155,10 @@ frontend:
     status_history:
         - working: false
           agent: "main"
-          comment: "Initial analysis: Mobile login issue where users are redirected to homepage but remain logged out. Need to fix authentication state persistence and ensure proper token storage."
+          comment: "IMPLEMENTED: Fixed mobile login authentication flow by: 1) Reordering token storage to happen before state updates, 2) Using window.history.replaceState instead of window.location.pathname for better mobile compatibility, 3) Adding small delay to ensure state updates complete on mobile, 4) Improved useEffect logic to prevent dependency loops and handle session_id parsing correctly. Changes should resolve mobile login persistence issues."
 
   - task: "EMAIL MODAL BUG FIX - Prevent Double Display & Fix X Button"
-    implemented: false
+    implemented: true
     working: false
     file: "/app/frontend/src/components/EmailCaptureModal.js"
     stuck_count: 0
@@ -167,7 +167,7 @@ frontend:
     status_history:
         - working: false
           agent: "main"
-          comment: "Initial analysis: Email modal appears twice even after dismissal and X button doesn't properly close modal. Need to fix localStorage logic and ensure proper modal dismissal behavior."
+          comment: "IMPLEMENTED: Fixed email modal double display and X button issues by: 1) Added check for 'email_capture_dismissed' in initial useEffect logic to prevent re-showing after dismissal, 2) Added modalShown flag to prevent double triggering from multiple event sources, 3) Improved handleClose function with event handling and stopPropagation, 4) Enhanced backdrop click handler to only close when clicking directly on backdrop, 5) Improved close button styling and accessibility with aria-label, 6) Fixed auto-close after successful subscription to also mark as seen. Changes should ensure modal appears only once and X button works properly."
 
   - task: "Content Management Admin Interface"
     implemented: true
