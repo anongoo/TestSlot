@@ -412,6 +412,8 @@ class Comment(BaseModel):
     user_name: str
     text: str
     pinned: bool = False  # New field for pinned comments
+    parent_comment_id: Optional[str] = None  # For threaded replies
+    like_count: int = 0  # Number of likes
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class CommentRequest(BaseModel):
