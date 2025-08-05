@@ -131,63 +131,51 @@ const VideoPlayer = ({ video, onClose, onVideoEnd, relatedVideos = [] }) => {
     }
   };
 
-  const handlePlay = () => {
-    if (videoRef.current) {
-      videoRef.current.play();
-      setPlaying(true);
-      // Hide overlay when video starts playing
-      setShowOverlay(false);
+  // Vime Event Handlers
+  const handleTimeUpdate = (e) => {
+    const currentTime = Math.floor(e.detail.currentTime);
+    setCurrentTime(currentTime);
+    console.log('📌 Current Time:', currentTime);
+
+    // Track new seconds watched for accurate minutes-watched tracking
+    if (!watchedMinutesRef.current.has(currentTime)) {
+      watchedMinutesRef.current.add(currentTime);
+      console.log('✅ New second logged:', currentTime);
     }
   };
 
-  const handlePause = () => {
-    if (videoRef.current) {
-      videoRef.current.pause();
-      setPlaying(false);
-    }
+  const handleVimePlay = () => {
+    console.log('▶️ Video playing');
+    setPlaying(true);
+    setShowOverlay(false);
   };
 
-  const handleTimeUpdate = () => {
-    if (videoRef.current) {
-      setCurrentTime(videoRef.current.currentTime);
-    }
+  const handleVimePause = () => {
+    console.log('⏸️ Video paused');
+    setPlaying(false);
   };
 
-  const handleLoadedMetadata = () => {
-    if (videoRef.current) {
-      setDuration(videoRef.current.duration);
-    }
-  };
-
-  const handleEnded = () => {
+  const handleVimeEnd = () => {
+    console.log('🏁 Video ended');
     setPlaying(false);
     if (onVideoEnd) {
       onVideoEnd();
     }
   };
 
-  const handleSeek = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const newTime = (clickX / rect.width) * duration;
-    
-    if (videoRef.current) {
-      videoRef.current.currentTime = newTime;
-      setCurrentTime(newTime);
-    }
+  const handleVimeDurationChange = (e) => {
+    const duration = e.detail.duration;
+    setDuration(duration);
+    console.log('⏱️ Duration set:', duration);
   };
 
-  const toggleFullscreen = () => {
-    if (!isFullscreen) {
-      if (playerContainerRef.current.requestFullscreen) {
-        playerContainerRef.current.requestFullscreen();
-      }
-      setIsFullscreen(true);
-    } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-      }
-      setIsFullscreen(false);
+  // Handle next video functionality
+  const handleNextVideo = (nextVideo) => {
+    if (nextVideo && typeof nextVideo === 'object') {
+      console.log('➡️ Loading next video:', nextVideo.title);
+      // We'll call onClose to return to video grid and let parent handle video switching
+      onClose();
+      // In a real implementation, you might want to pass the selected video back to parent
     }
   };
 
