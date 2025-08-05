@@ -59,14 +59,20 @@ const WatchTab = () => {
   };
 
   const handleVideoSelect = (video) => {
-    console.log('🎯 Video selected:', video);
+    console.log('🎯 Video selected:', video?.title);
     setSelectedVideo(video);
     console.log('🎭 Selected video state updated');
   };
 
   const handleClosePlayer = () => {
+    console.log('❌ Closing video player');
     setSelectedVideo(null);
   };
+
+  // Debug logging
+  useEffect(() => {
+    console.log('🔍 WatchTab selectedVideo state:', selectedVideo?.title || 'None');
+  }, [selectedVideo]);
 
   if (selectedVideo) {
     // Filter out the selected video and pass remaining as related videos
