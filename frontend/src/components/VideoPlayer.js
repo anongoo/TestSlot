@@ -40,48 +40,12 @@ const VideoPlayer = ({ video, onClose, onVideoEnd, relatedVideos = [], onVideoSe
   const trackingIntervalRef = useRef(null);
   const lastTrackedMinute = useRef(0);
 
-  // Check if video is in user's list on component mount
+  // Initialize toast for guest users
   useEffect(() => {
-    if (isAuthenticated && isStudent) {
-      checkVideoInList();
+    if (!isAuthenticated) {
+      setShowToast(true);
     }
-    checkVideoWatchedStatus();
-  }, [isAuthenticated, isStudent, video.id]);
-
-  const checkVideoWatchedStatus = async () => {
-    try {
-      const headers = sessionToken ? 
-        { 'Authorization': `Bearer ${sessionToken}` } : {};
-      
-      const response = await axios.get(`${API}/progress/${sessionId}`, {
-        headers
-      });
-      
-      const progressData = response.data;
-      const watchedVideo = progressData.recent_activity?.find(
-        activity => activity.video_id === video.id && activity.completed
-      );
-      
-      setIsWatched(!!watchedVideo);
-    } catch (error) {
-      console.error('Error checking video watched status:', error);
-    }
-  };
-
-  const checkVideoInList = async () => {
-    try {
-      const headers = sessionToken ? 
-        { 'Authorization': `Bearer ${sessionToken}` } : {};
-      
-      const response = await axios.get(`${API}/user/list/status/${video.id}`, {
-        headers
-      });
-      
-      setIsInList(response.data.in_list);
-    } catch (error) {
-      console.error('Error checking video list status:', error);
-    }
-  };
+  }, [isAuthenticated]);
 
   useEffect(() => {
     // Start tracking when video starts playing (only for authenticated users)
