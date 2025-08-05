@@ -25,7 +25,7 @@ const getSessionId = () => {
   return sessionId;
 };
 
-const VideoPlayer = ({ video, onClose, onVideoEnd, relatedVideos = [], onVideoSelect }) => {
+const VideoPlayer = ({ video, onClose, onVideoEnd, relatedVideos = [], onVideoSelect, debug = false }) => {
   const { isAuthenticated, sessionToken, isStudent } = useAuth();
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -34,21 +34,30 @@ const VideoPlayer = ({ video, onClose, onVideoEnd, relatedVideos = [], onVideoSe
   const [sessionId] = useState(getSessionId());
   const [showMarkModal, setShowMarkModal] = useState(false);
   const [showToast, setShowToast] = useState(false);
+  const [playerReady, setPlayerReady] = useState(false);
+  const [videoError, setVideoError] = useState(null);
   
   const watchedMinutesRef = useRef(new Set());
   const playerRef = useRef(null);
   const trackingIntervalRef = useRef(null);
   const lastTrackedMinute = useRef(0);
+  const mountedRef = useRef(false);
 
   // Debug logging
   useEffect(() => {
-    console.log('🎬 VideoPlayer mounted for:', video?.title);
-    console.log('🎥 Video type:', video?.video_type);
-    console.log('📹 Video URL:', video?.video_url);
+    if (debug) console.log('🎬 VideoPlayer mounted for:', video?.title);
+    if (debug) console.log('🎥 Video type:', video?.video_type);
+    if (debug) console.log('📹 Video URL:', video?.video_url);
+    mountedRef.current = true;
+    
     return () => {
-      console.log('🎬 VideoPlayer unmounting');
+      if (debug) console.log('🎬 VideoPlayer unmounting');
+      mountedRef.current = false;
+      if (trackingIntervalRef.current) {
+        clearInterval(trackingIntervalRef.current);
+      }
     };
-  }, [video]);
+  }, [video, debug]);
 
   // Initialize toast for guest users
   useEffect(() => {
@@ -57,77 +66,33 @@ const VideoPlayer = ({ video, onClose, onVideoEnd, relatedVideos = [], onVideoSe
     }
   }, [isAuthenticated]);
 
-  useEffect(() => {
-    // Start tracking when video starts playing (only for authenticated users)
-    if (playing && isAuthenticated) {
-      trackingIntervalRef.current = setInterval(() => {
-        trackWatchTime();
-      }, 5000); // Track every 5 seconds
-    } else {
-      if (trackingIntervalRef.current) {
-        clearInterval(trackingIntervalRef.current);
-      }
-    }
-
-    return () => {
-      if (trackingIntervalRef.current) {
-        clearInterval(trackingIntervalRef.current);
-      }
-    };
-  }, [playing, isAuthenticated]);
-
-  const trackWatchTime = async () => {
-    if (!playerRef.current || !isAuthenticated) return;
-
-    const currentMinute = Math.floor(currentTime / 60);
-    
-    // Only track if we've watched a new minute
-    if (currentMinute > lastTrackedMinute.current) {
-      lastTrackedMinute.current = currentMinute;
-      
-      try {
-        const headers = sessionToken ? 
-          { 'Authorization': `Bearer ${sessionToken}` } : {};
-        
-        await axios.post(`${API}/videos/${video.id}/watch`, {
-          watched_minutes: currentMinute + 1 // Track the completed minute
-        }, {
-          params: { session_id: sessionId },
-          headers
-        });
-
-        setWatchedMinutes(currentMinute + 1);
-      } catch (error) {
-        console.error('Error tracking watch time:', error);
-      }
-    }
-  };
-
-  // Vime Event Handlers
+  // Vime Event Handlers - Fixed with proper error handling
   const handleTimeUpdate = (e) => {
-    const currentTime = Math.floor(e.detail.currentTime);
-    setCurrentTime(currentTime);
-    console.log('📌 Current Time:', currentTime);
+    if (!mountedRef.current) return;
+    
+    const newTime = Math.floor(e.detail?.currentTime || 0);
+    setCurrentTime(newTime);
+    if (debug) console.log('📌 Current Time:', newTime);
 
     // Track new seconds watched for accurate minutes-watched tracking
-    if (!watchedMinutesRef.current.has(currentTime)) {
-      watchedMinutesRef.current.add(currentTime);
-      console.log('✅ New second logged:', currentTime);
+    if (!watchedMinutesRef.current.has(newTime)) {
+      watchedMinutesRef.current.add(newTime);
+      if (debug) console.log('✅ New second logged:', newTime);
     }
   };
 
   const handleVimePlay = () => {
-    console.log('▶️ Video playing');
+    if (debug) console.log('▶️ Video playing');
     setPlaying(true);
   };
 
   const handleVimePause = () => {
-    console.log('⏸️ Video paused');
+    if (debug) console.log('⏸️ Video paused');
     setPlaying(false);
   };
 
   const handleVimeEnd = () => {
-    console.log('🏁 Video ended');
+    if (debug) console.log('🏁 Video ended');
     setPlaying(false);
     if (onVideoEnd) {
       onVideoEnd();
@@ -135,20 +100,29 @@ const VideoPlayer = ({ video, onClose, onVideoEnd, relatedVideos = [], onVideoSe
   };
 
   const handleVimeDurationChange = (e) => {
-    const duration = e.detail.duration;
-    setDuration(duration);
-    console.log('⏱️ Duration set:', duration);
+    const newDuration = e.detail?.duration || 0;
+    setDuration(newDuration);
+    if (debug) console.log('⏱️ Duration set:', newDuration);
+  };
+
+  const handleVimeReady = () => {
+    setPlayerReady(true);
+    if (debug) console.log('🎯 Vime player ready');
+  };
+
+  const handleVimeError = (e) => {
+    const error = e.detail || 'Unknown video error';
+    setVideoError(error);
+    if (debug) console.error('❌ Video error:', error);
   };
 
   // Handle next video functionality
   const handleNextVideo = (nextVideo) => {
     if (nextVideo && typeof nextVideo === 'object') {
-      console.log('➡️ Loading next video:', nextVideo.title);
-      // If onVideoSelect is provided, use it to switch videos
+      if (debug) console.log('➡️ Loading next video:', nextVideo.title);
       if (onVideoSelect) {
         onVideoSelect(nextVideo);
       } else {
-        // Fallback: close player and let parent handle
         onClose();
       }
     }
