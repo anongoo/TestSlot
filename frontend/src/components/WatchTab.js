@@ -25,6 +25,13 @@ const WatchTab = ({ onDebugVideoSelect }) => {
     fetchVideos();
   }, [filters]);
 
+  // Expose debug functionality to parent component
+  useEffect(() => {
+    if (onDebugVideoSelect && videos.length > 0) {
+      onDebugVideoSelect(videos, setSelectedVideo);
+    }
+  }, [videos, onDebugVideoSelect]);
+
   const fetchVideos = async () => {
     setLoading(true);
     try {
