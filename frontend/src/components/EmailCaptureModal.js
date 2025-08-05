@@ -89,9 +89,10 @@ const EmailCaptureModal = () => {
         setIsSubmitted(true);
         localStorage.setItem('email_subscribed', 'true');
         
-        // Auto-close after 3 seconds
+        // Auto-close after 3 seconds - also mark as seen to prevent reappearing
         setTimeout(() => {
           setIsVisible(false);
+          localStorage.setItem('email_capture_seen', 'true');
         }, 3000);
       } else {
         const errorData = await response.json();
