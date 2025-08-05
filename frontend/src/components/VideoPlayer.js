@@ -109,7 +109,6 @@ const VideoPlayer = ({ video, onClose, onVideoEnd, relatedVideos = [], onVideoSe
   const handleVimePlay = () => {
     console.log('▶️ Video playing');
     setPlaying(true);
-    setShowOverlay(false);
   };
 
   const handleVimePause = () => {
