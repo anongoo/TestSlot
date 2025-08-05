@@ -69,12 +69,16 @@ export const AuthProvider = ({ children }) => {
       // Clear the hash from URL
       window.location.hash = '';
       
-      // Use replace instead of pathname assignment for better mobile compatibility
-      window.history.replaceState({}, '', '/');
+      // Check for stored redirect path, default to /watch
+      const redirectPath = localStorage.getItem('auth_redirect_path') || '/watch';
+      localStorage.removeItem('auth_redirect_path'); // Clear after use
       
-      // Add a small delay to ensure state updates complete on mobile
+      // Use replace instead of pathname assignment for better mobile compatibility
+      window.history.replaceState({}, '', redirectPath);
+      
+      // Force a page reload to ensure React router picks up the new path
       setTimeout(() => {
-        setLoading(false);
+        window.location.href = redirectPath;
       }, 100);
       
     } catch (error) {
