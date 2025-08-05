@@ -154,27 +154,8 @@ const VideoSidebar = ({
   };
 
   const getFallbackThumbnail = (video) => {
-    // Create a branded fallback thumbnail
-    return `data:image/svg+xml;base64,${btoa(`
-      <svg width="120" height="68" viewBox="0 0 120 68" xmlns="http://www.w3.org/2000/svg">
-        <rect width="120" height="68" fill="#f3f4f6"/>
-        <rect width="120" height="68" fill="url(#gradient)" opacity="0.1"/>
-        <defs>
-          <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style="stop-color:#3b82f6"/>
-            <stop offset="50%" style="stop-color:#8b5cf6"/>
-            <stop offset="100%" style="stop-color:#ec4899"/>
-          </linearGradient>
-        </defs>
-        <g transform="translate(60, 34)">
-          <circle r="12" fill="#e5e7eb"/>
-          <polygon points="-4,-6 -4,6 8,0" fill="#6b7280"/>
-        </g>
-        <text x="60" y="52" text-anchor="middle" fill="#6b7280" font-family="Arial, sans-serif" font-size="8" font-weight="600">
-          ${video.level || 'VIDEO'}
-        </text>
-      </svg>
-    `)}`;
+    // Create a simple branded fallback thumbnail without btoa
+    return 'data:image/svg+xml;charset=utf8,%3Csvg width="120" height="68" viewBox="0 0 120 68" xmlns="http://www.w3.org/2000/svg"%3E%3Crect width="120" height="68" fill="%23f3f4f6"/%3E%3Cg transform="translate(60, 34)"%3E%3Ccircle r="12" fill="%23e5e7eb"/%3E%3Cpolygon points="-4,-6 -4,6 8,0" fill="%236b7280"/%3E%3C/g%3E%3Ctext x="60" y="52" text-anchor="middle" fill="%23374151" font-family="Arial, sans-serif" font-size="8" font-weight="600"%3E' + encodeURIComponent(video.level || 'VIDEO') + '%3C/text%3E%3C/svg%3E';
   };
 
   const getCountryFlag = (country) => {
