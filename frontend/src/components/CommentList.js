@@ -35,6 +35,10 @@ const CommentList = ({ videoId }) => {
     setComments(prev => [newComment, ...prev]);
   };
 
+  const handleCommentDeleted = (commentId) => {
+    setComments(prev => prev.filter(comment => comment.id !== commentId));
+  };
+
   const handleCommentUpdated = (updatedComment) => {
     setComments(prev => prev.map(comment => {
       if (comment.id === updatedComment.id) {
