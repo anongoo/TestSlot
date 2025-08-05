@@ -33,11 +33,7 @@ const VideoPlayer = ({ video, onClose, onVideoEnd, relatedVideos = [], onVideoSe
   const [watchedMinutes, setWatchedMinutes] = useState(0);
   const [sessionId] = useState(getSessionId());
   const [showMarkModal, setShowMarkModal] = useState(false);
-  const [isInList, setIsInList] = useState(false);
-  const [isManagingList, setIsManagingList] = useState(false);
-  const [isWatched, setIsWatched] = useState(false);
-  const [isToggling, setIsToggling] = useState(false);
-  const [showOverlay, setShowOverlay] = useState(true);
+  const [showToast, setShowToast] = useState(false);
   
   const watchedMinutesRef = useRef(new Set());
   const playerRef = useRef(null);
