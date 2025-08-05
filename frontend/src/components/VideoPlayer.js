@@ -128,6 +128,54 @@ const VideoPlayer = ({ video, onClose, onVideoEnd, relatedVideos = [], onVideoSe
     }
   };
 
+  // Watch time tracking
+  useEffect(() => {
+    // Start tracking when video starts playing (only for authenticated users)
+    if (playing && isAuthenticated) {
+      trackingIntervalRef.current = setInterval(() => {
+        trackWatchTime();
+      }, 5000); // Track every 5 seconds
+    } else {
+      if (trackingIntervalRef.current) {
+        clearInterval(trackingIntervalRef.current);
+      }
+    }
+
+    return () => {
+      if (trackingIntervalRef.current) {
+        clearInterval(trackingIntervalRef.current);
+      }
+    };
+  }, [playing, isAuthenticated]);
+
+  const trackWatchTime = async () => {
+    if (!playerRef.current || !isAuthenticated || !mountedRef.current) return;
+
+    const currentMinute = Math.floor(currentTime / 60);
+    
+    // Only track if we've watched a new minute
+    if (currentMinute > lastTrackedMinute.current) {
+      lastTrackedMinute.current = currentMinute;
+      
+      try {
+        const headers = sessionToken ? 
+          { 'Authorization': `Bearer ${sessionToken}` } : {};
+        
+        await axios.post(`${API}/videos/${video.id}/watch`, {
+          watched_minutes: currentMinute + 1 // Track the completed minute
+        }, {
+          params: { session_id: sessionId },
+          headers
+        });
+
+        setWatchedMinutes(currentMinute + 1);
+        if (debug) console.log('📊 Tracked minute:', currentMinute + 1);
+      } catch (error) {
+        console.error('Error tracking watch time:', error);
+      }
+    }
+  };
+
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
