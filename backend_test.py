@@ -7584,8 +7584,7 @@ class EnglishFiestaAPITester:
         print("\n🎬 TESTING VIDEO PLAYER ENDPOINTS...")
         self.test_get_videos_basic()
         self.test_get_specific_video()
-        self.test_video_file_serving_endpoint()
-        self.test_thumbnail_file_serving_endpoint()
+        self.test_file_serving_endpoints_structure()
         self.test_video_metadata_completeness()
         
         # Progress Tracking for UI Overhaul
