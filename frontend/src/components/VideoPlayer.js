@@ -40,6 +40,16 @@ const VideoPlayer = ({ video, onClose, onVideoEnd, relatedVideos = [], onVideoSe
   const trackingIntervalRef = useRef(null);
   const lastTrackedMinute = useRef(0);
 
+  // Debug logging
+  useEffect(() => {
+    console.log('🎬 VideoPlayer mounted for:', video?.title);
+    console.log('🎥 Video type:', video?.video_type);
+    console.log('📹 Video URL:', video?.video_url);
+    return () => {
+      console.log('🎬 VideoPlayer unmounting');
+    };
+  }, [video]);
+
   // Initialize toast for guest users
   useEffect(() => {
     if (!isAuthenticated) {
