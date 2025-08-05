@@ -101,7 +101,6 @@ const DreamingSpanishWatchTab = () => {
       country: '',
       guide: '',
       topic: '',
-      category: '',
       search: ''
     });
     setHideWatched(false);
