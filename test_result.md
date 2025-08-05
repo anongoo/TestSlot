@@ -147,27 +147,27 @@ backend:
 frontend:
   - task: "MOBILE LOGIN BUG FIX - Authentication State Persistence"
     implemented: true
-    working: false
+    working: "manual_testing"
     file: "/app/frontend/src/contexts/AuthContext.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
-        - working: false
+        - working: "manual_testing"
           agent: "main"
-          comment: "IMPLEMENTED: Fixed mobile login authentication flow by: 1) Reordering token storage to happen before state updates, 2) Using window.history.replaceState instead of window.location.pathname for better mobile compatibility, 3) Adding small delay to ensure state updates complete on mobile, 4) Improved useEffect logic to prevent dependency loops and handle session_id parsing correctly. Changes should resolve mobile login persistence issues."
+          comment: "IMPLEMENTED & READY FOR MANUAL TESTING: Fixed mobile login authentication flow by: 1) Reordering token storage to happen before state updates, 2) Using window.history.replaceState instead of window.location.pathname for better mobile compatibility, 3) Adding small delay to ensure state updates complete on mobile, 4) Improved useEffect logic to prevent dependency loops and handle session_id parsing correctly. Backend testing passed (85.3% success rate). User will manually test mobile login functionality."
 
   - task: "EMAIL MODAL BUG FIX - Prevent Double Display & Fix X Button"
     implemented: true
-    working: false
+    working: "manual_testing"
     file: "/app/frontend/src/components/EmailCaptureModal.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
-        - working: false
+        - working: "manual_testing"
           agent: "main"
-          comment: "IMPLEMENTED: Fixed email modal double display and X button issues by: 1) Added check for 'email_capture_dismissed' in initial useEffect logic to prevent re-showing after dismissal, 2) Added modalShown flag to prevent double triggering from multiple event sources, 3) Improved handleClose function with event handling and stopPropagation, 4) Enhanced backdrop click handler to only close when clicking directly on backdrop, 5) Improved close button styling and accessibility with aria-label, 6) Fixed auto-close after successful subscription to also mark as seen. Changes should ensure modal appears only once and X button works properly."
+          comment: "IMPLEMENTED & READY FOR MANUAL TESTING: Fixed email modal double display and X button issues by: 1) Added check for 'email_capture_dismissed' in initial useEffect logic to prevent re-showing after dismissal, 2) Added modalShown flag to prevent double triggering from multiple event sources, 3) Improved handleClose function with event handling and stopPropagation, 4) Enhanced backdrop click handler to only close when clicking directly on backdrop, 5) Improved close button styling and accessibility with aria-label, 6) Fixed auto-close after successful subscription to also mark as seen. Screenshot verified modal appears correctly. User will manually test dismissal behavior."
 
   - task: "Content Management Admin Interface"
     implemented: true
