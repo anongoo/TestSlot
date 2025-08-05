@@ -86,7 +86,7 @@ const WatchTab = ({ onDebugVideoSelect }) => {
     const relatedVideos = videos.filter(video => video.id !== selectedVideo.id);
     
     return (
-      <VideoPlayer
+      <NewVideoPlayer
         key={`video-player-${selectedVideo.id}`} // Prevent double rendering
         video={selectedVideo}
         onClose={handleClosePlayer}
