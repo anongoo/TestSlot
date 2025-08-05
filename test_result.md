@@ -912,6 +912,18 @@ backend:
           agent: "main"
           comment: "Implemented daily goal system backend: GET /api/user/daily-goal (get goal and today's progress with streak calculation), POST /api/user/daily-goal (set/update daily goal with validation 1-480 minutes), POST /api/user/unmark-watched (remove video from progress and subtract minutes from daily progress). Added DailyGoal model, goal streak calculation, and enhanced daily progress tracking integration."
 
+  - task: "Enhanced Comments System with Threading and Likes"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "ENHANCED COMMENTS SYSTEM TESTING COMPLETED: Comprehensive testing of the enhanced comments system shows 100% success rate (7/7 tests passed). ✅ GET /api/comments/{video_id} returns proper threading structure with user_liked field and replies array for nested comments, ✅ POST /api/comments/{video_id} supports parent_comment_id parameter for threaded replies and correctly requires student+ authentication, ✅ POST /api/comments/{comment_id}/like properly adds likes and increments count with student+ authentication requirement, ✅ DELETE /api/comments/{comment_id}/like properly removes likes and decrements count with authentication, ✅ Video player integration working correctly with comments system, ✅ All authentication requirements properly enforced (only authenticated student+ users can post comments and like/unlike), ✅ Threading structure fully supported with parent-child comment relationships and proper sorting. The enhanced comments system is fully functional and production-ready for frontend integration."
+
 frontend:
   - task: "Phase 2 - Admin Upload Interface & Dashboard"
     implemented: true
