@@ -105,9 +105,9 @@ const VideoPlayer = ({ video, onClose, onVideoEnd, relatedVideos = [] }) => {
   }, [playing, isAuthenticated]);
 
   const trackWatchTime = async () => {
-    if (!videoRef.current || !isAuthenticated) return;
+    if (!playerRef.current || !isAuthenticated) return;
 
-    const currentMinute = Math.floor(videoRef.current.currentTime / 60);
+    const currentMinute = Math.floor(currentTime / 60);
     
     // Only track if we've watched a new minute
     if (currentMinute > lastTrackedMinute.current) {
