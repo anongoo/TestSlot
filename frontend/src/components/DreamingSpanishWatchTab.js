@@ -20,7 +20,6 @@ const DreamingSpanishWatchTab = () => {
     country: '',
     guide: '',
     topic: '',
-    category: '', // Keep for backward compatibility
     search: ''
   });
 
@@ -29,8 +28,7 @@ const DreamingSpanishWatchTab = () => {
     levels: ['New Beginner', 'Beginner', 'Intermediate', 'Advanced'],
     countries: ['USA', 'UK', 'Canada', 'Australia'],
     guides: ['Native Speaker', 'ESL Teacher', 'Language Coach'],
-    topics: [], // Will be loaded from API
-    categories: ['Conversation', 'Grammar', 'Vocabulary', 'Pronunciation', 'Culture', 'Business']
+    topics: [] // Will be loaded from API
   });
 
   // Sort options matching Dreaming Spanish
