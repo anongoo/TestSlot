@@ -220,24 +220,81 @@ const CommentItem = ({ comment, onCommentDeleted, onCommentPinToggled, onComment
 
           {/* Interaction Buttons */}
           <div className="flex items-center gap-4 mt-3">
+            {/* Like Button */}
             <motion.button
-              className="flex items-center gap-1 text-gray-500 hover:text-fiesta-pink text-sm font-poppins transition-colors"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              onClick={handleLike}
+              disabled={isLiking || !isAuthenticated}
+              className={`flex items-center gap-1 text-sm font-poppins transition-colors ${
+                comment.user_liked 
+                  ? 'text-fiesta-pink hover:text-pink-600' 
+                  : 'text-gray-500 hover:text-fiesta-pink'
+              } ${!isAuthenticated ? 'opacity-50 cursor-not-allowed' : ''}`}
+              whileHover={isAuthenticated ? { scale: 1.05 } : {}}
+              whileTap={isAuthenticated ? { scale: 0.95 } : {}}
+              title={!isAuthenticated ? 'Login to like comments' : ''}
             >
-              <span>👍</span>
-              <span>Like</span>
+              <span>{comment.user_liked ? '❤️' : '🤍'}</span>
+              <span>{comment.like_count || 0}</span>
+              <span>{isLiking ? 'Loading...' : 'Like'}</span>
             </motion.button>
             
-            <motion.button
-              className="flex items-center gap-1 text-gray-500 hover:text-fiesta-blue text-sm font-poppins transition-colors"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <span>💬</span>
-              <span>Reply</span>
-            </motion.button>
+            {/* Reply Button - Only for top-level comments */}
+            {isTopLevel && (
+              <motion.button
+                onClick={() => setShowReplyForm(!showReplyForm)}
+                disabled={!isAuthenticated}
+                className={`flex items-center gap-1 text-sm font-poppins transition-colors ${
+                  !isAuthenticated 
+                    ? 'text-gray-400 cursor-not-allowed' 
+                    : 'text-gray-500 hover:text-fiesta-blue'
+                }`}
+                whileHover={isAuthenticated ? { scale: 1.05 } : {}}
+                whileTap={isAuthenticated ? { scale: 0.95 } : {}}
+                title={!isAuthenticated ? 'Login to reply to comments' : ''}
+              >
+                <span>💬</span>
+                <span>Reply</span>
+                {comment.replies && comment.replies.length > 0 && (
+                  <span className="text-xs">({comment.replies.length})</span>
+                )}
+              </motion.button>
+            )}
           </div>
+
+          {/* Reply Form */}
+          {showReplyForm && isAuthenticated && isTopLevel && (
+            <motion.div
+              className="mt-4 pl-4 border-l-2 border-gray-200"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+            >
+              <CommentForm
+                videoId={comment.video_id}
+                parentCommentId={comment.id}
+                onCommentSubmitted={handleReplySubmitted}
+                placeholder={`Reply to ${comment.user_name}...`}
+                buttonText="Post Reply"
+              />
+            </motion.div>
+          )}
+
+          {/* Replies */}
+          {comment.replies && comment.replies.length > 0 && (
+            <div className="mt-4 pl-4 border-l-2 border-gray-100">
+              {comment.replies.map((reply) => (
+                <div key={reply.id} className="mb-3 last:mb-0">
+                  <CommentItem
+                    comment={reply}
+                    onCommentDeleted={onCommentDeleted}
+                    onCommentPinToggled={onCommentPinToggled}
+                    onCommentUpdated={onCommentUpdated}
+                    level={level + 1}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </motion.div>
