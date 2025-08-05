@@ -59,7 +59,9 @@ const WatchTab = () => {
   };
 
   const handleVideoSelect = (video) => {
+    console.log('🎯 Video selected:', video);
     setSelectedVideo(video);
+    console.log('🎭 Selected video state updated');
   };
 
   const handleClosePlayer = () => {
