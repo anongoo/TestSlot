@@ -2,11 +2,17 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 
-const CommentForm = ({ videoId, onCommentSubmitted }) => {
+const CommentForm = ({ 
+  videoId, 
+  onCommentSubmitted, 
+  parentCommentId = null, 
+  placeholder = "Write a comment...", 
+  buttonText = "Post Comment" 
+}) => {
   const [text, setText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const { user, isAuthenticated } = useAuth();
+  const { sessionToken, isAuthenticated } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
