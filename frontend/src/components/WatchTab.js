@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import WatchVideoCard from './WatchVideoCard';
-import VideoPlayer from './VideoPlayer';
+import NewVideoPlayer from './NewVideoPlayer';
 import FilterPanel from './FilterPanel';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
