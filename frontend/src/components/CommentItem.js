@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
+import CommentForm from './CommentForm';
 
-const CommentItem = ({ comment, onCommentDeleted, onCommentPinToggled }) => {
+const CommentItem = ({ comment, onCommentDeleted, onCommentPinToggled, onCommentUpdated, level = 0 }) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isPinToggling, setIsPinToggling] = useState(false);
-  const { user, isAuthenticated } = useAuth();
+  const [isLiking, setIsLiking] = useState(false);
+  const [showReplyForm, setShowReplyForm] = useState(false);
+  const { user, isAuthenticated, sessionToken } = useAuth();
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -36,7 +39,7 @@ const CommentItem = ({ comment, onCommentDeleted, onCommentPinToggled }) => {
         {
           method: 'PUT',
           headers: {
-            'Authorization': `Bearer ${user.sessionToken}`
+            'Authorization': `Bearer ${sessionToken}`
           }
         }
       );
