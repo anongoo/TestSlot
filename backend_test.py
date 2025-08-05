@@ -12,7 +12,7 @@ from datetime import datetime
 from typing import Dict, List, Any
 
 # Backend URL from frontend/.env
-BACKEND_URL = "https://8b327d29-9141-457c-a4de-e4e6a559d756.preview.emergentagent.com/api"
+BACKEND_URL = "https://24def043-437e-4708-a610-fbfa5acb93f6.preview.emergentagent.com/api"
 
 class EnglishFiestaAPITester:
     def __init__(self):
