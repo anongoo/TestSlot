@@ -74,44 +74,21 @@ const WatchTab = () => {
     console.log('🔍 WatchTab selectedVideo state:', selectedVideo?.title || 'None');
   }, [selectedVideo]);
 
-  // Debug: Force render VideoPlayer for testing
-  if (true) { // Temporarily bypass modal condition
-    const testVideo = {
-      id: 'test-123',
-      title: 'Test Video - babycrawl',
-      video_type: 'local',
-      video_url: '/api/files/videos/babycrawl.mp4',
-      thumbnail_url: '/api/files/thumbnails/babycrawl.jpg',
-      duration_minutes: 2,
-      level: 'Beginner',
-      country: 'USA',
-      instructor_name: 'Test Instructor',
-      category: 'Conversation',
-      is_premium: false
-    };
+  if (selectedVideo) {
+    // Filter out the selected video and pass remaining as related videos
+    const relatedVideos = videos.filter(video => video.id !== selectedVideo.id);
     
     return (
-      <div className="fixed inset-0 z-40 bg-black bg-opacity-50 flex items-center justify-center">
-        <div className="bg-white p-4 rounded-lg">
-          <h2 className="text-lg font-bold mb-4">🧪 Testing VideoPlayer Direct Render</h2>
-          <button
-            onClick={() => {
-              console.log('🚫 Closing test player');
-              window.location.reload();
-            }}
-            className="mb-4 px-4 py-2 bg-red-500 text-white rounded"
-          >
-            Close Test
-          </button>
-          <VideoPlayer
-            video={testVideo}
-            onClose={() => window.location.reload()}
-            onVideoEnd={() => console.log('🏁 Video ended')}
-            relatedVideos={[]}
-            onVideoSelect={() => console.log('➡️ Video selected')}
-          />
-        </div>
-      </div>
+      <VideoPlayer
+        video={selectedVideo}
+        onClose={handleClosePlayer}
+        onVideoEnd={() => {
+          // Auto-play next video or return to grid
+          setSelectedVideo(null);
+        }}
+        relatedVideos={relatedVideos}
+        onVideoSelect={handleVideoSelect}
+      />
     );
   }
 
