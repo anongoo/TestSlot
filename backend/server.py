@@ -1322,6 +1322,14 @@ async def post_video_comment(
     if not video:
         raise HTTPException(status_code=404, detail="Video not found")
     
+    # If this is a reply, verify parent comment exists
+    if comment_request.parent_comment_id:
+        parent_comment = await db.comments.find_one({"id": comment_request.parent_comment_id}, {"_id": 0})
+        if not parent_comment:
+            raise HTTPException(status_code=404, detail="Parent comment not found")
+        if parent_comment["video_id"] != video_id:
+            raise HTTPException(status_code=400, detail="Parent comment is not for this video")
+    
     # Create comment
     comment_data = {
         "id": str(uuid.uuid4()),
@@ -1330,6 +1338,8 @@ async def post_video_comment(
         "user_name": current_user.name,
         "text": comment_request.text.strip(),
         "pinned": False,  # New comments are not pinned by default
+        "parent_comment_id": comment_request.parent_comment_id,
+        "like_count": 0,
         "created_at": datetime.utcnow()
     }
     
