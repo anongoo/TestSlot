@@ -140,18 +140,14 @@ const WatchVideoCard = ({ video, onVideoSelect }) => {
   };
 
   const handlePlay = () => {
-    console.log('🎯 handlePlay triggered for:', video.title);
-    
     // Check premium access for non-authenticated users
     if (video.is_premium && !isStudent) {
-      console.log('⚠️ Premium access blocked for non-student');
       alert('Please create an account to access premium content!');
       return;
     }
 
-    console.log('✅ Calling onVideoSelect with video:', video);
+    // Trigger video selection
     onVideoSelect(video);
-    console.log('✅ onVideoSelect called');
   };
 
   return (
