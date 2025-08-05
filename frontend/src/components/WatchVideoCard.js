@@ -159,29 +159,7 @@ const WatchVideoCard = ({ video, onVideoSelect }) => {
       {/* Thumbnail */}
       <div className="relative" onClick={handlePlay}>
         <img 
-          src={video.thumbnail_url ? `${BACKEND_URL}${video.thumbnail_url}` : `data:image/svg+xml;charset=utf8,${encodeURIComponent(`
-            <svg width="320" height="180" viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg">
-              <rect width="320" height="180" fill="#f8fafc"/>
-              <rect width="320" height="180" fill="url(#fiesta-gradient)" opacity="0.1"/>
-              <defs>
-                <linearGradient id="fiesta-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" style="stop-color:#fbbf24"/>
-                  <stop offset="50%" style="stop-color:#3b82f6"/>
-                  <stop offset="100%" style="stop-color:#8b5cf6"/>
-                </linearGradient>
-              </defs>
-              <g transform="translate(160, 90)">
-                <circle r="24" fill="white" stroke="#e5e7eb" stroke-width="2"/>
-                <polygon points="-10,-14 -10,14 20,0" fill="#3b82f6"/>
-              </g>
-              <text x="160" y="130" text-anchor="middle" fill="#374151" font-family="Arial, sans-serif" font-size="14" font-weight="700">
-                English Fiesta
-              </text>
-              <text x="160" y="150" text-anchor="middle" fill="#6b7280" font-family="Arial, sans-serif" font-size="11">
-                ${video.level || 'Learn English'} • ${video.duration_minutes || '0'}min
-              </text>
-            </svg>
-          `)}`}
+          src={video.thumbnail_url ? `${BACKEND_URL}${video.thumbnail_url}` : 'data:image/svg+xml;charset=utf8,%3Csvg width="320" height="180" viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg"%3E%3Crect width="320" height="180" fill="%23f8fafc"/%3E%3Cg transform="translate(160, 90)"%3E%3Ccircle r="24" fill="white" stroke="%23e5e7eb" stroke-width="2"/%3E%3Cpolygon points="-10,-14 -10,14 20,0" fill="%233b82f6"/%3E%3C/g%3E%3Ctext x="160" y="130" text-anchor="middle" fill="%23374151" font-family="Arial" font-size="14"%3EEnglish Fiesta%3C/text%3E%3C/svg%3E'}
           alt={video.title}
           className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
           onError={(e) => {
