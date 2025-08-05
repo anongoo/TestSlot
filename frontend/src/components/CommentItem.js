@@ -175,35 +175,39 @@ const CommentItem = ({ comment, onCommentDeleted, onCommentPinToggled, onComment
             </div>
             
             {/* Admin Controls */}
-            {canDelete && (
+            {(canDelete || canPin) && (
               <div className="flex items-center gap-2">
                 {/* Pin/Unpin Button */}
-                <motion.button
-                  onClick={handlePinToggle}
-                  disabled={isPinToggling}
-                  className={`text-sm p-2 rounded transition-colors font-poppins ${
-                    comment.pinned
-                      ? 'text-fiesta-orange hover:text-orange-700 bg-fiesta-yellow bg-opacity-20'
-                      : 'text-gray-500 hover:text-fiesta-orange'
-                  }`}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  title={comment.pinned ? "Unpin comment" : "Pin comment"}
-                >
-                  {isPinToggling ? '⏳' : (comment.pinned ? '📌' : '📍')}
-                </motion.button>
+                {canPin && (
+                  <motion.button
+                    onClick={handlePinToggle}
+                    disabled={isPinToggling}
+                    className={`text-sm p-2 rounded transition-colors font-poppins ${
+                      comment.pinned
+                        ? 'text-fiesta-orange hover:text-orange-700 bg-fiesta-yellow bg-opacity-20'
+                        : 'text-gray-500 hover:text-fiesta-orange'
+                    }`}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    title={comment.pinned ? "Unpin comment" : "Pin comment"}
+                  >
+                    {isPinToggling ? '⏳' : (comment.pinned ? '📌' : '📍')}
+                  </motion.button>
+                )}
 
                 {/* Delete Button */}
-                <motion.button
-                  onClick={handleDelete}
-                  disabled={isDeleting}
-                  className="text-red-500 hover:text-red-700 text-sm p-2 rounded transition-colors font-poppins"
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  title="Delete comment (Admin only)"
-                >
-                  {isDeleting ? '⏳' : '🗑️'}
-                </motion.button>
+                {canDelete && (
+                  <motion.button
+                    onClick={handleDelete}
+                    disabled={isDeleting}
+                    className="text-red-500 hover:text-red-700 text-sm p-2 rounded transition-colors font-poppins"
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    title="Delete comment (Admin only)"
+                  >
+                    {isDeleting ? '⏳' : '🗑️'}
+                  </motion.button>
+                )}
               </div>
             )}
           </div>
