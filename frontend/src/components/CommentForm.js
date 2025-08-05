@@ -143,7 +143,7 @@ const CommentForm = ({
             whileHover={!text.trim() || isLoading ? {} : { scale: 1.05 }}
             whileTap={!text.trim() || isLoading ? {} : { scale: 0.95 }}
           >
-            {isLoading ? '📤 Posting...' : '💬 Post Comment'}
+            {isLoading ? '📤 Posting...' : `💬 ${buttonText}`}
           </motion.button>
         </div>
       </div>
