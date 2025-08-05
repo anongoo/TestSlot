@@ -1259,23 +1259,55 @@ async def get_filter_options():
 # ==========================================
 
 @api_router.get("/comments/{video_id}")
-async def get_video_comments(video_id: str):
-    """Get comments for a specific video (public access)"""
+async def get_video_comments(video_id: str, current_user: Optional[User] = Depends(get_current_user)):
+    """Get comments for a specific video with threading support"""
     # Verify video exists
     video = await db.videos.find_one({"id": video_id}, {"_id": 0})
     if not video:
         raise HTTPException(status_code=404, detail="Video not found")
     
-    # Get comments sorted by pinned status first, then by creation date (newest first)
-    comments = await db.comments.find(
+    # Get all comments for this video
+    all_comments = await db.comments.find(
         {"video_id": video_id},
         {"_id": 0}
-    ).sort([("pinned", -1), ("created_at", -1)]).to_list(100)  # Limit to 100 comments
+    ).sort([("pinned", -1), ("created_at", -1)]).to_list(500)
+    
+    # Separate top-level comments and replies
+    top_level_comments = []
+    replies_map = {}
+    
+    for comment in all_comments:
+        # Add user_liked field if user is authenticated
+        if current_user:
+            user_like = await db.user_comment_likes.find_one({
+                "user_id": current_user.id,
+                "comment_id": comment["id"]
+            })
+            comment["user_liked"] = user_like is not None
+        else:
+            comment["user_liked"] = False
+        
+        if comment.get("parent_comment_id"):
+            # This is a reply
+            parent_id = comment["parent_comment_id"]
+            if parent_id not in replies_map:
+                replies_map[parent_id] = []
+            replies_map[parent_id].append(comment)
+        else:
+            # This is a top-level comment
+            comment["replies"] = []
+            top_level_comments.append(comment)
+    
+    # Attach replies to their parent comments
+    for comment in top_level_comments:
+        comment_id = comment["id"]
+        if comment_id in replies_map:
+            comment["replies"] = sorted(replies_map[comment_id], key=lambda x: x["created_at"])
     
     return {
         "video_id": video_id,
-        "comments": comments,
-        "total": len(comments)
+        "comments": top_level_comments,
+        "total": len(all_comments)
     }
 
 @api_router.post("/comments/{video_id}")
