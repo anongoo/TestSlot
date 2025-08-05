@@ -67,6 +67,9 @@ const WatchTab = () => {
   };
 
   if (selectedVideo) {
+    // Filter out the selected video and pass remaining as related videos
+    const relatedVideos = videos.filter(video => video.id !== selectedVideo.id);
+    
     return (
       <VideoPlayer
         video={selectedVideo}
@@ -75,6 +78,7 @@ const WatchTab = () => {
           // Auto-play next video or return to grid
           setSelectedVideo(null);
         }}
+        relatedVideos={relatedVideos}
       />
     );
   }
