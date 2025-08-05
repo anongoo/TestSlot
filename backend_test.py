@@ -8107,6 +8107,21 @@ class EnglishFiestaAPITester:
         self.test_admin_content_get()
         self.test_admin_content_update()
         
+        # 4. VIDEO UPLOAD SYSTEM TESTING
+        print("\n🎥 TESTING VIDEO UPLOAD SYSTEM...")
+        self.test_video_upload_system_requirements()
+        self.test_admin_video_upload_authentication()
+        self.test_admin_video_upload_file_validation()
+        self.test_admin_video_upload_metadata_validation()
+        self.test_youtube_video_addition_authentication()
+        self.test_youtube_video_addition_url_validation()
+        self.test_youtube_video_addition_metadata_extraction()
+        self.test_upload_directories_and_permissions()
+        self.test_file_size_limits()
+        self.test_video_format_support()
+        self.test_thumbnail_generation()
+        self.test_video_processing_pipeline()
+        
         # Print summary
         self.print_test_summary()
 
