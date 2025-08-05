@@ -6430,6 +6430,11 @@ class EnglishFiestaAPITester:
         self.test_filter_collections_visibility_toggle()
         self.test_filter_collections_models_structure()
         
+        # NEW: Enhanced Comments System with Threading and Likes Tests
+        print("\n💬✨ Testing ENHANCED Comments System with Threading and Likes")
+        print("-" * 60)
+        self.test_enhanced_comments_system()
+        
         # Summary
         print("\n" + "=" * 60)
         print("📊 TEST SUMMARY")
