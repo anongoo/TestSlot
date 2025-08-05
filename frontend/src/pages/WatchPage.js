@@ -136,7 +136,11 @@ const WatchPage = () => {
 
       {/* Tab Content */}
       <div className="container mx-auto px-4 py-8">
-        <ActiveComponent />
+        {activeTab === 'watch' ? (
+          <WatchTab onDebugVideoSelect={handleDebugVideoSelect} />
+        ) : (
+          <ActiveComponent />
+        )}
       </div>
     </div>
   );
