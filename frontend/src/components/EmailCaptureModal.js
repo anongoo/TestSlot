@@ -128,7 +128,12 @@ const EmailCaptureModal = () => {
         {/* Backdrop */}
         <div 
           className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm"
-          onClick={handleClose}
+          onClick={(e) => {
+            // Only close if clicking directly on backdrop, not on modal content
+            if (e.target === e.currentTarget) {
+              handleClose(e);
+            }
+          }}
         />
         
         {/* Modal Content */}
