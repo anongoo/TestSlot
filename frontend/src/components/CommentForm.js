@@ -12,7 +12,7 @@ const CommentForm = ({
   const [text, setText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const { sessionToken, isAuthenticated } = useAuth();
+  const { sessionToken, isAuthenticated, user } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
