@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import WatchVideoCard from './WatchVideoCard';
-import VideoPlayer from './VideoPlayer';
+import NewVideoPlayer from './NewVideoPlayer';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
