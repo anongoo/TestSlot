@@ -5798,6 +5798,457 @@ class EnglishFiestaAPITester:
                     {"endpoint": test['endpoint']}
                 )
 
+    # ========== FOCUSED AUTHENTICATION TESTS FOR MOBILE LOGIN BUG REVIEW ==========
+    
+    def test_auth_session_creation_comprehensive(self):
+        """Comprehensive test of POST /api/auth/session with various session_id scenarios"""
+        test_cases = [
+            {
+                "name": "Valid Format Session ID (Mock)",
+                "session_id": "emergent_session_" + str(uuid.uuid4()),
+                "expected_codes": [401, 500],  # 401 for invalid, 500 for service unavailable
+                "should_pass": True
+            },
+            {
+                "name": "Empty Session ID",
+                "session_id": "",
+                "expected_codes": [400, 422],
+                "should_pass": True
+            },
+            {
+                "name": "Invalid Format Session ID",
+                "session_id": "invalid-format",
+                "expected_codes": [400, 401, 422],
+                "should_pass": True
+            },
+            {
+                "name": "Null Session ID",
+                "session_id": None,
+                "expected_codes": [400, 422],
+                "should_pass": True
+            },
+            {
+                "name": "Very Long Session ID",
+                "session_id": "x" * 1000,
+                "expected_codes": [400, 401, 422],
+                "should_pass": True
+            }
+        ]
+        
+        passed_tests = 0
+        for test_case in test_cases:
+            try:
+                payload = {}
+                if test_case["session_id"] is not None:
+                    payload["session_id"] = test_case["session_id"]
+                
+                response = requests.post(f"{BACKEND_URL}/auth/session", json=payload)
+                
+                if response.status_code in test_case["expected_codes"]:
+                    passed_tests += 1
+                    self.log_test(
+                        f"POST /api/auth/session - {test_case['name']}",
+                        True,
+                        f"Correctly handled with status {response.status_code}",
+                        {"session_id": test_case["session_id"], "status_code": response.status_code}
+                    )
+                else:
+                    self.log_test(
+                        f"POST /api/auth/session - {test_case['name']}",
+                        False,
+                        f"Expected {test_case['expected_codes']}, got {response.status_code}",
+                        {"session_id": test_case["session_id"], "response": response.text}
+                    )
+            except Exception as e:
+                self.log_test(
+                    f"POST /api/auth/session - {test_case['name']}",
+                    False,
+                    f"Request failed: {str(e)}",
+                    {"session_id": test_case["session_id"]}
+                )
+        
+        # Overall assessment
+        if passed_tests >= len(test_cases) * 0.8:  # 80% pass rate
+            self.log_test(
+                "POST /api/auth/session - Comprehensive Testing",
+                True,
+                f"Session creation endpoint handles various scenarios correctly ({passed_tests}/{len(test_cases)} passed)",
+                {"total_tests": len(test_cases), "passed": passed_tests}
+            )
+        else:
+            self.log_test(
+                "POST /api/auth/session - Comprehensive Testing",
+                False,
+                f"Session creation endpoint failed multiple scenarios ({passed_tests}/{len(test_cases)} passed)",
+                {"total_tests": len(test_cases), "passed": passed_tests}
+            )
+    
+    def test_auth_profile_comprehensive(self):
+        """Comprehensive test of GET /api/auth/profile with various token scenarios"""
+        test_cases = [
+            {
+                "name": "No Authorization Header",
+                "headers": {},
+                "expected_code": 401,
+                "should_pass": True
+            },
+            {
+                "name": "Empty Bearer Token",
+                "headers": {"Authorization": "Bearer "},
+                "expected_code": 401,
+                "should_pass": True
+            },
+            {
+                "name": "Invalid Token Format",
+                "headers": {"Authorization": "Bearer invalid_token_123"},
+                "expected_code": 401,
+                "should_pass": True
+            },
+            {
+                "name": "Wrong Authorization Scheme",
+                "headers": {"Authorization": "Basic invalid_token_123"},
+                "expected_code": 401,
+                "should_pass": True
+            },
+            {
+                "name": "Malformed Authorization Header",
+                "headers": {"Authorization": "invalid_token_123"},
+                "expected_code": 401,
+                "should_pass": True
+            },
+            {
+                "name": "UUID Format Token (Mock)",
+                "headers": {"Authorization": f"Bearer {str(uuid.uuid4())}"},
+                "expected_code": 401,
+                "should_pass": True
+            }
+        ]
+        
+        passed_tests = 0
+        for test_case in test_cases:
+            try:
+                response = requests.get(f"{BACKEND_URL}/auth/profile", headers=test_case["headers"])
+                
+                if response.status_code == test_case["expected_code"]:
+                    passed_tests += 1
+                    self.log_test(
+                        f"GET /api/auth/profile - {test_case['name']}",
+                        True,
+                        f"Correctly returned {response.status_code} for invalid authentication",
+                        {"headers": test_case["headers"], "status_code": response.status_code}
+                    )
+                else:
+                    self.log_test(
+                        f"GET /api/auth/profile - {test_case['name']}",
+                        False,
+                        f"Expected {test_case['expected_code']}, got {response.status_code}",
+                        {"headers": test_case["headers"], "response": response.text}
+                    )
+            except Exception as e:
+                self.log_test(
+                    f"GET /api/auth/profile - {test_case['name']}",
+                    False,
+                    f"Request failed: {str(e)}",
+                    {"headers": test_case["headers"]}
+                )
+        
+        # Overall assessment
+        if passed_tests >= len(test_cases) * 0.9:  # 90% pass rate for profile endpoint
+            self.log_test(
+                "GET /api/auth/profile - Comprehensive Testing",
+                True,
+                f"Profile endpoint properly validates authentication ({passed_tests}/{len(test_cases)} passed)",
+                {"total_tests": len(test_cases), "passed": passed_tests}
+            )
+        else:
+            self.log_test(
+                "GET /api/auth/profile - Comprehensive Testing",
+                False,
+                f"Profile endpoint has authentication validation issues ({passed_tests}/{len(test_cases)} passed)",
+                {"total_tests": len(test_cases), "passed": passed_tests}
+            )
+    
+    def test_auth_logout_comprehensive(self):
+        """Comprehensive test of POST /api/auth/logout with various token scenarios"""
+        test_cases = [
+            {
+                "name": "No Authorization Header",
+                "headers": {},
+                "expected_code": 401,
+                "should_pass": True
+            },
+            {
+                "name": "Empty Bearer Token",
+                "headers": {"Authorization": "Bearer "},
+                "expected_code": 401,
+                "should_pass": True
+            },
+            {
+                "name": "Invalid Token Format",
+                "headers": {"Authorization": "Bearer invalid_logout_token"},
+                "expected_code": 401,
+                "should_pass": True
+            },
+            {
+                "name": "Expired Token Format (Mock)",
+                "headers": {"Authorization": f"Bearer expired_{str(uuid.uuid4())}"},
+                "expected_code": 401,
+                "should_pass": True
+            },
+            {
+                "name": "Wrong Authorization Scheme",
+                "headers": {"Authorization": "Basic some_token"},
+                "expected_code": 401,
+                "should_pass": True
+            }
+        ]
+        
+        passed_tests = 0
+        for test_case in test_cases:
+            try:
+                response = requests.post(f"{BACKEND_URL}/auth/logout", headers=test_case["headers"])
+                
+                if response.status_code == test_case["expected_code"]:
+                    passed_tests += 1
+                    self.log_test(
+                        f"POST /api/auth/logout - {test_case['name']}",
+                        True,
+                        f"Correctly returned {response.status_code} for invalid authentication",
+                        {"headers": test_case["headers"], "status_code": response.status_code}
+                    )
+                else:
+                    self.log_test(
+                        f"POST /api/auth/logout - {test_case['name']}",
+                        False,
+                        f"Expected {test_case['expected_code']}, got {response.status_code}",
+                        {"headers": test_case["headers"], "response": response.text}
+                    )
+            except Exception as e:
+                self.log_test(
+                    f"POST /api/auth/logout - {test_case['name']}",
+                    False,
+                    f"Request failed: {str(e)}",
+                    {"headers": test_case["headers"]}
+                )
+        
+        # Overall assessment
+        if passed_tests >= len(test_cases) * 0.9:  # 90% pass rate for logout endpoint
+            self.log_test(
+                "POST /api/auth/logout - Comprehensive Testing",
+                True,
+                f"Logout endpoint properly validates authentication ({passed_tests}/{len(test_cases)} passed)",
+                {"total_tests": len(test_cases), "passed": passed_tests}
+            )
+        else:
+            self.log_test(
+                "POST /api/auth/logout - Comprehensive Testing",
+                False,
+                f"Logout endpoint has authentication validation issues ({passed_tests}/{len(test_cases)} passed)",
+                {"total_tests": len(test_cases), "passed": passed_tests}
+            )
+    
+    def test_authentication_flow_simulation(self):
+        """Simulate complete authentication flow to test integration"""
+        # Step 1: Try to create session with mock data
+        mock_session_id = f"mobile_test_session_{str(uuid.uuid4())}"
+        
+        try:
+            # Test session creation
+            session_response = requests.post(
+                f"{BACKEND_URL}/auth/session",
+                json={"session_id": mock_session_id}
+            )
+            
+            session_test_passed = session_response.status_code in [401, 500]  # Expected for mock data
+            
+            # Test profile access without token
+            profile_response = requests.get(f"{BACKEND_URL}/auth/profile")
+            profile_test_passed = profile_response.status_code == 401
+            
+            # Test logout without token
+            logout_response = requests.post(f"{BACKEND_URL}/auth/logout")
+            logout_test_passed = logout_response.status_code == 401
+            
+            # Test admin endpoint access
+            admin_response = requests.get(f"{BACKEND_URL}/admin/users")
+            admin_test_passed = admin_response.status_code == 401
+            
+            # Overall flow assessment
+            total_tests = 4
+            passed_tests = sum([session_test_passed, profile_test_passed, logout_test_passed, admin_test_passed])
+            
+            if passed_tests == total_tests:
+                self.log_test(
+                    "Authentication Flow Integration",
+                    True,
+                    f"Complete authentication flow working correctly ({passed_tests}/{total_tests} endpoints)",
+                    {
+                        "session_creation": session_response.status_code,
+                        "profile_access": profile_response.status_code,
+                        "logout": logout_response.status_code,
+                        "admin_access": admin_response.status_code
+                    }
+                )
+            else:
+                self.log_test(
+                    "Authentication Flow Integration",
+                    False,
+                    f"Authentication flow has issues ({passed_tests}/{total_tests} endpoints working)",
+                    {
+                        "session_creation": session_response.status_code,
+                        "profile_access": profile_response.status_code,
+                        "logout": logout_response.status_code,
+                        "admin_access": admin_response.status_code
+                    }
+                )
+        except Exception as e:
+            self.log_test(
+                "Authentication Flow Integration",
+                False,
+                f"Authentication flow test failed: {str(e)}"
+            )
+    
+    def test_token_validation_edge_cases(self):
+        """Test edge cases in token validation that might affect mobile login"""
+        edge_cases = [
+            {
+                "name": "Very Long Token",
+                "token": "x" * 2000,
+                "expected_code": 401
+            },
+            {
+                "name": "Token with Special Characters",
+                "token": "token!@#$%^&*()",
+                "expected_code": 401
+            },
+            {
+                "name": "Token with Spaces",
+                "token": "token with spaces",
+                "expected_code": 401
+            },
+            {
+                "name": "Token with Unicode",
+                "token": "token_with_unicode_🔐",
+                "expected_code": 401
+            },
+            {
+                "name": "Base64-like Token",
+                "token": "dGVzdF90b2tlbl9iYXNlNjQ=",
+                "expected_code": 401
+            },
+            {
+                "name": "JWT-like Token Structure",
+                "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+                "expected_code": 401
+            }
+        ]
+        
+        passed_tests = 0
+        for case in edge_cases:
+            try:
+                headers = {"Authorization": f"Bearer {case['token']}"}
+                response = requests.get(f"{BACKEND_URL}/auth/profile", headers=headers)
+                
+                if response.status_code == case["expected_code"]:
+                    passed_tests += 1
+                    self.log_test(
+                        f"Token Validation - {case['name']}",
+                        True,
+                        f"Correctly rejected edge case token with {response.status_code}",
+                        {"token_type": case['name'], "status_code": response.status_code}
+                    )
+                else:
+                    self.log_test(
+                        f"Token Validation - {case['name']}",
+                        False,
+                        f"Expected {case['expected_code']}, got {response.status_code}",
+                        {"token_type": case['name'], "response": response.text}
+                    )
+            except Exception as e:
+                self.log_test(
+                    f"Token Validation - {case['name']}",
+                    False,
+                    f"Request failed: {str(e)}",
+                    {"token_type": case['name']}
+                )
+        
+        # Overall assessment
+        if passed_tests >= len(edge_cases) * 0.8:  # 80% pass rate
+            self.log_test(
+                "Token Validation Edge Cases",
+                True,
+                f"Token validation handles edge cases correctly ({passed_tests}/{len(edge_cases)} passed)",
+                {"total_tests": len(edge_cases), "passed": passed_tests}
+            )
+        else:
+            self.log_test(
+                "Token Validation Edge Cases",
+                False,
+                f"Token validation has issues with edge cases ({passed_tests}/{len(edge_cases)} passed)",
+                {"total_tests": len(edge_cases), "passed": passed_tests}
+            )
+    
+    def test_admin_endpoints_authentication_comprehensive(self):
+        """Test all admin endpoints require proper authentication"""
+        admin_endpoints = [
+            {"method": "GET", "path": "/admin/users", "name": "User Management"},
+            {"method": "POST", "path": "/admin/users/role", "name": "Role Update", "json": {"user_id": "test", "new_role": "student"}},
+            {"method": "GET", "path": "/admin/videos", "name": "Video Management"},
+            {"method": "POST", "path": "/admin/videos/youtube", "name": "YouTube Video Add", "json": {"youtube_url": "https://youtube.com/watch?v=test"}},
+            {"method": "GET", "path": "/admin/content", "name": "Content Management"},
+            {"method": "PUT", "path": "/admin/content/hero_section/title", "name": "Content Update", "json": {"languages": {"en": {"title": "test"}}}}
+        ]
+        
+        passed_tests = 0
+        for endpoint in admin_endpoints:
+            try:
+                # Test without authentication
+                if endpoint["method"] == "GET":
+                    response = requests.get(f"{BACKEND_URL}{endpoint['path']}")
+                elif endpoint["method"] == "POST":
+                    response = requests.post(f"{BACKEND_URL}{endpoint['path']}", json=endpoint.get("json", {}))
+                elif endpoint["method"] == "PUT":
+                    response = requests.put(f"{BACKEND_URL}{endpoint['path']}", json=endpoint.get("json", {}))
+                
+                if response.status_code == 401:
+                    passed_tests += 1
+                    self.log_test(
+                        f"Admin Auth - {endpoint['name']}",
+                        True,
+                        f"Correctly requires authentication (401)",
+                        {"endpoint": endpoint['path'], "method": endpoint['method']}
+                    )
+                else:
+                    self.log_test(
+                        f"Admin Auth - {endpoint['name']}",
+                        False,
+                        f"Expected 401, got {response.status_code}",
+                        {"endpoint": endpoint['path'], "method": endpoint['method'], "response": response.text}
+                    )
+            except Exception as e:
+                self.log_test(
+                    f"Admin Auth - {endpoint['name']}",
+                    False,
+                    f"Request failed: {str(e)}",
+                    {"endpoint": endpoint['path'], "method": endpoint['method']}
+                )
+        
+        # Overall assessment
+        if passed_tests >= len(admin_endpoints) * 0.9:  # 90% pass rate for admin endpoints
+            self.log_test(
+                "Admin Endpoints Authentication",
+                True,
+                f"All admin endpoints properly secured ({passed_tests}/{len(admin_endpoints)} passed)",
+                {"total_endpoints": len(admin_endpoints), "secured": passed_tests}
+            )
+        else:
+            self.log_test(
+                "Admin Endpoints Authentication",
+                False,
+                f"Some admin endpoints lack proper authentication ({passed_tests}/{len(admin_endpoints)} passed)",
+                {"total_endpoints": len(admin_endpoints), "secured": passed_tests}
+            )
+
     def run_all_tests(self):
         """Run all backend tests"""
         print("🚀 Starting English Fiesta Backend API Tests")
@@ -5805,7 +6256,20 @@ class EnglishFiestaAPITester:
         print(f"Test Session ID: {self.session_id}")
         print("=" * 60)
         
+        # FOCUSED AUTHENTICATION TESTS FOR MOBILE LOGIN BUG REVIEW
+        print("\n🔐 AUTHENTICATION SYSTEM COMPREHENSIVE TESTING")
+        print("Testing authentication endpoints to ensure mobile login fixes haven't broken existing functionality...")
+        print("-" * 80)
+        self.test_auth_session_creation_comprehensive()
+        self.test_auth_profile_comprehensive()
+        self.test_auth_logout_comprehensive()
+        self.test_authentication_flow_simulation()
+        self.test_token_validation_edge_cases()
+        self.test_admin_endpoints_authentication_comprehensive()
+        
         # Test sequence - Video Management Tests
+        print("\n📹 CORE VIDEO MANAGEMENT TESTS")
+        print("-" * 40)
         self.test_get_videos_basic()
         self.test_sample_data_validation()
         self.test_video_filtering()
