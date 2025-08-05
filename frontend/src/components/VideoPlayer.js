@@ -23,13 +23,12 @@ const getSessionId = () => {
   return sessionId;
 };
 
-const VideoPlayer = ({ video, onClose, onVideoEnd }) => {
+const VideoPlayer = ({ video, onClose, onVideoEnd, relatedVideos = [] }) => {
   const { isAuthenticated, sessionToken, isStudent } = useAuth();
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [watchedMinutes, setWatchedMinutes] = useState(0);
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [sessionId] = useState(getSessionId());
   const [showMarkModal, setShowMarkModal] = useState(false);
   const [isInList, setIsInList] = useState(false);
@@ -38,8 +37,8 @@ const VideoPlayer = ({ video, onClose, onVideoEnd }) => {
   const [isToggling, setIsToggling] = useState(false);
   const [showOverlay, setShowOverlay] = useState(true);
   
-  const videoRef = useRef(null);
-  const playerContainerRef = useRef(null);
+  const watchedMinutesRef = useRef(new Set());
+  const playerRef = useRef(null);
   const trackingIntervalRef = useRef(null);
   const lastTrackedMinute = useRef(0);
 
