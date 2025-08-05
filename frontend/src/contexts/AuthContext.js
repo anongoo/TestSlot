@@ -23,17 +23,30 @@ export const AuthProvider = ({ children }) => {
   );
 
   useEffect(() => {
-    if (sessionToken) {
-      fetchUserProfile();
-    } else {
-      // Check for auth redirect with session_id
+    const initializeAuth = async () => {
+      // Check for auth redirect with session_id first
       const hash = window.location.hash;
       if (hash.includes('session_id=')) {
-        const sessionId = hash.split('session_id=')[1];
-        handleEmergentAuth(sessionId);
+        const sessionId = hash.split('session_id=')[1].split('&')[0]; // Handle multiple hash params
+        await handleEmergentAuth(sessionId);
+        return;
+      }
+
+      // If we have a stored token, fetch user profile
+      if (sessionToken) {
+        await fetchUserProfile();
       } else {
         setLoading(false);
       }
+    };
+
+    initializeAuth();
+  }, []); // Remove sessionToken dependency to prevent loops
+
+  // Separate useEffect to handle sessionToken changes after initial load
+  useEffect(() => {
+    if (sessionToken && user === null && !loading) {
+      fetchUserProfile();
     }
   }, [sessionToken]);
 
