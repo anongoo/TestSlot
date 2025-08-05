@@ -255,12 +255,22 @@ const VideoPlayer = ({ video, onClose, onVideoEnd, relatedVideos = [], onVideoSe
         </div>
       </div>
       
-      {/* Mark as Watched Modal */}
+      {/* Smart Progress Tracking Toast for Guest Users */}
+      <ProgressTrackingToast
+        isVisible={showToast && !isAuthenticated}
+        watchTime={watchedMinutesRef.current.size}
+        onDismiss={() => setShowToast(false)}
+      />
+      
+      {/* Mark as Watched Modal (if needed by sidebar) */}
       <MarkAsWatchedModal
         video={video}
         isOpen={showMarkModal}
         onClose={() => setShowMarkModal(false)}
-        onSuccess={handleMarkModalSuccess}
+        onSuccess={() => {
+          // Refresh sidebar data when modal succeeds
+          setShowMarkModal(false);
+        }}
       />
     </div>
   );
