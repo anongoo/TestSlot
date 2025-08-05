@@ -12,6 +12,12 @@ const WatchPage = () => {
   const [debugVideos, setDebugVideos] = useState([]);
   const [debugSetSelectedVideo, setDebugSetSelectedVideo] = useState(null);
 
+  // Callback to receive debug functionality from WatchTab
+  const handleDebugVideoSelect = (videos, setSelectedVideoFn) => {
+    setDebugVideos(videos);
+    setDebugSetSelectedVideo(() => setSelectedVideoFn);
+  };
+
   // Tabs configuration
   const tabs = [
     { id: 'watch', label: '🎥 Watch', icon: '🎥', component: WatchTab },
