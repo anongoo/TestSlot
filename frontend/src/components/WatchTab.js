@@ -87,6 +87,7 @@ const WatchTab = ({ onDebugVideoSelect }) => {
     
     return (
       <VideoPlayer
+        key={`video-player-${selectedVideo.id}`} // Prevent double rendering
         video={selectedVideo}
         onClose={handleClosePlayer}
         onVideoEnd={() => {
@@ -95,6 +96,7 @@ const WatchTab = ({ onDebugVideoSelect }) => {
         }}
         relatedVideos={relatedVideos}
         onVideoSelect={handleVideoSelect}
+        debug={process.env.NODE_ENV === 'development'} // Enable debug in development
       />
     );
   }
