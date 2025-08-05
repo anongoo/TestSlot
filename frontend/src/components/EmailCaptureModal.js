@@ -12,24 +12,32 @@ const EmailCaptureModal = () => {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    // Check if user has already seen or dismissed the modal
+    // Check if user has already seen, dismissed, or subscribed
     const hasSeenModal = localStorage.getItem('email_capture_seen');
+    const hasDismissedModal = localStorage.getItem('email_capture_dismissed'); 
     const hasSubscribed = localStorage.getItem('email_subscribed');
     
-    if (hasSeenModal || hasSubscribed) {
+    // Don't show modal if any of these conditions are true
+    if (hasSeenModal || hasDismissedModal || hasSubscribed) {
       return;
     }
 
-    // Show modal after 10 seconds or when user scrolls
+    let modalShown = false; // Prevent double triggering
+
+    // Show modal function
     const showModal = () => {
+      if (modalShown) return; // Prevent multiple calls
+      modalShown = true;
       setIsVisible(true);
       localStorage.setItem('email_capture_seen', 'true');
     };
 
     // Timer trigger (10 seconds)
-    const timer = setTimeout(showModal, 10000);
+    const timer = setTimeout(() => {
+      showModal();
+    }, 10000);
 
-    // Scroll trigger
+    // Scroll trigger  
     const handleScroll = () => {
       if (window.scrollY > 500) {
         showModal();
