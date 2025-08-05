@@ -47,29 +47,6 @@ const WatchPage = () => {
               <p className="text-gray-600 mt-2">
                 Learn English naturally through comprehensible input
               </p>
-              
-              {/* Debug: Test video selection button */}
-              <button
-                onClick={() => {
-                  console.log('🧪 Debug button clicked');
-                  console.log('📊 Debug state:', { 
-                    videosCount: debugVideos.length, 
-                    hasSetFunction: !!debugSetSelectedVideo,
-                    activeTab 
-                  });
-                  const testVideo = debugVideos.find(v => v.title?.includes('babycrawl')) || debugVideos[0];
-                  console.log('🎯 Setting selected video:', testVideo?.title);
-                  if (debugSetSelectedVideo && testVideo) {
-                    debugSetSelectedVideo(testVideo);
-                  } else {
-                    console.log('❌ Debug: No videos available or setSelectedVideo not ready');
-                  }
-                }}
-                className="mt-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-                title={`Videos: ${debugVideos.length}, Ready: ${!!debugSetSelectedVideo}`}
-              >
-                🧪 DEBUG: Open babycrawl video ({debugVideos.length} videos)
-              </button>
             </div>
             
             {/* Auth Status */}
