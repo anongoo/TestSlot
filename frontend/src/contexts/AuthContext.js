@@ -45,15 +45,25 @@ export const AuthProvider = ({ children }) => {
       });
 
       const userData = response.data;
-      setUser(userData);
-      setSessionToken(userData.session_token);
+      
+      // Store token first in localStorage
       localStorage.setItem('english_fiesta_token', userData.session_token);
+      
+      // Then update state
+      setSessionToken(userData.session_token);
+      setUser(userData);
       
       // Clear the hash from URL
       window.location.hash = '';
       
-      // Redirect to main app
-      window.location.pathname = '/';
+      // Use replace instead of pathname assignment for better mobile compatibility
+      window.history.replaceState({}, '', '/');
+      
+      // Add a small delay to ensure state updates complete on mobile
+      setTimeout(() => {
+        setLoading(false);
+      }, 100);
+      
     } catch (error) {
       console.error('Authentication failed:', error);
       setLoading(false);
