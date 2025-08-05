@@ -1,0 +1,3226 @@
+from fastapi import FastAPI, APIRouter, HTTPException, Query, Depends, Header, UploadFile, File, Form
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.responses import FileResponse
+from dotenv import load_dotenv
+from starlette.middleware.cors import CORSMiddleware
+from motor.motor_asyncio import AsyncIOMotorClient
+import os
+import logging
+import requests
+from pathlib import Path
+from pydantic import BaseModel, Field, EmailStr
+from typing import List, Optional, Dict, Any, Union
+import uuid
+from datetime import datetime, timedelta
+from enum import Enum
+import hashlib
+import secrets
+import aiofiles
+try:
+    import magic
+    MAGIC_AVAILABLE = True
+except ImportError:
+    MAGIC_AVAILABLE = False
+    magic = None
+from PIL import Image
+import tempfile
+import shutil
+import json
+import re
+import yt_dlp
+import subprocess
+from urllib.parse import urlparse, parse_qs
+
+ROOT_DIR = Path(__file__).parent
+load_dotenv(ROOT_DIR / '.env')
+
+# File upload configuration
+UPLOAD_DIR = ROOT_DIR / "uploads"
+THUMBNAILS_DIR = UPLOAD_DIR / "thumbnails"
+VIDEOS_DIR = UPLOAD_DIR / "videos"
+TEMP_DIR = UPLOAD_DIR / "temp"
+
+# Create upload directories
+UPLOAD_DIR.mkdir(exist_ok=True)
+THUMBNAILS_DIR.mkdir(exist_ok=True)
+VIDEOS_DIR.mkdir(exist_ok=True)
+TEMP_DIR.mkdir(exist_ok=True)
+
+# File upload limits and supported formats
+MAX_FILE_SIZE = 5 * 1024 * 1024 * 1024  # 5GB in bytes
+CHUNK_SIZE = 1024 * 1024  # 1MB chunks
+SUPPORTED_VIDEO_FORMATS = ['.mp4', '.mov', '.avi']
+SUPPORTED_IMAGE_FORMATS = ['.jpg', '.jpeg', '.png', '.webp']
+
+# MongoDB connection
+mongo_url = os.environ['MONGO_URL']
+client = AsyncIOMotorClient(mongo_url)
+db = client[os.environ['DB_NAME']]
+
+# Create the main app without a prefix
+app = FastAPI()
+
+# Create a router with the /api prefix
+api_router = APIRouter(prefix="/api")
+
+# Security
+security = HTTPBearer(auto_error=False)
+
+# User Roles Enum
+class UserRole(str, Enum):
+    GUEST = "guest"
+    STUDENT = "student"
+    INSTRUCTOR = "instructor"
+    ADMIN = "admin"
+
+# Enums
+class VideoLevel(str, Enum):
+    NEW_BEGINNER = "New Beginner"
+    BEGINNER = "Beginner"
+    INTERMEDIATE = "Intermediate"
+    ADVANCED = "Advanced"
+
+class VideoCategory(str, Enum):
+    CONVERSATION = "Conversation"
+    GRAMMAR = "Grammar"
+    VOCABULARY = "Vocabulary"
+    PRONUNCIATION = "Pronunciation"
+    CULTURE = "Culture"
+    BUSINESS = "Business"
+    INTERVIEW = "Interview"
+    TRAVEL = "Travel"
+    TUTORIAL = "Tutorial"
+
+class AccentType(str, Enum):
+    BRITISH = "British"
+    AMERICAN = "American"
+    AUSTRALIAN = "Australian"
+    CANADIAN = "Canadian"
+
+class GuideType(str, Enum):
+    NATIVE_SPEAKER = "Native Speaker"
+    ESL_TEACHER = "ESL Teacher"
+    LANGUAGE_COACH = "Language Coach"
+
+class VideoType(str, Enum):
+    UPLOAD = "upload"
+    YOUTUBE = "youtube"
+
+class CountryType(str, Enum):
+    USA = "USA"
+    UK = "UK"
+    CANADA = "Canada"
+    AUSTRALIA = "Australia"
+
+# Enhanced Video Model
+class Video(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    title: str
+    description: str
+    duration_minutes: int
+    level: VideoLevel
+    accents: List[AccentType] = []  # Changed to support multiple accents
+    tags: List[str] = []  # Comma-separated tags
+    instructor_name: str
+    country: CountryType
+    topics: List[str] = []  # Topics instead of category - list of topic IDs or slugs
+    thumbnail_url: Optional[str] = None  # Optional for uploads, auto-generated
+    is_premium: bool = False
+    
+    # Video source information
+    video_type: VideoType  # "upload" or "youtube"
+    video_url: Optional[str] = None  # YouTube URL or local file path
+    file_path: Optional[str] = None  # Local file path for uploads
+    youtube_video_id: Optional[str] = None  # YouTube video ID
+    
+    # File information (for uploads)
+    file_size: Optional[int] = None  # File size in bytes
+    file_format: Optional[str] = None  # MP4, MOV, AVI
+    
+    # Legacy fields (keep for backward compatibility)
+    guide: GuideType = GuideType.NATIVE_SPEAKER
+    series_id: Optional[str] = None
+    series_order: Optional[int] = None
+    
+    # Metadata
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_by: Optional[str] = None  # Admin user ID who uploaded
+
+class VideoSeries(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    title: str
+    description: str
+    thumbnail_url: str
+    level: VideoLevel
+    category: VideoCategory
+    video_count: int
+    total_duration_minutes: int
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+# New Filter Collections Models
+class Topic(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    slug: str
+    visible: bool = True
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class Country(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    slug: str
+    visible: bool = True
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class Guide(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    visible: bool = True
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class WatchProgress(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: Optional[str] = None  # For guest users, this will be None
+    session_id: str  # For tracking guest progress
+    video_id: str
+    watched_minutes: int
+    completed: bool = False
+    watched_at: datetime = Field(default_factory=datetime.utcnow)
+
+class DailyProgress(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: Optional[str] = None
+    session_id: str
+    date: str  # Format: YYYY-MM-DD
+    total_minutes_watched: int
+    videos_watched: List[str] = []
+    streak_count: int = 0
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+class UserStats(BaseModel):
+    user_id: Optional[str] = None
+    session_id: str
+    total_minutes_watched: int = 0
+    current_streak: int = 0
+    longest_streak: int = 0
+    personal_best_day: int = 0
+    level_progress: Dict[str, int] = {}
+    milestones_achieved: List[str] = []
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+class VideoFilterRequest(BaseModel):
+    level: Optional[VideoLevel] = None
+    category: Optional[VideoCategory] = None
+    accent: Optional[AccentType] = None
+    guide: Optional[GuideType] = None
+    country: Optional[str] = None
+    is_premium: Optional[bool] = None
+    search: Optional[str] = None
+    max_duration: Optional[int] = None
+    sort_by: Optional[str] = "newest"  # newest, popular, shortest, longest
+
+class EmailSubscribeRequest(BaseModel):
+    email: EmailStr
+    name: Optional[str] = None
+    source: str = "english_fiesta"
+
+# Video Upload and Management Models
+class VideoUploadRequest(BaseModel):
+    title: str
+    description: str
+    duration_minutes: int
+    level: VideoLevel
+    accents: List[AccentType]
+    tags: List[str]
+    instructor_name: str
+    country: CountryType
+    category: VideoCategory
+    is_premium: bool = False
+
+class YouTubeVideoRequest(BaseModel):
+    youtube_url: str
+    title: Optional[str] = None  # Auto-fetch if not provided
+    description: Optional[str] = None
+    level: VideoLevel
+    accents: List[AccentType]
+    tags: List[str]
+    instructor_name: str
+    country: CountryType
+    category: VideoCategory
+    is_premium: bool = False
+
+class VideoUpdateRequest(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    duration_minutes: Optional[int] = None
+    level: Optional[VideoLevel] = None
+    accents: Optional[List[AccentType]] = None
+    tags: Optional[List[str]] = None
+    instructor_name: Optional[str] = None
+    country: Optional[CountryType] = None
+    category: Optional[VideoCategory] = None
+    is_premium: Optional[bool] = None
+
+class BulkUploadResponse(BaseModel):
+    uploaded_files: List[Dict[str, Any]]
+    failed_files: List[Dict[str, str]]
+    total_uploaded: int
+    total_failed: int
+
+class UploadProgressResponse(BaseModel):
+    file_id: str
+    filename: str
+    progress: float  # 0.0 to 1.0
+    status: str  # "uploading", "processing", "completed", "failed"
+    message: Optional[str] = None
+
+# Authentication Models
+class User(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    email: str
+    name: str
+    picture: Optional[str] = None
+    role: UserRole = UserRole.STUDENT
+    emergent_user_id: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    is_active: bool = True
+
+class UserSession(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    session_token: str
+    emergent_session_id: str
+    expires_at: datetime
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    is_active: bool = True
+
+class AuthSessionRequest(BaseModel):
+    session_id: str
+
+class UserProfileResponse(BaseModel):
+    id: str
+    email: str
+    name: str
+    picture: Optional[str]
+    role: UserRole
+    created_at: datetime
+    session_token: str
+
+class RoleUpdateRequest(BaseModel):
+    user_id: str
+    new_role: UserRole
+
+# Manual Activity Tracking Models
+class ActivityType(str, Enum):
+    MOVIES_TV = "Movies/TV Shows"
+    AUDIOBOOKS_PODCASTS = "Audiobooks/Podcasts"
+    TALKING_FRIENDS = "Talking with friends"
+
+class ActivityLevel(str, Enum):
+    NEW_BEGINNER = "New Beginner"
+    BEGINNER = "Beginner"
+    INTERMEDIATE = "Intermediate"
+    ADVANCED = "Advanced"
+
+# Content Management Models
+class ContentType(str, Enum):
+    HERO_SECTION = "hero_section"
+    ABOUT_PAGE = "about_page"
+    FAQ_PAGE = "faq_page"
+    FOOTER = "footer"
+    UI_TEXT = "ui_text"
+
+class ContentItem(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    content_type: ContentType
+    section_key: str  # e.g., "hero_title", "faq_section_1", "footer_copyright"
+    languages: Dict[str, Any] = {}  # {"en": {"title": "...", "content": "..."}, "es": {...}, "pt": {...}}
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+
+class ContentUpdateRequest(BaseModel):
+    languages: Dict[str, Any]
+
+class ManualActivity(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: Optional[str] = None
+    session_id: str
+    activity_type: ActivityType
+    duration_minutes: int
+    date: str  # Format: YYYY-MM-DD
+    title: Optional[str] = None
+    difficulty_level: Optional[ActivityLevel] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class ManualActivityRequest(BaseModel):
+    activity_type: ActivityType
+    duration_minutes: int
+    date: str  # Format: YYYY-MM-DD
+    title: Optional[str] = None
+    difficulty_level: Optional[ActivityLevel] = None
+
+class MarkAsWatchedRequest(BaseModel):
+    difficulty_level: Optional[ActivityLevel] = None
+
+# New models for the requested functionality
+class ManualProgressRequest(BaseModel):
+    videoId: str
+    watchedAt: str  # YYYY-MM-DD format
+    minutesWatched: int
+
+class UserListRequest(BaseModel):
+    video_id: str
+
+class UserListItem(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    video_id: str
+    added_at: datetime = Field(default_factory=datetime.utcnow)
+
+# Daily Goal System Models
+class DailyGoal(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    daily_minutes_goal: int = 30  # Default 30 minutes
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+class SetDailyGoalRequest(BaseModel):
+    daily_minutes_goal: int = Field(ge=1, le=480)  # 1 minute to 8 hours max
+
+class DailyGoalProgressResponse(BaseModel):
+    daily_goal: int
+    minutes_watched_today: int
+    progress_percentage: float
+    goal_completed: bool
+    streak_days: int
+
+class UnmarkVideoRequest(BaseModel):
+    video_id: str
+
+# Video Commenting System Models
+class Comment(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    video_id: str
+    user_id: str
+    user_name: str
+    text: str
+    pinned: bool = False  # New field for pinned comments
+    parent_comment_id: Optional[str] = None  # For threaded replies
+    like_count: int = 0  # Number of likes
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class CommentRequest(BaseModel):
+    text: str = Field(min_length=1, max_length=500)  # Limit comment length
+    parent_comment_id: Optional[str] = None  # For replies
+
+class UserCommentLike(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    comment_id: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+# Filter Collections Request Models
+class TopicRequest(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
+    slug: str = Field(min_length=1, max_length=100)
+    visible: bool = True
+
+class CountryRequest(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
+    slug: str = Field(min_length=1, max_length=100)
+    visible: bool = True
+
+class GuideRequest(BaseModel):
+    name: str = Field(min_length=1, max_length=200)
+    visible: bool = True
+
+# ==========================================
+# FILE HANDLING UTILITIES
+# ==========================================
+
+def get_file_extension(filename: str) -> str:
+    """Get file extension from filename"""
+    return Path(filename).suffix.lower()
+
+def is_video_file(filename: str) -> bool:
+    """Check if file is a supported video format"""
+    return get_file_extension(filename) in SUPPORTED_VIDEO_FORMATS
+
+def is_image_file(filename: str) -> bool:
+    """Check if file is a supported image format"""
+    return get_file_extension(filename) in SUPPORTED_IMAGE_FORMATS
+
+async def save_uploaded_file(file: UploadFile, destination: Path) -> bool:
+    """Save uploaded file to destination with chunked reading"""
+    try:
+        async with aiofiles.open(destination, 'wb') as f:
+            while chunk := await file.read(CHUNK_SIZE):
+                await f.write(chunk)
+        return True
+    except Exception as e:
+        logging.error(f"Error saving file {destination}: {e}")
+        if destination.exists():
+            destination.unlink()  # Clean up partial file
+        return False
+
+def get_video_duration(file_path: Path) -> Optional[int]:
+    """Get video duration in minutes using ffprobe"""
+    try:
+        cmd = [
+            'ffprobe', '-v', 'quiet', '-show_entries', 'format=duration',
+            '-of', 'csv=p=0', str(file_path)
+        ]
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode == 0:
+            duration_seconds = float(result.stdout.strip())
+            return int(duration_seconds / 60)  # Convert to minutes
+    except Exception as e:
+        logging.error(f"Error getting video duration for {file_path}: {e}")
+    return None
+
+def extract_video_thumbnail(video_path: Path, thumbnail_path: Path) -> bool:
+    """Extract thumbnail from video file using ffmpeg"""
+    try:
+        cmd = [
+            'ffmpeg', '-i', str(video_path), '-ss', '00:00:01.000',
+            '-vframes', '1', '-f', 'image2', str(thumbnail_path), '-y'
+        ]
+        result = subprocess.run(cmd, capture_output=True)
+        return result.returncode == 0 and thumbnail_path.exists()
+    except Exception as e:
+        logging.error(f"Error extracting thumbnail: {e}")
+        return False
+
+def get_youtube_video_id(url: str) -> Optional[str]:
+    """Extract YouTube video ID from URL"""
+    patterns = [
+        r'(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)',
+        r'youtube\.com\/watch\?.*v=([^&\n?#]+)'
+    ]
+    
+    for pattern in patterns:
+        match = re.search(pattern, url)
+        if match:
+            return match.group(1)
+    return None
+
+async def fetch_youtube_metadata(video_id: str) -> Optional[Dict[str, Any]]:
+    """Fetch YouTube video metadata using yt-dlp"""
+    try:
+        ydl_opts = {
+            'quiet': True,
+            'no_warnings': True,
+            'extract_flat': False,
+        }
+        
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(f'https://www.youtube.com/watch?v={video_id}', download=False)
+            
+            return {
+                'title': info.get('title', ''),
+                'description': info.get('description', ''),
+                'duration': int(info.get('duration', 0) / 60) if info.get('duration') else 0,
+                'thumbnail_url': info.get('thumbnail', ''),
+                'uploader': info.get('uploader', ''),
+                'upload_date': info.get('upload_date', '')
+            }
+    except Exception as e:
+        logging.error(f"Error fetching YouTube metadata for {video_id}: {e}")
+        return None
+
+def validate_file_size(file_size: int) -> bool:
+    """Validate file size against maximum limit"""
+    return file_size <= MAX_FILE_SIZE
+
+def generate_unique_filename(original_filename: str) -> str:
+    """Generate unique filename to avoid conflicts"""
+    ext = get_file_extension(original_filename)
+    unique_id = str(uuid.uuid4())[:8]
+    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    return f"{timestamp}_{unique_id}{ext}"
+
+# ==========================================
+# AUTHENTICATION DEPENDENCIES
+# ==========================================
+
+# Current User Dependency
+async def get_current_user(authorization: HTTPAuthorizationCredentials = Depends(security)) -> Optional[User]:
+    """Get current authenticated user from session token"""
+    if not authorization:
+        return None
+    
+    session_token = authorization.credentials
+    
+    # Find active session
+    session = await db.user_sessions.find_one({
+        "session_token": session_token,
+        "is_active": True,
+        "expires_at": {"$gt": datetime.utcnow()}
+    })
+    
+    if not session:
+        return None
+    
+    # Get user
+    user = await db.users.find_one({"id": session["user_id"]}, {"_id": 0})
+    if not user:
+        return None
+    
+    return User(**user)
+
+# Role-based access decorators
+def require_role(required_role: UserRole):
+    """Decorator to require specific role or higher"""
+    role_hierarchy = {
+        UserRole.GUEST: 0,
+        UserRole.STUDENT: 1, 
+        UserRole.INSTRUCTOR: 2,
+        UserRole.ADMIN: 3
+    }
+    
+    async def role_checker(current_user: User = Depends(get_current_user)):
+        if not current_user:
+            if required_role == UserRole.GUEST:
+                return None
+            raise HTTPException(status_code=401, detail="Authentication required")
+        
+        user_level = role_hierarchy.get(current_user.role, 0)
+        required_level = role_hierarchy.get(required_role, 0)
+        
+        if user_level < required_level:
+            raise HTTPException(
+                status_code=403, 
+                detail=f"Insufficient permissions. Required: {required_role}, Current: {current_user.role}"
+            )
+        
+        return current_user
+    
+    return role_checker
+
+# Role helpers
+require_student = require_role(UserRole.STUDENT)
+require_instructor = require_role(UserRole.INSTRUCTOR)  
+require_admin = require_role(UserRole.ADMIN)
+
+# Initialize sample data
+async def init_sample_data():
+    """Initialize sample video data if database is empty"""
+    video_count = await db.videos.count_documents({})
+    if video_count == 0:
+        sample_videos = [
+            {
+                "id": str(uuid.uuid4()),
+                "title": "Basic English Greetings",
+                "description": "Learn how to greet people in English with proper pronunciation and cultural context.",
+                "thumbnail_url": "https://images.unsplash.com/photo-1645594287996-086e2217a809?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NjZ8MHwxfHNlYXJjaHwzfHxsYW5ndWFnZSUyMGxlYXJuaW5nfGVufDB8fHxibHVlfDE3NTMxNzE5NDR8MA&ixlib=rb-4.1.0&q=85",
+                "video_url": "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4",
+                "duration_minutes": 8,
+                "level": "New Beginner",
+                "category": "Conversation",
+                "accent": "American",
+                "guide": "Native Speaker",
+                "country": "United States",
+                "is_premium": False,
+                "created_at": datetime.utcnow()
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "title": "Present Simple vs Present Continuous",
+                "description": "Master the difference between present simple and present continuous tenses with examples.",
+                "thumbnail_url": "https://images.unsplash.com/photo-1426024120108-99cc76989c71?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzR8MHwxfHNlYXJjaHwyfHxvbmxpbmUlMjBlZHVjYXRpb258ZW58MHx8fGJsdWV8MTc1MzE3MTk1N3ww&ixlib=rb-4.1.0&q=85",
+                "video_url": "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_2mb.mp4",
+                "duration_minutes": 15,
+                "level": "Beginner",
+                "category": "Grammar",
+                "accent": "British",
+                "guide": "ESL Teacher",
+                "country": "United Kingdom",
+                "is_premium": False,
+                "created_at": datetime.utcnow()
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "title": "Business Meeting Vocabulary",
+                "description": "Essential vocabulary and phrases for professional English business meetings.",
+                "thumbnail_url": "https://images.unsplash.com/photo-1651796704084-a115817945b2?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzR8MHwxfHNlYXJjaHwzfHxvbmxpbmUlMjBlZHVjYXRpb258ZW58MHx8fGJsdWV8MTc1MzE3MTk1N3ww&ixlib=rb-4.1.0&q=85",
+                "video_url": "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_5mb.mp4",
+                "duration_minutes": 25,
+                "level": "Advanced",
+                "category": "Business",
+                "accent": "American",
+                "guide": "Language Coach",
+                "country": "United States",
+                "is_premium": True,
+                "created_at": datetime.utcnow()
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "title": "Australian Pronunciation Guide",
+                "description": "Learn the unique sounds and pronunciation patterns of Australian English.",
+                "thumbnail_url": "https://images.unsplash.com/photo-1527871369852-eb58cb2b54e2?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzZ8MHwxfHNlYXJjaHwxfHxhY2hpZXZlbWVudHxlbnwwfHx8Ymx1ZXwxNzUzMTcxOTc1fDA&ixlib=rb-4.1.0&q=85",
+                "video_url": "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_7mb.mp4",
+                "duration_minutes": 18,
+                "level": "Intermediate",
+                "category": "Pronunciation",
+                "accent": "Australian",
+                "guide": "Native Speaker",
+                "country": "Australia",
+                "is_premium": False,
+                "created_at": datetime.utcnow()
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "title": "Cultural Differences: Small Talk",
+                "description": "Understanding cultural context when making small talk in English-speaking countries.",
+                "thumbnail_url": "https://images.unsplash.com/photo-1645594287996-086e2217a809?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NjZ8MHwxfHNlYXJjaHwzfHxsYW5ndWFnZSUyMGxlYXJuaW5nfGVufDB8fHxibHVlfDE3NTMxNzE5NDR8MA&ixlib=rb-4.1.0&q=85",
+                "video_url": "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_10mb.mp4",
+                "duration_minutes": 12,
+                "level": "Intermediate",
+                "category": "Culture",
+                "accent": "Canadian",
+                "guide": "ESL Teacher",
+                "country": "Canada",
+                "is_premium": False,
+                "created_at": datetime.utcnow()
+            }
+        ]
+        await db.videos.insert_many(sample_videos)
+
+# API Routes
+@api_router.get("/videos")
+async def get_videos(
+    level: Optional[VideoLevel] = None,
+    category: Optional[VideoCategory] = None,
+    accent: Optional[AccentType] = None,
+    guide: Optional[GuideType] = None,
+    country: Optional[str] = None,
+    is_premium: Optional[bool] = None,
+    search: Optional[str] = None,
+    max_duration: Optional[int] = None,
+    sort_by: str = "newest",
+    limit: int = 20,
+    offset: int = 0
+):
+    """Get videos with filtering and sorting"""
+    query = {}
+    
+    if level:
+        query["level"] = level
+    if category:
+        query["category"] = category
+    if accent:
+        query["accent"] = accent
+    if guide:
+        query["guide"] = guide
+    if country:
+        query["country"] = country
+    if is_premium is not None:
+        query["is_premium"] = is_premium
+    if max_duration:
+        query["duration_minutes"] = {"$lte": max_duration}
+    
+    # Text search
+    if search:
+        query["$or"] = [
+            {"title": {"$regex": search, "$options": "i"}},
+            {"description": {"$regex": search, "$options": "i"}}
+        ]
+    
+    # Sort options
+    sort_options = {
+        "newest": [("created_at", -1)],
+        "popular": [("created_at", -1)],  # TODO: Add popularity metric
+        "shortest": [("duration_minutes", 1)],
+        "longest": [("duration_minutes", -1)]
+    }
+    
+    sort_criteria = sort_options.get(sort_by, sort_options["newest"])
+    
+    videos = await db.videos.find(query, {"_id": 0}).sort(sort_criteria).skip(offset).limit(limit).to_list(limit)
+    total_count = await db.videos.count_documents(query)
+    
+    return {
+        "videos": videos,
+        "total": total_count,
+        "limit": limit,
+        "offset": offset
+    }
+
+@api_router.get("/videos/{video_id}")
+async def get_video(video_id: str):
+    """Get a specific video by ID"""
+    video = await db.videos.find_one({"id": video_id}, {"_id": 0})
+    if not video:
+        raise HTTPException(status_code=404, detail="Video not found")
+    return video
+
+class WatchRequest(BaseModel):
+    watched_minutes: int
+
+@api_router.post("/videos/{video_id}/mark-watched")
+async def mark_video_as_watched(
+    video_id: str,
+    request: MarkAsWatchedRequest,
+    session_id: str = Query(...),
+    current_user: Optional[User] = Depends(get_current_user)
+):
+    """Mark a video as already watched (for external content)"""
+    video = await db.videos.find_one({"id": video_id}, {"_id": 0})
+    if not video:
+        raise HTTPException(status_code=404, detail="Video not found")
+    
+    user_id = current_user.id if current_user else None
+    watched_minutes = video["duration_minutes"]  # Credit full duration
+    
+    # Check if already marked as watched
+    existing_progress = await db.watch_progress.find_one({
+        "session_id": session_id,
+        "video_id": video_id
+    })
+    
+    if existing_progress and existing_progress.get("completed", False):
+        return {"message": "Video already marked as watched", "already_watched": True}
+    
+    # Create or update watch progress
+    progress_data = {
+        "user_id": user_id,
+        "session_id": session_id,
+        "video_id": video_id,
+        "watched_minutes": watched_minutes,
+        "completed": True,
+        "watched_at": datetime.utcnow(),
+        "marked_as_watched": True  # Flag to indicate manual marking
+    }
+    
+    if existing_progress:
+        await db.watch_progress.update_one(
+            {"session_id": session_id, "video_id": video_id},
+            {"$set": progress_data}
+        )
+    else:
+        progress = WatchProgress(**{**progress_data, "id": str(uuid.uuid4())})
+        await db.watch_progress.insert_one(progress.dict())
+    
+    # Update daily progress
+    await update_daily_progress(session_id, video_id, watched_minutes, user_id)
+    
+    return {
+        "message": "Video marked as watched successfully",
+        "credited_minutes": watched_minutes,
+        "already_watched": False
+    }
+
+@api_router.post("/activities/manual")
+async def log_manual_activity(
+    request: ManualActivityRequest,
+    session_id: str = Query(...),
+    current_user: Optional[User] = Depends(get_current_user)
+):
+    """Log manual learning activity (movies, podcasts, conversations)"""
+    user_id = current_user.id if current_user else None
+    
+    # Create manual activity record
+    activity_data = {
+        "id": str(uuid.uuid4()),
+        "user_id": user_id,
+        "session_id": session_id,
+        "activity_type": request.activity_type,
+        "duration_minutes": request.duration_minutes,
+        "date": request.date,
+        "title": request.title,
+        "difficulty_level": request.difficulty_level,
+        "created_at": datetime.utcnow()
+    }
+    
+    activity = ManualActivity(**activity_data)
+    await db.manual_activities.insert_one(activity.dict())
+    
+    # Update daily progress for the specified date
+    await update_daily_progress_for_date(
+        session_id, 
+        request.date, 
+        request.duration_minutes, 
+        user_id,
+        activity_type=request.activity_type
+    )
+    
+    return {
+        "message": "Manual activity logged successfully",
+        "activity": {
+            "type": request.activity_type,
+            "duration": request.duration_minutes,
+            "date": request.date,
+            "title": request.title
+        }
+    }
+
+@api_router.get("/activities/manual")
+async def get_manual_activities(
+    session_id: str = Query(...),
+    current_user: Optional[User] = Depends(get_current_user),
+    limit: int = 50,
+    offset: int = 0
+):
+    """Get user's manual activities"""
+    activities = await db.manual_activities.find(
+        {"session_id": session_id},
+        {"_id": 0}
+    ).sort("date", -1).skip(offset).limit(limit).to_list(limit)
+    
+    total_count = await db.manual_activities.count_documents({"session_id": session_id})
+    
+    return {
+        "activities": activities,
+        "total": total_count,
+        "limit": limit,
+        "offset": offset
+    }
+
+async def update_daily_progress_for_date(
+    session_id: str, 
+    date: str, 
+    duration_minutes: int, 
+    user_id: Optional[str] = None,
+    activity_type: Optional[str] = None
+):
+    """Update daily progress for a specific date (used for manual activities)"""
+    
+    # Find or create daily progress for the specified date
+    daily_progress = await db.daily_progress.find_one({
+        "session_id": session_id,
+        "date": date
+    })
+    
+    if daily_progress:
+        # Update existing daily progress
+        daily_progress["total_minutes_watched"] += duration_minutes
+        daily_progress["updated_at"] = datetime.utcnow()
+        daily_progress["user_id"] = user_id
+        
+        # Add to manual activity tracking
+        if "manual_activities" not in daily_progress:
+            daily_progress["manual_activities"] = {}
+        
+        if activity_type:
+            daily_progress["manual_activities"][activity_type] = daily_progress["manual_activities"].get(activity_type, 0) + duration_minutes
+        
+        await db.daily_progress.update_one(
+            {"session_id": session_id, "date": date},
+            {"$set": daily_progress}
+        )
+    else:
+        # Create new daily progress for the date
+        # Calculate streak based on consecutive days
+        all_dates = await db.daily_progress.find(
+            {"session_id": session_id},
+            {"date": 1, "_id": 0}
+        ).sort("date", 1).to_list(1000)
+        
+        existing_dates = [record["date"] for record in all_dates]
+        streak_count = calculate_streak_up_to_date(existing_dates, date)
+        
+        manual_activities = {}
+        if activity_type:
+            manual_activities[activity_type] = duration_minutes
+        
+        new_daily_progress = {
+            "id": str(uuid.uuid4()),
+            "user_id": user_id,
+            "session_id": session_id,
+            "date": date,
+            "total_minutes_watched": duration_minutes,
+            "videos_watched": [],  # No videos for manual activities
+            "manual_activities": manual_activities,
+            "streak_count": streak_count,
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow()
+        }
+        
+        await db.daily_progress.insert_one(new_daily_progress)
+        
+        # Recalculate streaks for all subsequent dates
+        await recalculate_streaks_from_date(session_id, date)
+    
+    # Update user stats
+    await update_user_stats(session_id, user_id)
+
+def calculate_streak_up_to_date(existing_dates: List[str], target_date: str) -> int:
+    """Calculate streak count up to a specific date"""
+    from datetime import datetime, timedelta
+    
+    # Sort all dates including the target date
+    all_dates = sorted(existing_dates + [target_date])
+    target_idx = all_dates.index(target_date)
+    
+    # Calculate streak ending at target date
+    streak = 1
+    current_date = datetime.strptime(target_date, "%Y-%m-%d")
+    
+    for i in range(target_idx - 1, -1, -1):
+        prev_date = datetime.strptime(all_dates[i], "%Y-%m-%d")
+        if (current_date - prev_date).days == 1:
+            streak += 1
+            current_date = prev_date
+        else:
+            break
+    
+    return streak
+
+async def recalculate_streaks_from_date(session_id: str, from_date: str):
+    """Recalculate streak counts for all dates from the given date onwards"""
+    # Get all daily progress records from the date onwards
+    daily_records = await db.daily_progress.find(
+        {"session_id": session_id, "date": {"$gte": from_date}},
+        {"_id": 0}
+    ).sort("date", 1).to_list(1000)
+    
+    if not daily_records:
+        return
+    
+    # Get all dates for streak calculation
+    all_dates = [record["date"] for record in daily_records]
+    
+    # Update each record with correct streak
+    for i, record in enumerate(daily_records):
+        new_streak = calculate_streak_up_to_date(all_dates[:i+1], record["date"])
+        await db.daily_progress.update_one(
+            {"session_id": session_id, "date": record["date"]},
+            {"$set": {"streak_count": new_streak}}
+        )
+
+@api_router.post("/videos/{video_id}/watch")
+async def record_watch_progress(
+    video_id: str, 
+    request: WatchRequest, 
+    session_id: str = Query(...),
+    current_user: Optional[User] = Depends(get_current_user)
+):
+    """Record video watch progress"""
+    video = await db.videos.find_one({"id": video_id}, {"_id": 0})
+    if not video:
+        raise HTTPException(status_code=404, detail="Video not found")
+    
+    # Check if video is premium and user has access
+    if video.get("is_premium", False):
+        if not current_user or current_user.role == UserRole.GUEST:
+            raise HTTPException(status_code=403, detail="Premium content requires student account or higher")
+    
+    watched_minutes = request.watched_minutes
+    user_id = current_user.id if current_user else None
+    
+    # Create or update watch progress
+    progress_data = {
+        "user_id": user_id,
+        "session_id": session_id,
+        "video_id": video_id,
+        "watched_minutes": watched_minutes,
+        "completed": watched_minutes >= video["duration_minutes"],
+        "watched_at": datetime.utcnow()
+    }
+    
+    existing_progress = await db.watch_progress.find_one({
+        "session_id": session_id,
+        "video_id": video_id
+    })
+    
+    if existing_progress:
+        # Update existing progress
+        await db.watch_progress.update_one(
+            {"session_id": session_id, "video_id": video_id},
+            {"$set": {
+                "user_id": user_id,  # Update user_id if now authenticated
+                "watched_minutes": max(watched_minutes, existing_progress["watched_minutes"]),
+                "completed": watched_minutes >= video["duration_minutes"],
+                "watched_at": datetime.utcnow()
+            }}
+        )
+    else:
+        # Create new progress record
+        progress = WatchProgress(**progress_data)
+        await db.watch_progress.insert_one(progress.dict())
+    
+    # Update daily progress
+    await update_daily_progress(session_id, video_id, watched_minutes, user_id)
+    
+    return {"message": "Progress recorded successfully"}
+
+async def update_daily_progress(session_id: str, video_id: str, watched_minutes: int, user_id: Optional[str] = None):
+    """Update daily progress and streak tracking"""
+    today = datetime.utcnow().strftime("%Y-%m-%d")
+    
+    # Find or create today's progress
+    daily_progress = await db.daily_progress.find_one({
+        "session_id": session_id,
+        "date": today
+    })
+    
+    if daily_progress:
+        # Update existing daily progress
+        if video_id not in daily_progress["videos_watched"]:
+            daily_progress["videos_watched"].append(video_id)
+        daily_progress["total_minutes_watched"] += watched_minutes
+        daily_progress["updated_at"] = datetime.utcnow()
+        daily_progress["user_id"] = user_id  # Update user_id if now authenticated
+        
+        await db.daily_progress.update_one(
+            {"session_id": session_id, "date": today},
+            {"$set": daily_progress}
+        )
+    else:
+        # Create new daily progress
+        # Calculate streak
+        yesterday = (datetime.utcnow() - timedelta(days=1)).strftime("%Y-%m-%d")
+        yesterday_progress = await db.daily_progress.find_one({
+            "session_id": session_id,
+            "date": yesterday
+        })
+        
+        streak_count = (yesterday_progress["streak_count"] + 1) if yesterday_progress else 1
+        
+        new_daily_progress = {
+            "id": str(uuid.uuid4()),
+            "user_id": user_id,
+            "session_id": session_id,
+            "date": today,
+            "total_minutes_watched": watched_minutes,
+            "videos_watched": [video_id],
+            "streak_count": streak_count,
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow()
+        }
+        
+        await db.daily_progress.insert_one(new_daily_progress)
+    
+    # Update user stats
+    await update_user_stats(session_id, user_id)
+
+async def update_user_stats(session_id: str, user_id: Optional[str] = None):
+    """Update comprehensive user statistics"""
+    # Get all daily progress records
+    daily_records = await db.daily_progress.find({"session_id": session_id}, {"_id": 0}).to_list(1000)
+    
+    total_minutes = sum(record["total_minutes_watched"] for record in daily_records)
+    current_streak = daily_records[-1]["streak_count"] if daily_records else 0
+    longest_streak = max([record["streak_count"] for record in daily_records], default=0)
+    personal_best = max([record["total_minutes_watched"] for record in daily_records], default=0)
+    
+    # Calculate level progress
+    watch_records = await db.watch_progress.find({"session_id": session_id}, {"_id": 0}).to_list(1000)
+    level_progress = {}
+    
+    for record in watch_records:
+        video = await db.videos.find_one({"id": record["video_id"]}, {"_id": 0})
+        if video:
+            level = video["level"]
+            level_progress[level] = level_progress.get(level, 0) + record["watched_minutes"]
+    
+    # Calculate milestones
+    milestones = []
+    if total_minutes >= 60:
+        milestones.append("First Hour")
+    if total_minutes >= 600:  # 10 hours
+        milestones.append("Intermediate Unlocked")
+    if total_minutes >= 3600:  # 60 hours = 100 hours milestone
+        milestones.append("Century Club")
+    if current_streak >= 7:
+        milestones.append("Week Warrior")
+    if current_streak >= 30:
+        milestones.append("Month Master")
+    
+    # Update or create user stats
+    stats_data = {
+        "user_id": user_id,
+        "session_id": session_id,
+        "total_minutes_watched": total_minutes,
+        "current_streak": current_streak,
+        "longest_streak": longest_streak,
+        "personal_best_day": personal_best,
+        "level_progress": level_progress,
+        "milestones_achieved": milestones,
+        "updated_at": datetime.utcnow()
+    }
+    
+    existing_stats = await db.user_stats.find_one({"session_id": session_id})
+    if existing_stats:
+        await db.user_stats.update_one(
+            {"session_id": session_id},
+            {"$set": stats_data}
+        )
+    else:
+        stats_data["created_at"] = datetime.utcnow()
+        await db.user_stats.insert_one(stats_data)
+
+@api_router.get("/progress/{session_id}")
+async def get_user_progress(session_id: str):
+    """Get comprehensive user progress and statistics including manual activities"""
+    stats = await db.user_stats.find_one({"session_id": session_id}, {"_id": 0})
+    
+    if not stats:
+        # Initialize empty stats if none exist
+        stats = {
+            "total_minutes_watched": 0,
+            "platform_minutes": 0,
+            "manual_minutes": 0,
+            "current_streak": 0,
+            "longest_streak": 0,
+            "personal_best_day": 0,
+            "level_progress": {},
+            "milestones_achieved": [],
+            "manual_activity_breakdown": {}
+        }
+    
+    # Get recent daily progress for heatmap (last 90 days)
+    recent_progress = await db.daily_progress.find(
+        {"session_id": session_id}, {"_id": 0}
+    ).sort("date", -1).limit(90).to_list(90)
+    
+    # Format for heatmap and calculate breakdowns
+    heatmap_data = []
+    total_platform_minutes = 0
+    total_manual_minutes = 0
+    activity_breakdown = {
+        "Movies/TV Shows": 0,
+        "Audiobooks/Podcasts": 0,
+        "Talking with friends": 0
+    }
+    
+    for progress in recent_progress:
+        platform_minutes = 0
+        manual_minutes = 0
+        
+        # Calculate platform minutes (from videos watched)
+        if progress.get("videos_watched"):
+            for video_id in progress["videos_watched"]:
+                video = await db.videos.find_one({"id": video_id}, {"duration_minutes": 1, "_id": 0})
+                if video:
+                    platform_minutes += video["duration_minutes"]
+        
+        # Calculate manual minutes (from manual activities)
+        manual_activities = progress.get("manual_activities", {})
+        for activity_type, minutes in manual_activities.items():
+            manual_minutes += minutes
+            activity_breakdown[activity_type] = activity_breakdown.get(activity_type, 0) + minutes
+        
+        total_platform_minutes += platform_minutes
+        total_manual_minutes += manual_minutes
+        
+        heatmap_data.append({
+            "date": progress["date"],
+            "minutes": progress["total_minutes_watched"],
+            "platform_minutes": platform_minutes,
+            "manual_minutes": manual_minutes
+        })
+    
+    # Get total video count
+    watch_progress_count = await db.watch_progress.count_documents({"session_id": session_id})
+    
+    # Get manual activity count
+    manual_activity_count = await db.manual_activities.count_documents({"session_id": session_id})
+    
+    # Update stats with breakdown
+    stats.update({
+        "platform_minutes": total_platform_minutes,
+        "manual_minutes": total_manual_minutes,
+        "manual_activity_breakdown": activity_breakdown
+    })
+    
+    return {
+        "stats": stats,
+        "recent_activity": heatmap_data,
+        "total_videos_watched": watch_progress_count,
+        "total_manual_activities": manual_activity_count,
+        "breakdown": {
+            "platform_hours": round(total_platform_minutes / 60, 1),
+            "manual_hours": round(total_manual_minutes / 60, 1),
+            "total_hours": round((total_platform_minutes + total_manual_minutes) / 60, 1)
+        }
+    }
+
+@api_router.get("/filters/options")
+async def get_filter_options():
+    """Get available filter options"""
+    return {
+        "levels": [level.value for level in VideoLevel],
+        "categories": [category.value for category in VideoCategory],
+        "accents": [accent.value for accent in AccentType],
+        "guides": [guide.value for guide in GuideType],
+        "countries": [country.value for country in CountryType]
+    }
+
+# ==========================================
+# VIDEO COMMENTING SYSTEM ENDPOINTS
+# ==========================================
+
+@api_router.get("/comments/{video_id}")
+async def get_video_comments(video_id: str, current_user: Optional[User] = Depends(get_current_user)):
+    """Get comments for a specific video with threading support"""
+    # Verify video exists
+    video = await db.videos.find_one({"id": video_id}, {"_id": 0})
+    if not video:
+        raise HTTPException(status_code=404, detail="Video not found")
+    
+    # Get all comments for this video
+    all_comments = await db.comments.find(
+        {"video_id": video_id},
+        {"_id": 0}
+    ).sort([("pinned", -1), ("created_at", -1)]).to_list(500)
+    
+    # Separate top-level comments and replies
+    top_level_comments = []
+    replies_map = {}
+    
+    for comment in all_comments:
+        # Add user_liked field if user is authenticated
+        if current_user:
+            user_like = await db.user_comment_likes.find_one({
+                "user_id": current_user.id,
+                "comment_id": comment["id"]
+            })
+            comment["user_liked"] = user_like is not None
+        else:
+            comment["user_liked"] = False
+        
+        if comment.get("parent_comment_id"):
+            # This is a reply
+            parent_id = comment["parent_comment_id"]
+            if parent_id not in replies_map:
+                replies_map[parent_id] = []
+            replies_map[parent_id].append(comment)
+        else:
+            # This is a top-level comment
+            comment["replies"] = []
+            top_level_comments.append(comment)
+    
+    # Attach replies to their parent comments
+    for comment in top_level_comments:
+        comment_id = comment["id"]
+        if comment_id in replies_map:
+            comment["replies"] = sorted(replies_map[comment_id], key=lambda x: x["created_at"])
+    
+    return {
+        "video_id": video_id,
+        "comments": top_level_comments,
+        "total": len(all_comments)
+    }
+
+@api_router.post("/comments/{video_id}")
+async def post_video_comment(
+    video_id: str,
+    comment_request: CommentRequest,
+    current_user: User = Depends(require_role(UserRole.STUDENT))
+):
+    """Post a comment on a video (requires student role or higher)"""
+    # Verify video exists
+    video = await db.videos.find_one({"id": video_id}, {"_id": 0})
+    if not video:
+        raise HTTPException(status_code=404, detail="Video not found")
+    
+    # If this is a reply, verify parent comment exists
+    if comment_request.parent_comment_id:
+        parent_comment = await db.comments.find_one({"id": comment_request.parent_comment_id}, {"_id": 0})
+        if not parent_comment:
+            raise HTTPException(status_code=404, detail="Parent comment not found")
+        if parent_comment["video_id"] != video_id:
+            raise HTTPException(status_code=400, detail="Parent comment is not for this video")
+    
+    # Create comment
+    comment_data = {
+        "id": str(uuid.uuid4()),
+        "video_id": video_id,
+        "user_id": current_user.id,
+        "user_name": current_user.name,
+        "text": comment_request.text.strip(),
+        "pinned": False,  # New comments are not pinned by default
+        "parent_comment_id": comment_request.parent_comment_id,
+        "like_count": 0,
+        "created_at": datetime.utcnow()
+    }
+    
+    comment = Comment(**comment_data)
+    await db.comments.insert_one(comment.dict())
+    
+    return {
+        "message": "Comment posted successfully",
+        "comment": comment_data
+    }
+
+@api_router.delete("/admin/comments/{comment_id}")
+async def delete_comment(
+    comment_id: str,
+    current_user: User = Depends(require_role(UserRole.ADMIN))
+):
+    """Delete a comment (admin only)"""
+    # Find and delete the comment
+    result = await db.comments.delete_one({"id": comment_id})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    
+    return {"message": "Comment deleted successfully"}
+
+@api_router.put("/comments/{comment_id}/pin")
+async def pin_comment(
+    comment_id: str,
+    current_user: User = Depends(require_role(UserRole.ADMIN))
+):
+    """Pin a comment (admin only)"""
+    # Find and update the comment
+    result = await db.comments.update_one(
+        {"id": comment_id},
+        {"$set": {"pinned": True}}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    
+    # Get the updated comment
+    comment = await db.comments.find_one({"id": comment_id}, {"_id": 0})
+    
+    return {
+        "message": "Comment pinned successfully",
+        "comment": comment
+    }
+
+@api_router.put("/comments/{comment_id}/unpin")
+async def unpin_comment(
+    comment_id: str,
+    current_user: User = Depends(require_role(UserRole.ADMIN))
+):
+    """Unpin a comment (admin only)"""
+    # Find and update the comment
+    result = await db.comments.update_one(
+        {"id": comment_id},
+        {"$set": {"pinned": False}}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    
+    # Get the updated comment
+    comment = await db.comments.find_one({"id": comment_id}, {"_id": 0})
+    
+    return {
+        "message": "Comment unpinned successfully",
+        "comment": comment
+    }
+
+@api_router.post("/comments/{comment_id}/like")
+async def like_comment(
+    comment_id: str,
+    current_user: User = Depends(require_role(UserRole.STUDENT))
+):
+    """Like a comment (authenticated users only)"""
+    # Check if comment exists
+    comment = await db.comments.find_one({"id": comment_id}, {"_id": 0})
+    if not comment:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    
+    # Check if user already liked this comment
+    existing_like = await db.user_comment_likes.find_one({
+        "user_id": current_user.id,
+        "comment_id": comment_id
+    })
+    
+    if existing_like:
+        return {"message": "Comment already liked", "already_liked": True}
+    
+    # Add like
+    like_data = {
+        "id": str(uuid.uuid4()),
+        "user_id": current_user.id,
+        "comment_id": comment_id,
+        "created_at": datetime.utcnow()
+    }
+    
+    await db.user_comment_likes.insert_one(like_data)
+    
+    # Update comment like count
+    await db.comments.update_one(
+        {"id": comment_id},
+        {"$inc": {"like_count": 1}}
+    )
+    
+    # Get updated comment
+    updated_comment = await db.comments.find_one({"id": comment_id}, {"_id": 0})
+    
+    return {
+        "message": "Comment liked successfully",
+        "comment": updated_comment,
+        "already_liked": False
+    }
+
+@api_router.delete("/comments/{comment_id}/like")
+async def unlike_comment(
+    comment_id: str,
+    current_user: User = Depends(require_role(UserRole.STUDENT))
+):
+    """Unlike a comment (authenticated users only)"""
+    # Check if comment exists
+    comment = await db.comments.find_one({"id": comment_id}, {"_id": 0})
+    if not comment:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    
+    # Find and remove like
+    result = await db.user_comment_likes.delete_one({
+        "user_id": current_user.id,
+        "comment_id": comment_id
+    })
+    
+    if result.deleted_count == 0:
+        return {"message": "Comment was not liked", "was_liked": False}
+    
+    # Update comment like count
+    await db.comments.update_one(
+        {"id": comment_id},
+        {"$inc": {"like_count": -1}}
+    )
+    
+    # Get updated comment
+    updated_comment = await db.comments.find_one({"id": comment_id}, {"_id": 0})
+    
+    return {
+        "message": "Comment unliked successfully",
+        "comment": updated_comment,
+        "was_liked": True
+    }
+
+# ==========================================
+# ADMIN VIDEO UPLOAD ENDPOINTS
+# ==========================================
+
+@api_router.post("/admin/videos/upload")
+async def upload_video(
+    file: UploadFile = File(...),
+    title: str = Form(...),
+    description: str = Form(...),
+    level: VideoLevel = Form(...),
+    accents: str = Form(...),  # JSON string of accent list
+    tags: str = Form(...),  # JSON string of tag list
+    instructor_name: str = Form(...),
+    country: CountryType = Form(...),
+    category: VideoCategory = Form(...),
+    is_premium: bool = Form(False),
+    thumbnail: Optional[UploadFile] = File(None),
+    current_user: User = Depends(require_role(UserRole.ADMIN))
+):
+    """Upload a video file with metadata (Admin only)"""
+    
+    # Validate file type
+    if not is_video_file(file.filename):
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Unsupported file format. Supported formats: {', '.join(SUPPORTED_VIDEO_FORMATS)}"
+        )
+    
+    # Validate file size
+    if not validate_file_size(file.size if file.size else 0):
+        raise HTTPException(
+            status_code=400,
+            detail=f"File size exceeds maximum limit of {MAX_FILE_SIZE / (1024**3):.1f}GB"
+        )
+    
+    try:
+        # Parse JSON fields
+        accents_list = json.loads(accents) if accents else []
+        tags_list = json.loads(tags) if tags else []
+        
+        # Generate unique filename
+        unique_filename = generate_unique_filename(file.filename)
+        video_path = VIDEOS_DIR / unique_filename
+        
+        # Save video file
+        if not await save_uploaded_file(file, video_path):
+            raise HTTPException(status_code=500, detail="Failed to save video file")
+        
+        # Get video duration
+        duration_minutes = get_video_duration(video_path)
+        if not duration_minutes:
+            # Clean up file if duration extraction failed
+            video_path.unlink()
+            raise HTTPException(status_code=400, detail="Failed to process video file")
+        
+        # Handle thumbnail
+        thumbnail_url = None
+        if thumbnail and is_image_file(thumbnail.filename):
+            # Save uploaded thumbnail
+            thumbnail_filename = generate_unique_filename(thumbnail.filename)
+            thumbnail_path = THUMBNAILS_DIR / thumbnail_filename
+            if await save_uploaded_file(thumbnail, thumbnail_path):
+                thumbnail_url = f"/api/files/thumbnails/{thumbnail_filename}"
+        else:
+            # Extract thumbnail from video
+            thumbnail_filename = f"{Path(unique_filename).stem}.jpg"
+            thumbnail_path = THUMBNAILS_DIR / thumbnail_filename
+            if extract_video_thumbnail(video_path, thumbnail_path):
+                thumbnail_url = f"/api/files/thumbnails/{thumbnail_filename}"
+        
+        # Create video record
+        video_data = {
+            "id": str(uuid.uuid4()),
+            "title": title,
+            "description": description,
+            "duration_minutes": duration_minutes,
+            "level": level,
+            "accents": accents_list,
+            "tags": tags_list,
+            "instructor_name": instructor_name,
+            "country": country,
+            "category": category,
+            "thumbnail_url": thumbnail_url,
+            "is_premium": is_premium,
+            "video_type": VideoType.UPLOAD,
+            "file_path": str(video_path),
+            "video_url": f"/api/files/videos/{unique_filename}",
+            "file_size": video_path.stat().st_size,
+            "file_format": get_file_extension(file.filename),
+            "guide": GuideType.NATIVE_SPEAKER,  # Default value
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow(),
+            "created_by": current_user.id if current_user else None
+        }
+        
+        # Insert into database
+        await db.videos.insert_one(video_data)
+        
+        return {
+            "message": "Video uploaded successfully",
+            "video_id": video_data["id"],
+            "title": title,
+            "duration_minutes": duration_minutes,
+            "file_size": video_data["file_size"],
+            "thumbnail_url": thumbnail_url
+        }
+        
+    except json.JSONDecodeError:
+        # Clean up uploaded file
+        if video_path.exists():
+            video_path.unlink()
+        raise HTTPException(status_code=400, detail="Invalid JSON in accents or tags field")
+    except Exception as e:
+        # Clean up uploaded file
+        if video_path.exists():
+            video_path.unlink()
+        logging.error(f"Error uploading video: {e}")
+        raise HTTPException(status_code=500, detail="Failed to upload video")
+
+@api_router.post("/admin/videos/youtube")
+async def add_youtube_video(
+    request: YouTubeVideoRequest,
+    current_user: User = Depends(require_role(UserRole.ADMIN))
+):
+    """Add a YouTube video with metadata (Admin only)"""
+    
+    # Extract YouTube video ID
+    video_id = get_youtube_video_id(request.youtube_url)
+    if not video_id:
+        raise HTTPException(status_code=400, detail="Invalid YouTube URL")
+    
+    # Check if video already exists
+    existing_video = await db.videos.find_one({"youtube_video_id": video_id}, {"_id": 0})
+    if existing_video:
+        raise HTTPException(status_code=400, detail="YouTube video already exists in database")
+    
+    try:
+        # Fetch YouTube metadata
+        youtube_metadata = await fetch_youtube_metadata(video_id)
+        if not youtube_metadata:
+            raise HTTPException(status_code=400, detail="Failed to fetch YouTube video metadata")
+        
+        # Use provided metadata or fallback to YouTube data
+        title = request.title or youtube_metadata.get('title', '')
+        description = request.description or youtube_metadata.get('description', '')
+        duration = youtube_metadata.get('duration', 0)
+        
+        if not title:
+            raise HTTPException(status_code=400, detail="Video title is required")
+        
+        # Create video record
+        video_data = {
+            "id": str(uuid.uuid4()),
+            "title": title,
+            "description": description,
+            "duration_minutes": duration,
+            "level": request.level,
+            "accents": request.accents,
+            "tags": request.tags,
+            "instructor_name": request.instructor_name,
+            "country": request.country,
+            "category": request.category,
+            "thumbnail_url": youtube_metadata.get('thumbnail_url', ''),
+            "is_premium": request.is_premium,
+            "video_type": VideoType.YOUTUBE,
+            "video_url": request.youtube_url,
+            "youtube_video_id": video_id,
+            "guide": GuideType.NATIVE_SPEAKER,  # Default value
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow(),
+            "created_by": current_user.id if current_user else None
+        }
+        
+        # Insert into database
+        await db.videos.insert_one(video_data)
+        
+        return {
+            "message": "YouTube video added successfully",
+            "video_id": video_data["id"],
+            "title": title,
+            "duration_minutes": duration,
+            "youtube_video_id": video_id,
+            "thumbnail_url": video_data["thumbnail_url"]
+        }
+        
+    except Exception as e:
+        logging.error(f"Error adding YouTube video: {e}")
+        raise HTTPException(status_code=500, detail="Failed to add YouTube video")
+
+@api_router.get("/admin/videos")
+async def get_admin_videos(
+    page: int = Query(1, ge=1),
+    limit: int = Query(20, ge=1, le=100),
+    search: Optional[str] = Query(None),
+    level: Optional[VideoLevel] = Query(None),
+    category: Optional[VideoCategory] = Query(None),
+    video_type: Optional[VideoType] = Query(None),
+    current_user: User = Depends(require_role(UserRole.ADMIN))
+):
+    """Get all videos for admin management with pagination and filtering"""
+    
+    # Build filter query
+    filter_query = {}
+    if search:
+        filter_query["$or"] = [
+            {"title": {"$regex": search, "$options": "i"}},
+            {"description": {"$regex": search, "$options": "i"}},
+            {"instructor_name": {"$regex": search, "$options": "i"}}
+        ]
+    if level:
+        filter_query["level"] = level
+    if category:
+        filter_query["category"] = category
+    if video_type:
+        filter_query["video_type"] = video_type
+    
+    # Get total count
+    total_count = await db.videos.count_documents(filter_query)
+    
+    # Get videos with pagination
+    skip = (page - 1) * limit
+    videos = await db.videos.find(
+        filter_query, {"_id": 0}
+    ).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
+    
+    return {
+        "videos": videos,
+        "pagination": {
+            "page": page,
+            "limit": limit,
+            "total": total_count,
+            "pages": (total_count + limit - 1) // limit
+        }
+    }
+
+@api_router.put("/admin/videos/{video_id}")
+async def update_video(
+    video_id: str,
+    request: VideoUpdateRequest,
+    current_user: User = Depends(require_role(UserRole.ADMIN))
+):
+    """Update video metadata (Admin only)"""
+    
+    # Check if video exists
+    existing_video = await db.videos.find_one({"id": video_id}, {"_id": 0})
+    if not existing_video:
+        raise HTTPException(status_code=404, detail="Video not found")
+    
+    # Build update query
+    update_data = {"updated_at": datetime.utcnow()}
+    if request.title is not None:
+        update_data["title"] = request.title
+    if request.description is not None:
+        update_data["description"] = request.description
+    if request.duration_minutes is not None:
+        update_data["duration_minutes"] = request.duration_minutes
+    if request.level is not None:
+        update_data["level"] = request.level
+    if request.accents is not None:
+        update_data["accents"] = request.accents
+    if request.tags is not None:
+        update_data["tags"] = request.tags
+    if request.instructor_name is not None:
+        update_data["instructor_name"] = request.instructor_name
+    if request.country is not None:
+        update_data["country"] = request.country
+    if request.category is not None:
+        update_data["category"] = request.category
+    if request.is_premium is not None:
+        update_data["is_premium"] = request.is_premium
+    
+    # Update video
+    await db.videos.update_one({"id": video_id}, {"$set": update_data})
+    
+    return {"message": "Video updated successfully"}
+
+@api_router.delete("/admin/videos/{video_id}")
+async def delete_video(
+    video_id: str,
+    current_user: User = Depends(require_role(UserRole.ADMIN))
+):
+    """Delete video and associated files (Admin only)"""
+    
+    # Get video to delete associated files
+    video = await db.videos.find_one({"id": video_id}, {"_id": 0})
+    if not video:
+        raise HTTPException(status_code=404, detail="Video not found")
+    
+    try:
+        # Delete associated files for uploaded videos
+        if video.get("video_type") == VideoType.UPLOAD:
+            if video.get("file_path"):
+                file_path = Path(video["file_path"])
+                if file_path.exists():
+                    file_path.unlink()
+            
+            # Delete thumbnail if it's a local file
+            if video.get("thumbnail_url") and video["thumbnail_url"].startswith("/api/files/thumbnails/"):
+                thumbnail_filename = video["thumbnail_url"].split("/")[-1]
+                thumbnail_path = THUMBNAILS_DIR / thumbnail_filename
+                if thumbnail_path.exists():
+                    thumbnail_path.unlink()
+        
+        # Delete from database
+        await db.videos.delete_one({"id": video_id})
+        
+        # Also delete associated watch progress and stats
+        await db.watch_progress.delete_many({"video_id": video_id})
+        
+        return {"message": "Video deleted successfully"}
+        
+    except Exception as e:
+        logging.error(f"Error deleting video {video_id}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to delete video")
+
+@api_router.get("/files/videos/{filename}")
+async def serve_video_file(filename: str):
+    """Serve uploaded video files"""
+    file_path = VIDEOS_DIR / filename
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="Video file not found")
+    return FileResponse(file_path)
+
+@api_router.get("/files/thumbnails/{filename}")
+async def serve_thumbnail_file(filename: str):
+    """Serve thumbnail files"""
+    file_path = THUMBNAILS_DIR / filename
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="Thumbnail file not found")
+    return FileResponse(file_path)
+
+@api_router.post("/email/subscribe")
+async def subscribe_email(request: EmailSubscribeRequest):
+    """Subscribe email to Kit (ConvertKit) for motivational messages and updates"""
+    try:
+        # Get ConvertKit credentials
+        api_key = os.environ.get('CONVERTKIT_API_KEY')
+        form_id = os.environ.get('CONVERTKIT_FORM_ID')
+        
+        if not api_key or not form_id:
+            raise HTTPException(status_code=500, detail="Email service configuration missing")
+        
+        # Store subscription in MongoDB first
+        subscription_data = {
+            "id": str(uuid.uuid4()),
+            "email": request.email,
+            "name": request.name,
+            "source": request.source,
+            "subscribed_at": datetime.utcnow(),
+            "active": True
+        }
+        
+        # Check if email already exists
+        existing_subscription = await db.email_subscriptions.find_one({"email": request.email})
+        if existing_subscription:
+            return {"message": "Email already subscribed", "status": "existing"}
+        
+        # Save to MongoDB
+        await db.email_subscriptions.insert_one(subscription_data)
+        
+        # Subscribe to ConvertKit
+        convertkit_url = f"https://api.convertkit.com/v3/forms/{form_id}/subscribe"
+        convertkit_data = {
+            "api_key": api_key,
+            "email": request.email
+        }
+        
+        if request.name:
+            convertkit_data["first_name"] = request.name
+        
+        # Add custom fields for segmentation
+        convertkit_data["fields"] = {
+            "source": request.source,
+            "signup_date": datetime.utcnow().isoformat(),
+            "platform": "English Fiesta"
+        }
+        
+        response = requests.post(convertkit_url, json=convertkit_data, timeout=10)
+        
+        if response.status_code == 200:
+            # Update MongoDB record with ConvertKit subscriber ID
+            convertkit_response = response.json()
+            convertkit_subscriber_id = convertkit_response.get("subscription", {}).get("subscriber", {}).get("id")
+            
+            if convertkit_subscriber_id:
+                await db.email_subscriptions.update_one(
+                    {"email": request.email},
+                    {"$set": {"convertkit_subscriber_id": convertkit_subscriber_id}}
+                )
+            
+            return {
+                "message": "Successfully subscribed to English Fiesta updates!",
+                "status": "success"
+            }
+        else:
+            # Log error but don't fail completely since we saved to MongoDB
+            logging.error(f"ConvertKit API error: {response.status_code} - {response.text}")
+            return {
+                "message": "Subscription saved locally, email service temporarily unavailable",
+                "status": "partial_success"
+            }
+            
+    except requests.RequestException as e:
+        logging.error(f"ConvertKit request error: {str(e)}")
+        # Still return success since we saved to MongoDB
+        return {
+            "message": "Subscription saved, email service will sync later",
+            "status": "partial_success"
+        }
+    except Exception as e:
+        logging.error(f"Email subscription error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to process email subscription")
+
+@api_router.get("/email/subscriptions/{email}")
+async def check_subscription_status(email: str):
+    """Check if an email is already subscribed"""
+    subscription = await db.email_subscriptions.find_one({"email": email}, {"_id": 0})
+    if subscription:
+        return {"subscribed": True, "subscription": subscription}
+    return {"subscribed": False}
+
+# ==========================================
+# CONTENT MANAGEMENT ENDPOINTS
+# ==========================================
+
+@api_router.get("/content")
+async def get_all_content():
+    """Get all content items for the public site"""
+    content_items = await db.content_items.find({}, {"_id": 0}).to_list(1000)
+    
+    # Organize content by type and section for easy frontend consumption
+    organized_content = {}
+    for item in content_items:
+        content_type = item["content_type"]
+        section_key = item["section_key"]
+        
+        if content_type not in organized_content:
+            organized_content[content_type] = {}
+        
+        organized_content[content_type][section_key] = {
+            "id": item["id"],
+            "languages": item.get("languages", {}),
+            "updated_at": item["updated_at"]
+        }
+    
+    return organized_content
+
+@api_router.get("/content/{content_type}")
+async def get_content_by_type(content_type: ContentType):
+    """Get content items by type (hero_section, about_page, etc.)"""
+    content_items = await db.content_items.find(
+        {"content_type": content_type}, 
+        {"_id": 0}
+    ).to_list(1000)
+    
+    return {"content_type": content_type, "items": content_items}
+
+@api_router.get("/content/{content_type}/{section_key}")
+async def get_specific_content(content_type: ContentType, section_key: str):
+    """Get a specific content item"""
+    content_item = await db.content_items.find_one(
+        {"content_type": content_type, "section_key": section_key}, 
+        {"_id": 0}
+    )
+    
+    if not content_item:
+        raise HTTPException(status_code=404, detail="Content not found")
+    
+    return content_item
+
+@api_router.post("/admin/content")
+async def create_content_item(
+    content_type: ContentType,
+    section_key: str,
+    request: ContentUpdateRequest,
+    current_user: User = Depends(require_role(UserRole.ADMIN))
+):
+    """Create a new content item (Admin only)"""
+    
+    # Check if content item already exists
+    existing_item = await db.content_items.find_one({
+        "content_type": content_type,
+        "section_key": section_key
+    })
+    
+    if existing_item:
+        raise HTTPException(status_code=400, detail="Content item already exists")
+    
+    content_data = {
+        "id": str(uuid.uuid4()),
+        "content_type": content_type,
+        "section_key": section_key,
+        "languages": request.languages,
+        "created_at": datetime.utcnow(),
+        "updated_at": datetime.utcnow(),
+        "created_by": current_user.id,
+        "updated_by": current_user.id
+    }
+    
+    await db.content_items.insert_one(content_data)
+    
+    return {"message": "Content created successfully", "content_id": content_data["id"]}
+
+@api_router.put("/admin/content/{content_type}/{section_key}")
+async def update_content_item(
+    content_type: ContentType,
+    section_key: str,
+    request: ContentUpdateRequest,
+    current_user: User = Depends(require_role(UserRole.ADMIN))
+):
+    """Update a content item (Admin only)"""
+    
+    # Check if content item exists
+    existing_item = await db.content_items.find_one({
+        "content_type": content_type,
+        "section_key": section_key
+    })
+    
+    if not existing_item:
+        # Create new item if it doesn't exist
+        return await create_content_item(content_type, section_key, request, current_user)
+    
+    # Update existing item
+    update_data = {
+        "languages": request.languages,
+        "updated_at": datetime.utcnow(),
+        "updated_by": current_user.id
+    }
+    
+    await db.content_items.update_one(
+        {"content_type": content_type, "section_key": section_key},
+        {"$set": update_data}
+    )
+    
+    return {"message": "Content updated successfully"}
+
+@api_router.delete("/admin/content/{content_type}/{section_key}")
+async def delete_content_item(
+    content_type: ContentType,
+    section_key: str,
+    current_user: User = Depends(require_role(UserRole.ADMIN))
+):
+    """Delete a content item (Admin only)"""
+    
+    result = await db.content_items.delete_one({
+        "content_type": content_type,
+        "section_key": section_key
+    })
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Content not found")
+    
+    return {"message": "Content deleted successfully"}
+
+@api_router.get("/admin/content")
+async def get_admin_content_list(
+    content_type: Optional[ContentType] = None,
+    current_user: User = Depends(require_role(UserRole.ADMIN))
+):
+    """Get all content items for admin management"""
+    
+    query = {}
+    if content_type:
+        query["content_type"] = content_type
+    
+    content_items = await db.content_items.find(query, {"_id": 0}).sort("content_type", 1).sort("section_key", 1).to_list(1000)
+    
+    return {
+        "content_items": content_items,
+        "total": len(content_items),
+        "content_types": [ct.value for ct in ContentType]
+    }
+
+# ==========================================
+# FILTER COLLECTIONS MANAGEMENT ENDPOINTS (ADMIN)
+# ==========================================
+
+# Topics Management
+@api_router.get("/admin/topics")
+async def get_topics_admin(current_user: User = Depends(require_role(UserRole.ADMIN))):
+    """Get all topics for admin management"""
+    topics = await db.topics.find({}, {"_id": 0}).sort("name", 1).to_list(100)
+    return {"topics": topics, "total": len(topics)}
+
+@api_router.post("/admin/topics")
+async def create_topic(
+    topic_data: TopicRequest,
+    current_user: User = Depends(require_role(UserRole.ADMIN))
+):
+    """Create a new topic"""
+    # Check if topic with same name or slug exists
+    existing = await db.topics.find_one({
+        "$or": [
+            {"name": topic_data.name},
+            {"slug": topic_data.slug}
+        ]
+    })
+    
+    if existing:
+        raise HTTPException(status_code=400, detail="Topic with this name or slug already exists")
+    
+    topic = Topic(
+        name=topic_data.name,
+        slug=topic_data.slug,
+        visible=topic_data.visible
+    )
+    
+    await db.topics.insert_one(topic.dict())
+    return {"message": "Topic created successfully", "topic": topic.dict()}
+
+@api_router.put("/admin/topics/{topic_id}")
+async def update_topic(
+    topic_id: str,
+    topic_data: TopicRequest,
+    current_user: User = Depends(require_role(UserRole.ADMIN))
+):
+    """Update an existing topic"""
+    # Check if another topic with same name or slug exists
+    existing = await db.topics.find_one({
+        "$and": [
+            {"id": {"$ne": topic_id}},
+            {"$or": [
+                {"name": topic_data.name},
+                {"slug": topic_data.slug}
+            ]}
+        ]
+    })
+    
+    if existing:
+        raise HTTPException(status_code=400, detail="Another topic with this name or slug already exists")
+    
+    result = await db.topics.update_one(
+        {"id": topic_id},
+        {"$set": {
+            "name": topic_data.name,
+            "slug": topic_data.slug,
+            "visible": topic_data.visible
+        }}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Topic not found")
+    
+    return {"message": "Topic updated successfully"}
+
+@api_router.delete("/admin/topics/{topic_id}")
+async def delete_topic(
+    topic_id: str,
+    current_user: User = Depends(require_role(UserRole.ADMIN))
+):
+    """Delete a topic"""
+    result = await db.topics.delete_one({"id": topic_id})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Topic not found")
+    
+    return {"message": "Topic deleted successfully"}
+
+# Countries Management
+@api_router.get("/admin/countries")
+async def get_countries_admin(current_user: User = Depends(require_role(UserRole.ADMIN))):
+    """Get all countries for admin management"""
+    countries = await db.countries.find({}, {"_id": 0}).sort("name", 1).to_list(100)
+    return {"countries": countries, "total": len(countries)}
+
+@api_router.post("/admin/countries")
+async def create_country(
+    country_data: CountryRequest,
+    current_user: User = Depends(require_role(UserRole.ADMIN))
+):
+    """Create a new country"""
+    # Check if country with same name or slug exists
+    existing = await db.countries.find_one({
+        "$or": [
+            {"name": country_data.name},
+            {"slug": country_data.slug}
+        ]
+    })
+    
+    if existing:
+        raise HTTPException(status_code=400, detail="Country with this name or slug already exists")
+    
+    country = Country(
+        name=country_data.name,
+        slug=country_data.slug,
+        visible=country_data.visible
+    )
+    
+    await db.countries.insert_one(country.dict())
+    return {"message": "Country created successfully", "country": country.dict()}
+
+@api_router.put("/admin/countries/{country_id}")
+async def update_country(
+    country_id: str,
+    country_data: CountryRequest,
+    current_user: User = Depends(require_role(UserRole.ADMIN))
+):
+    """Update an existing country"""
+    # Check if another country with same name or slug exists
+    existing = await db.countries.find_one({
+        "$and": [
+            {"id": {"$ne": country_id}},
+            {"$or": [
+                {"name": country_data.name},
+                {"slug": country_data.slug}
+            ]}
+        ]
+    })
+    
+    if existing:
+        raise HTTPException(status_code=400, detail="Another country with this name or slug already exists")
+    
+    result = await db.countries.update_one(
+        {"id": country_id},
+        {"$set": {
+            "name": country_data.name,
+            "slug": country_data.slug,
+            "visible": country_data.visible
+        }}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Country not found")
+    
+    return {"message": "Country updated successfully"}
+
+@api_router.delete("/admin/countries/{country_id}")
+async def delete_country(
+    country_id: str,
+    current_user: User = Depends(require_role(UserRole.ADMIN))
+):
+    """Delete a country"""
+    result = await db.countries.delete_one({"id": country_id})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Country not found")
+    
+    return {"message": "Country deleted successfully"}
+
+# Guides Management
+@api_router.get("/admin/guides")
+async def get_guides_admin(current_user: User = Depends(require_role(UserRole.ADMIN))):
+    """Get all guides for admin management"""
+    guides = await db.guides.find({}, {"_id": 0}).sort("name", 1).to_list(100)
+    return {"guides": guides, "total": len(guides)}
+
+@api_router.post("/admin/guides")
+async def create_guide(
+    guide_data: GuideRequest,
+    current_user: User = Depends(require_role(UserRole.ADMIN))
+):
+    """Create a new guide"""
+    # Check if guide with same name exists
+    existing = await db.guides.find_one({"name": guide_data.name})
+    
+    if existing:
+        raise HTTPException(status_code=400, detail="Guide with this name already exists")
+    
+    guide = Guide(
+        name=guide_data.name,
+        visible=guide_data.visible
+    )
+    
+    await db.guides.insert_one(guide.dict())
+    return {"message": "Guide created successfully", "guide": guide.dict()}
+
+@api_router.put("/admin/guides/{guide_id}")
+async def update_guide(
+    guide_id: str,
+    guide_data: GuideRequest,
+    current_user: User = Depends(require_role(UserRole.ADMIN))
+):
+    """Update an existing guide"""
+    # Check if another guide with same name exists
+    existing = await db.guides.find_one({
+        "$and": [
+            {"id": {"$ne": guide_id}},
+            {"name": guide_data.name}
+        ]
+    })
+    
+    if existing:
+        raise HTTPException(status_code=400, detail="Another guide with this name already exists")
+    
+    result = await db.guides.update_one(
+        {"id": guide_id},
+        {"$set": {
+            "name": guide_data.name,
+            "visible": guide_data.visible
+        }}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Guide not found")
+    
+    return {"message": "Guide updated successfully"}
+
+@api_router.delete("/admin/guides/{guide_id}")
+async def delete_guide(
+    guide_id: str,
+    current_user: User = Depends(require_role(UserRole.ADMIN))
+):
+    """Delete a guide"""
+    result = await db.guides.delete_one({"id": guide_id})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Guide not found")
+    
+    return {"message": "Guide deleted successfully"}
+
+# Public Filter Endpoints (for frontend dropdowns)
+@api_router.get("/filters/topics")
+async def get_visible_topics():
+    """Get visible topics for frontend filter dropdown"""
+    topics = await db.topics.find(
+        {"visible": True}, 
+        {"_id": 0}
+    ).sort("name", 1).to_list(100)
+    return {"topics": topics}
+
+@api_router.get("/filters/countries")
+async def get_visible_countries():
+    """Get visible countries for frontend filter dropdown"""
+    countries = await db.countries.find(
+        {"visible": True}, 
+        {"_id": 0}
+    ).sort("name", 1).to_list(100)
+    return {"countries": countries}
+
+@api_router.get("/filters/guides")
+async def get_visible_guides():
+    """Get visible guides for frontend filter dropdown"""
+    guides = await db.guides.find(
+        {"visible": True}, 
+        {"_id": 0}
+    ).sort("name", 1).to_list(100)
+    return {"guides": guides}
+
+# ==========================================
+# NEW ENDPOINTS FOR VIDEO BUTTONS
+# ==========================================
+
+@api_router.post("/progress/manual")
+async def log_manual_progress(
+    request: ManualProgressRequest,
+    session_id: str = Query(...),
+    current_user: Optional[User] = Depends(get_current_user)
+):
+    """Log manual progress for a video (for Mark as Watched functionality)"""
+    
+    # Verify video exists
+    video = await db.videos.find_one({"id": request.videoId}, {"_id": 0})
+    if not video:
+        raise HTTPException(status_code=404, detail="Video not found")
+    
+    user_id = current_user.id if current_user else None
+    
+    # Parse the date
+    try:
+        watched_date = datetime.strptime(request.watchedAt, "%Y-%m-%d")
+    except ValueError:
+        raise HTTPException(status_code=422, detail="Invalid date format. Use YYYY-MM-DD")
+    
+    # Create or update watch progress
+    progress_data = {
+        "user_id": user_id,
+        "session_id": session_id,
+        "video_id": request.videoId,
+        "watched_minutes": request.minutesWatched,
+        "completed": request.minutesWatched >= video["duration_minutes"],
+        "watched_at": watched_date,
+        "marked_as_watched": True
+    }
+    
+    # Check if progress already exists
+    existing_progress = await db.watch_progress.find_one({
+        "session_id": session_id,
+        "video_id": request.videoId
+    })
+    
+    if existing_progress:
+        await db.watch_progress.update_one(
+            {"session_id": session_id, "video_id": request.videoId},
+            {"$set": progress_data}
+        )
+    else:
+        progress = WatchProgress(**{**progress_data, "id": str(uuid.uuid4())})
+        await db.watch_progress.insert_one(progress.dict())
+    
+    # Update daily progress
+    await update_daily_progress(session_id, request.videoId, request.minutesWatched, user_id)
+    
+    return {
+        "message": "Progress logged successfully",
+        "video_id": request.videoId,
+        "minutes_watched": request.minutesWatched
+    }
+
+@api_router.post("/user/list")
+async def add_to_user_list(
+    request: UserListRequest,
+    current_user: User = Depends(require_role(UserRole.STUDENT))
+):
+    """Add a video to user's list (requires student role or higher)"""
+    
+    # Verify video exists
+    video = await db.videos.find_one({"id": request.video_id}, {"_id": 0})
+    if not video:
+        raise HTTPException(status_code=404, detail="Video not found")
+    
+    # Check if already in list
+    existing_item = await db.user_list.find_one({
+        "user_id": current_user.id,
+        "video_id": request.video_id
+    })
+    
+    if existing_item:
+        return {"message": "Video already in your list", "already_added": True}
+    
+    # Add to list
+    list_item = UserListItem(
+        user_id=current_user.id,
+        video_id=request.video_id
+    )
+    
+    await db.user_list.insert_one(list_item.dict())
+    
+    return {
+        "message": "Video added to your list",
+        "video_id": request.video_id,
+        "already_added": False
+    }
+
+@api_router.delete("/user/list/{video_id}")
+async def remove_from_user_list(
+    video_id: str,
+    current_user: User = Depends(require_role(UserRole.STUDENT))
+):
+    """Remove a video from user's list (requires student role or higher)"""
+    
+    result = await db.user_list.delete_one({
+        "user_id": current_user.id,
+        "video_id": video_id
+    })
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Video not found in your list")
+    
+    return {
+        "message": "Video removed from your list",
+        "video_id": video_id
+    }
+
+@api_router.get("/user/list")
+async def get_user_list(
+    current_user: User = Depends(require_role(UserRole.STUDENT))
+):
+    """Get user's saved video list (requires student role or higher)"""
+    
+    # Get list items
+    list_items = await db.user_list.find(
+        {"user_id": current_user.id},
+        {"_id": 0}
+    ).sort("added_at", -1).to_list(1000)
+    
+    # Get video IDs
+    video_ids = [item["video_id"] for item in list_items]
+    
+    if not video_ids:
+        return {"videos": [], "total": 0}
+    
+    # Fetch video details
+    videos = await db.videos.find(
+        {"id": {"$in": video_ids}},
+        {"_id": 0}
+    ).to_list(1000)
+    
+    # Add metadata from list items
+    video_dict = {v["id"]: v for v in videos}
+    result_videos = []
+    
+    for item in list_items:
+        if item["video_id"] in video_dict:
+            video = video_dict[item["video_id"]]
+            video["added_to_list_at"] = item["added_at"]
+            result_videos.append(video)
+    
+    return {
+        "videos": result_videos,
+        "total": len(result_videos)
+    }
+
+@api_router.get("/user/list/status/{video_id}")
+async def check_video_in_list(
+    video_id: str,
+    current_user: Optional[User] = Depends(get_current_user)
+):
+    """Check if a video is in user's list"""
+    
+    if not current_user:
+        return {"in_list": False}
+    
+    list_item = await db.user_list.find_one({
+        "user_id": current_user.id,
+        "video_id": video_id
+    })
+    
+    return {"in_list": list_item is not None}
+
+# ==========================================
+# DAILY GOAL SYSTEM ENDPOINTS
+# ==========================================
+
+@api_router.get("/user/daily-goal")
+async def get_user_daily_goal(
+    current_user: User = Depends(require_role(UserRole.STUDENT))
+):
+    """Get user's daily goal and today's progress"""
+    
+    # Get or create user's daily goal
+    user_goal = await db.daily_goals.find_one({"user_id": current_user.id}, {"_id": 0})
+    if not user_goal:
+        # Create default goal
+        default_goal = DailyGoal(user_id=current_user.id, daily_minutes_goal=30)
+        await db.daily_goals.insert_one(default_goal.dict())
+        daily_goal_minutes = 30
+    else:
+        daily_goal_minutes = user_goal["daily_minutes_goal"]
+    
+    # Get today's progress
+    today = datetime.utcnow().strftime("%Y-%m-%d")
+    today_progress = await db.daily_progress.find_one({
+        "user_id": current_user.id,
+        "date": today
+    }, {"_id": 0})
+    
+    minutes_watched_today = today_progress["total_minutes_watched"] if today_progress else 0
+    progress_percentage = min((minutes_watched_today / daily_goal_minutes) * 100, 100)
+    goal_completed = minutes_watched_today >= daily_goal_minutes
+    
+    # Calculate streak (consecutive days meeting goal)
+    streak_days = await calculate_goal_streak(current_user.id, daily_goal_minutes)
+    
+    return DailyGoalProgressResponse(
+        daily_goal=daily_goal_minutes,
+        minutes_watched_today=minutes_watched_today,
+        progress_percentage=progress_percentage,
+        goal_completed=goal_completed,
+        streak_days=streak_days
+    )
+
+@api_router.post("/user/daily-goal")
+async def set_user_daily_goal(
+    request: SetDailyGoalRequest,
+    current_user: User = Depends(require_role(UserRole.STUDENT))
+):
+    """Set or update user's daily goal"""
+    
+    goal_data = {
+        "user_id": current_user.id,
+        "daily_minutes_goal": request.daily_minutes_goal,
+        "updated_at": datetime.utcnow()
+    }
+    
+    # Update existing goal or create new one
+    existing_goal = await db.daily_goals.find_one({"user_id": current_user.id})
+    if existing_goal:
+        await db.daily_goals.update_one(
+            {"user_id": current_user.id},
+            {"$set": goal_data}
+        )
+    else:
+        goal = DailyGoal(**{**goal_data, "id": str(uuid.uuid4()), "created_at": datetime.utcnow()})
+        await db.daily_goals.insert_one(goal.dict())
+    
+    return {
+        "message": "Daily goal updated successfully",
+        "daily_minutes_goal": request.daily_minutes_goal
+    }
+
+@api_router.post("/user/unmark-watched")
+async def unmark_video_as_watched(
+    request: UnmarkVideoRequest,
+    session_id: str = Query(...),
+    current_user: Optional[User] = Depends(get_current_user)
+):
+    """Unmark a video as watched (remove from progress)"""
+    
+    # Verify video exists
+    video = await db.videos.find_one({"id": request.video_id}, {"_id": 0})
+    if not video:
+        raise HTTPException(status_code=404, detail="Video not found")
+    
+    user_id = current_user.id if current_user else None
+    
+    # Find existing progress
+    existing_progress = await db.watch_progress.find_one({
+        "session_id": session_id,
+        "video_id": request.video_id
+    })
+    
+    if not existing_progress:
+        raise HTTPException(status_code=404, detail="No watch progress found for this video")
+    
+    # Get the minutes to subtract from daily progress
+    minutes_to_subtract = existing_progress.get("watched_minutes", 0)
+    
+    # Remove from watch progress
+    await db.watch_progress.delete_one({
+        "session_id": session_id,
+        "video_id": request.video_id
+    })
+    
+    # Update daily progress (subtract the minutes)
+    if minutes_to_subtract > 0:
+        today = datetime.utcnow().strftime("%Y-%m-%d")
+        daily_progress = await db.daily_progress.find_one({
+            "session_id": session_id,
+            "date": today
+        })
+        
+        if daily_progress:
+            new_total = max(0, daily_progress["total_minutes_watched"] - minutes_to_subtract)
+            videos_watched = daily_progress.get("videos_watched", [])
+            if request.video_id in videos_watched:
+                videos_watched.remove(request.video_id)
+            
+            await db.daily_progress.update_one(
+                {"session_id": session_id, "date": today},
+                {
+                    "$set": {
+                        "total_minutes_watched": new_total,
+                        "videos_watched": videos_watched,
+                        "updated_at": datetime.utcnow()
+                    }
+                }
+            )
+    
+    return {
+        "message": "Video unmarked as watched successfully",
+        "video_id": request.video_id,
+        "minutes_subtracted": minutes_to_subtract
+    }
+
+async def calculate_goal_streak(user_id: str, daily_goal_minutes: int) -> int:
+    """Calculate consecutive days the user has met their daily goal"""
+    streak = 0
+    current_date = datetime.utcnow().date()
+    
+    # Check backwards from today
+    for i in range(365):  # Check up to a year back
+        check_date = current_date - timedelta(days=i)
+        date_str = check_date.strftime("%Y-%m-%d")
+        
+        daily_progress = await db.daily_progress.find_one({
+            "user_id": user_id,
+            "date": date_str
+        })
+        
+        if daily_progress and daily_progress["total_minutes_watched"] >= daily_goal_minutes:
+            streak += 1
+        else:
+            break  # Streak is broken
+    
+    return streak
+
+# Initialize sample data on startup
+@app.on_event("startup")
+async def startup_event():
+    await init_sample_data()
+    await create_default_admin()
+    await init_content_management_data()
+
+async def create_default_admin():
+    """Create default admin user if none exists"""
+    admin_count = await db.users.count_documents({"role": UserRole.ADMIN})
+    if admin_count == 0:
+        # Create a placeholder admin - in production, this should be done via secure process
+        logging.info("No admin users found. First user to login will be promoted to admin.")
+
+async def init_content_management_data():
+    """Initialize default content management data if database is empty"""
+    content_count = await db.content_items.count_documents({})
+    if content_count == 0:
+        default_content = [
+            # Hero Section
+            {
+                "id": str(uuid.uuid4()),
+                "content_type": "hero_section",
+                "section_key": "hero_title",
+                "languages": {
+                    "en": {"title": "Learn English the Natural Way", "content": ""},
+                    "es": {"title": "Aprende Inglés de Forma Natural", "content": ""},
+                    "pt": {"title": "Aprenda Inglês de Forma Natural", "content": ""}
+                },
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow(),
+                "created_by": None,
+                "updated_by": None
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "content_type": "hero_section",
+                "section_key": "hero_subtitle",
+                "languages": {
+                    "en": {"title": "", "content": "Real conversations. Real people. No textbooks."},
+                    "es": {"title": "", "content": "Conversaciones reales. Personas reales. Sin libros de texto."},
+                    "pt": {"title": "", "content": "Conversas reais. Pessoas reais. Sem livros didáticos."}
+                },
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow(),
+                "created_by": None,
+                "updated_by": None
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "content_type": "hero_section",
+                "section_key": "cta_button",
+                "languages": {
+                    "en": {"title": "Start Learning Free", "content": ""},
+                    "es": {"title": "Comenzar a Aprender Gratis", "content": ""},
+                    "pt": {"title": "Começar a Aprender Grátis", "content": ""}
+                },
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow(),
+                "created_by": None,
+                "updated_by": None
+            },
+            
+            # About Page
+            {
+                "id": str(uuid.uuid4()),
+                "content_type": "about_page",
+                "section_key": "journey_title",
+                "languages": {
+                    "en": {"title": "Greg's Personal Language Learning Journey", "content": ""},
+                    "es": {"title": "El Viaje Personal de Aprendizaje de Idiomas de Greg", "content": ""},
+                    "pt": {"title": "A Jornada Pessoal de Aprendizado de Idiomas do Greg", "content": ""}
+                },
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow(),
+                "created_by": None,
+                "updated_by": None
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "content_type": "about_page",
+                "section_key": "journey_content",
+                "languages": {
+                    "en": {"title": "", "content": "<p>Greg's journey with language learning started like many others — full of effort, repetition, and frustration. He spent years memorizing vocabulary, drilling grammar rules, and trying to piece together conversations from textbooks and apps. Despite all that effort, real communication always felt just out of reach.</p><p>That changed when he discovered the method of <strong>Comprehensible Input</strong>.</p><p>For the first time, language began to feel alive. Through real messages, authentic conversations, and content he could actually understand, English and other languages opened up in a way they never had before. He wasn't just learning words — he was learning <strong>culture</strong>, building <strong>connection</strong>, and truly experiencing the language.</p><p>This transformation sparked a mission: to build a space where learners all over the world could experience that same breakthrough. That space became <strong>English Fiesta</strong> — a platform designed to help people learn naturally, joyfully, and meaningfully.</p>"},
+                    "es": {"title": "", "content": "<p>El viaje de Greg con el aprendizaje de idiomas comenzó como muchos otros — lleno de esfuerzo, repetición y frustración. Pasó años memorizando vocabulario, practicando reglas gramaticales y tratando de armar conversaciones a partir de libros de texto y aplicaciones. A pesar de todo ese esfuerzo, la comunicación real siempre se sentía fuera de alcance.</p><p>Eso cambió cuando descubrió el método del <strong>Input Comprensible</strong>.</p><p>Por primera vez, el idioma comenzó a sentirse vivo. A través de mensajes reales, conversaciones auténticas y contenido que realmente podía entender, el inglés y otros idiomas se abrieron de una manera que nunca antes habían hecho. No solo estaba aprendiendo palabras — estaba aprendiendo <strong>cultura</strong>, construyendo <strong>conexión</strong> y realmente experimentando el idioma.</p><p>Esta transformación despertó una misión: construir un espacio donde los estudiantes de todo el mundo pudieran experimentar ese mismo avance. Ese espacio se convirtió en <strong>English Fiesta</strong> — una plataforma diseñada para ayudar a las personas a aprender de forma natural, alegre y significativa.</p>"},
+                    "pt": {"title": "", "content": "<p>A jornada do Greg com o aprendizado de idiomas começou como muitas outras — cheia de esforço, repetição e frustração. Ele passou anos memorizando vocabulário, praticando regras gramaticais e tentando montar conversas a partir de livros didáticos e aplicativos. Apesar de todo esse esforço, a comunicação real sempre parecia estar fora de alcance.</p><p>Isso mudou quando ele descobriu o método do <strong>Input Compreensível</strong>.</p><p>Pela primeira vez, o idioma começou a se sentir vivo. Através de mensagens reais, conversas autênticas e conteúdo que ele podia realmente entender, o inglês e outros idiomas se abriram de uma forma que nunca haviam feito antes. Ele não estava apenas aprendendo palavras — ele estava aprendendo <strong>cultura</strong>, construindo <strong>conexão</strong> e realmente experimentando o idioma.</p><p>Esta transformação despertou uma missão: construir um espaço onde estudantes do mundo todo pudessem experimentar o mesmo avanço. Esse espaço se tornou <strong>English Fiesta</strong> — uma plataforma projetada para ajudar as pessoas a aprender de forma natural, alegre e significativa.</p>"}
+                },
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow(),
+                "created_by": None,
+                "updated_by": None
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "content_type": "about_page",
+                "section_key": "mission_title",
+                "languages": {
+                    "en": {"title": "Our Mission", "content": ""},
+                    "es": {"title": "Nuestra Misión", "content": ""},
+                    "pt": {"title": "Nossa Missão", "content": ""}
+                },
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow(),
+                "created_by": None,
+                "updated_by": None
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "content_type": "about_page",
+                "section_key": "mission_content",
+                "languages": {
+                    "en": {"title": "", "content": "English Fiesta is here to help you learn English the way your brain was designed to learn — through real, meaningful input. No memorization. No pressure. Just <strong>natural understanding</strong>."},
+                    "es": {"title": "", "content": "English Fiesta está aquí para ayudarte a aprender inglés de la manera en que tu cerebro fue diseñado para aprender — a través de input real y significativo. Sin memorización. Sin presión. Solo <strong>comprensión natural</strong>."},
+                    "pt": {"title": "", "content": "English Fiesta está aqui para ajudá-lo a aprender inglês da maneira que seu cérebro foi projetado para aprender — através de input real e significativo. Sem memorização. Sem pressão. Apenas <strong>compreensão natural</strong>."}
+                },
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow(),
+                "created_by": None,
+                "updated_by": None
+            },
+            
+            # FAQ Page
+            {
+                "id": str(uuid.uuid4()),
+                "content_type": "faq_page",
+                "section_key": "faq_section_basics",
+                "languages": {
+                    "en": {
+                        "title": "English Fiesta Basics",
+                        "content": json.dumps([
+                            {
+                                "question": "What is English Fiesta?",
+                                "answer": "English Fiesta is a language-learning platform that helps you acquire English naturally through engaging videos and conversations, rather than traditional grammar drills or memorization."
+                            },
+                            {
+                                "question": "How does English Fiesta work?",
+                                "answer": "We use a method called Comprehensible Input, where learners watch videos they can mostly understand, even as beginners. Over time, you absorb grammar, vocabulary, and pronunciation by exposure — not by force."
+                            },
+                            {
+                                "question": "Can I actually learn English with Comprehensible Input?",
+                                "answer": "Yes — and research supports it. When you understand what you hear or read in a language, your brain naturally picks it up the way children do. It's a slower beginning, but results in deeper fluency and confidence over time — without needing to study flashcards or grammar rules directly."
+                            },
+                            {
+                                "question": "Who is this for?",
+                                "answer": "For English learners of all levels, especially beginners. No matter your background, if you want to understand and speak English better, this is for you."
+                            },
+                            {
+                                "question": "Is it free?",
+                                "answer": "Yes, many videos are free. Some advanced content may be part of a premium plan."
+                            }
+                        ])
+                    },
+                    "es": {
+                        "title": "Conceptos Básicos de English Fiesta",
+                        "content": json.dumps([
+                            {
+                                "question": "¿Qué es English Fiesta?",
+                                "answer": "English Fiesta es una plataforma de aprendizaje de idiomas que te ayuda a adquirir inglés naturalmente a través de videos y conversaciones atractivas, en lugar de ejercicios gramaticales tradicionales o memorización."
+                            },
+                            {
+                                "question": "¿Cómo funciona English Fiesta?",
+                                "answer": "Usamos un método llamado Input Comprensible, donde los estudiantes ven videos que pueden entender en su mayoría, incluso como principiantes. Con el tiempo, absorbes gramática, vocabulario y pronunciación por exposición — no por fuerza."
+                            }
+                        ])
+                    },
+                    "pt": {
+                        "title": "Conceitos Básicos do English Fiesta",
+                        "content": json.dumps([
+                            {
+                                "question": "O que é English Fiesta?",
+                                "answer": "English Fiesta é uma plataforma de aprendizado de idiomas que ajuda você a adquirir inglês naturalmente através de vídeos e conversas envolventes, ao invés de exercícios gramaticais tradicionais ou memorização."
+                            },
+                            {
+                                "question": "Como funciona o English Fiesta?",
+                                "answer": "Usamos um método chamado Input Compreensível, onde os estudantes assistem vídeos que conseguem entender em sua maioria, mesmo sendo iniciantes. Com o tempo, você absorve gramática, vocabulário e pronúncia por exposição — não por força."
+                            }
+                        ])
+                    }
+                },
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow(),
+                "created_by": None,
+                "updated_by": None
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "content_type": "faq_page",
+                "section_key": "faq_section_comprehensible_input",
+                "languages": {
+                    "en": {
+                        "title": "Comprehensible Input",
+                        "content": json.dumps([
+                            {
+                                "question": "What is input?",
+                                "answer": "Input is any language you hear or read. When you listen to someone speak or read a book, you're receiving input. Input is the fuel your brain uses to acquire language."
+                            },
+                            {
+                                "question": "What is Comprehensible Input?",
+                                "answer": "Comprehensible Input is language you can mostly understand — even if you don't know every word. It's simple, clear communication that's just slightly above your level. This kind of input helps your brain naturally absorb vocabulary, grammar, and pronunciation over time."
+                            },
+                            {
+                                "question": "Do grammar study, exercises, or flashcards count as input?",
+                                "answer": "Not really. While those tools can support your learning, they don't count as input. Comprehensible Input works best when you're focused on meaning — not memorization. That's why our videos are designed to help you understand the story or message first, and let the language come naturally."
+                            }
+                        ])
+                    },
+                    "es": {
+                        "title": "Input Comprensible",
+                        "content": json.dumps([
+                            {
+                                "question": "¿Qué es el input?",
+                                "answer": "El input es cualquier idioma que escuches o leas. Cuando escuchas a alguien hablar o lees un libro, estás recibiendo input. El input es el combustible que tu cerebro usa para adquirir idiomas."
+                            },
+                            {
+                                "question": "¿Qué es el Input Comprensible?",
+                                "answer": "El Input Comprensible es idioma que puedes entender en su mayoría — aunque no sepas cada palabra. Es comunicación simple y clara que está ligeramente por encima de tu nivel. Este tipo de input ayuda a tu cerebro a absorber naturalmente vocabulario, gramática y pronunciación con el tiempo."
+                            }
+                        ])
+                    },
+                    "pt": {
+                        "title": "Input Compreensível",
+                        "content": json.dumps([
+                            {
+                                "question": "O que é input?",
+                                "answer": "Input é qualquer idioma que você ouve ou lê. Quando você ouve alguém falar ou lê um livro, você está recebendo input. Input é o combustível que seu cérebro usa para adquirir idiomas."
+                            },
+                            {
+                                "question": "O que é Input Compreensível?",
+                                "answer": "Input Compreensível é idioma que você consegue entender em sua maioria — mesmo que não saiba cada palavra. É comunicação simples e clara que está ligeiramente acima do seu nível. Este tipo de input ajuda seu cérebro a absorver naturalmente vocabulário, gramática e pronúncia ao longo do tempo."
+                            }
+                        ])
+                    }
+                },
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow(),
+                "created_by": None,
+                "updated_by": None
+            },
+            
+            # Footer
+            {
+                "id": str(uuid.uuid4()),
+                "content_type": "footer",
+                "section_key": "footer_tagline",
+                "languages": {
+                    "en": {"title": "", "content": "Learn English naturally through real videos and real conversations — no memorization, just meaningful understanding."},
+                    "es": {"title": "", "content": "Aprende inglés naturalmente a través de videos reales y conversaciones reales — sin memorización, solo comprensión significativa."},
+                    "pt": {"title": "", "content": "Aprenda inglês naturalmente através de vídeos reais e conversas reais — sem memorização, apenas compreensão significativa."}
+                },
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow(),
+                "created_by": None,
+                "updated_by": None
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "content_type": "footer",
+                "section_key": "footer_copyright",
+                "languages": {
+                    "en": {"title": "", "content": "© 2025 English Fiesta. All rights reserved."},
+                    "es": {"title": "", "content": "© 2025 English Fiesta. Todos los derechos reservados."},
+                    "pt": {"title": "", "content": "© 2025 English Fiesta. Todos os direitos reservados."}
+                },
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow(),
+                "created_by": None,
+                "updated_by": None
+            }
+        ]
+        await db.content_items.insert_many(default_content)
+
+# Authentication Endpoints
+@api_router.post("/auth/session", response_model=UserProfileResponse)
+async def create_auth_session(request: AuthSessionRequest):
+    """Create user session from Emergent auth session ID"""
+    try:
+        # Call Emergent auth API to get user data
+        emergent_response = requests.get(
+            "https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data",
+            headers={"X-Session-ID": request.session_id},
+            timeout=10
+        )
+        
+        if emergent_response.status_code != 200:
+            raise HTTPException(status_code=401, detail="Invalid session ID")
+        
+        emergent_data = emergent_response.json()
+        
+        # Check if user exists
+        existing_user = await db.users.find_one({"email": emergent_data["email"]}, {"_id": 0})
+        
+        if existing_user:
+            user = User(**existing_user)
+        else:
+            # Create new user with default student role
+            user_data = {
+                "id": str(uuid.uuid4()),
+                "email": emergent_data["email"],
+                "name": emergent_data["name"],
+                "picture": emergent_data.get("picture"),
+                "role": UserRole.STUDENT,
+                "emergent_user_id": emergent_data["id"],
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow(),
+                "is_active": True
+            }
+            
+            # Check if this is the first user - make them admin
+            user_count = await db.users.count_documents({})
+            if user_count == 0:
+                user_data["role"] = UserRole.ADMIN
+                logging.info(f"Creating first admin user: {emergent_data['email']}")
+            
+            await db.users.insert_one(user_data)
+            user = User(**user_data)
+            
+            # Migrate any guest session data to this user
+            await migrate_guest_data_to_user(user.id, request.session_id)
+        
+        # Create session token
+        session_token = secrets.token_urlsafe(32)
+        expires_at = datetime.utcnow() + timedelta(days=7)
+        
+        # Deactivate old sessions for this user
+        await db.user_sessions.update_many(
+            {"user_id": user.id},
+            {"$set": {"is_active": False}}
+        )
+        
+        # Create new session
+        session_data = {
+            "id": str(uuid.uuid4()),
+            "user_id": user.id,
+            "session_token": session_token,
+            "emergent_session_id": request.session_id,
+            "expires_at": expires_at,
+            "created_at": datetime.utcnow(),
+            "is_active": True
+        }
+        
+        await db.user_sessions.insert_one(session_data)
+        
+        return UserProfileResponse(
+            id=user.id,
+            email=user.email,
+            name=user.name,
+            picture=user.picture,
+            role=user.role,
+            created_at=user.created_at,
+            session_token=session_token
+        )
+        
+    except requests.RequestException as e:
+        logging.error(f"Emergent auth API error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Authentication service unavailable")
+    except Exception as e:
+        logging.error(f"Session creation error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to create session")
+
+async def migrate_guest_data_to_user(user_id: str, guest_session_id: str):
+    """Migrate guest session data to authenticated user"""
+    try:
+        # Update watch progress
+        await db.watch_progress.update_many(
+            {"session_id": guest_session_id},
+            {"$set": {"user_id": user_id}}
+        )
+        
+        # Update daily progress
+        await db.daily_progress.update_many(
+            {"session_id": guest_session_id},
+            {"$set": {"user_id": user_id}}
+        )
+        
+        # Update user stats
+        await db.user_stats.update_many(
+            {"session_id": guest_session_id},
+            {"$set": {"user_id": user_id}}
+        )
+        
+        logging.info(f"Migrated guest data from session {guest_session_id} to user {user_id}")
+    except Exception as e:
+        logging.error(f"Data migration error: {str(e)}")
+
+@api_router.get("/auth/profile")
+async def get_user_profile(current_user: User = Depends(get_current_user)):
+    """Get current user profile"""
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    return {
+        "id": current_user.id,
+        "email": current_user.email,
+        "name": current_user.name,
+        "picture": current_user.picture,
+        "role": current_user.role,
+        "created_at": current_user.created_at
+    }
+
+@api_router.post("/auth/logout")
+async def logout(current_user: User = Depends(get_current_user)):
+    """Logout current user"""
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    # Get session token from request (we'd need to modify this to get the actual token)
+    # For now, deactivate all sessions for the user
+    await db.user_sessions.update_many(
+        {"user_id": current_user.id},
+        {"$set": {"is_active": False}}
+    )
+    
+    return {"message": "Logged out successfully"}
+
+# Admin endpoints
+@api_router.get("/admin/users")
+async def get_all_users(current_user: User = Depends(require_admin)):
+    """Get all users (admin only)"""
+    users = await db.users.find({}, {"_id": 0}).to_list(1000)
+    return {"users": users}
+
+@api_router.post("/admin/users/role")
+async def update_user_role(request: RoleUpdateRequest, current_user: User = Depends(require_admin)):
+    """Update user role (admin only)"""
+    # Find target user
+    target_user = await db.users.find_one({"id": request.user_id}, {"_id": 0})
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Prevent admin from demoting themselves if they're the only admin
+    if current_user.id == request.user_id and request.new_role != UserRole.ADMIN:
+        admin_count = await db.users.count_documents({"role": UserRole.ADMIN})
+        if admin_count <= 1:
+            raise HTTPException(status_code=400, detail="Cannot remove the last admin")
+    
+    # Update role
+    await db.users.update_one(
+        {"id": request.user_id},
+        {"$set": {
+            "role": request.new_role,
+            "updated_at": datetime.utcnow()
+        }}
+    )
+    
+    return {
+        "message": f"User role updated to {request.new_role}",
+        "user_id": request.user_id,
+        "new_role": request.new_role
+    }
+
+# Include the router in the main app
+app.include_router(api_router)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_credentials=True,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+# Initialize filter collections with sample data
+async def initialize_filter_collections():
+    """Initialize filter collections with sample data if they don't exist"""
+    try:
+        # Sample Topics
+        topics_data = [
+            {"name": "Daily Life", "slug": "daily-life"},
+            {"name": "Travel", "slug": "travel"}, 
+            {"name": "Food", "slug": "food"},
+            {"name": "School", "slug": "school"},
+            {"name": "Culture", "slug": "culture"},
+            {"name": "Family", "slug": "family"},
+            {"name": "Jobs", "slug": "jobs"},
+            {"name": "Emotions", "slug": "emotions"},
+            {"name": "Hobbies", "slug": "hobbies"},
+            {"name": "Society", "slug": "society"}
+        ]
+        
+        # Check if topics collection is empty
+        topic_count = await db.topics.count_documents({})
+        if topic_count == 0:
+            for topic_data in topics_data:
+                topic = Topic(
+                    name=topic_data["name"],
+                    slug=topic_data["slug"],
+                    visible=True
+                )
+                await db.topics.insert_one(topic.dict())
+            logger.info(f"Initialized {len(topics_data)} topics")
+        
+        # Sample Countries
+        countries_data = [
+            {"name": "USA", "slug": "usa"},
+            {"name": "UK", "slug": "uk"},
+            {"name": "Canada", "slug": "canada"},
+            {"name": "Australia", "slug": "australia"},
+            {"name": "Other", "slug": "other"}
+        ]
+        
+        # Check if countries collection is empty
+        country_count = await db.countries.count_documents({})
+        if country_count == 0:
+            for country_data in countries_data:
+                country = Country(
+                    name=country_data["name"],
+                    slug=country_data["slug"],
+                    visible=True
+                )
+                await db.countries.insert_one(country.dict())
+            logger.info(f"Initialized {len(countries_data)} countries")
+        
+        # Sample Guides (based on existing instructor names if any exist)
+        guide_count = await db.guides.count_documents({})
+        if guide_count == 0:
+            unique_instructors = []
+            
+            # Try to get unique instructor names from videos
+            try:
+                pipeline = [
+                    {"$group": {"_id": "$instructor_name"}},
+                    {"$match": {"_id": {"$ne": None, "$ne": ""}}},
+                    {"$limit": 10}
+                ]
+                cursor = db.videos.aggregate(pipeline)
+                unique_instructors = [doc["_id"] for doc in await cursor.to_list(length=10)]
+                logger.info(f"Found {len(unique_instructors)} instructor names from videos")
+            except Exception as e:
+                logger.warning(f"Could not fetch instructor names: {e}")
+            
+            # If no instructors found from videos, use sample data
+            if not unique_instructors:
+                unique_instructors = [
+                    "Greg Martinez", 
+                    "Sarah Johnson", 
+                    "Mike Thompson",
+                    "Emma Wilson",
+                    "David Rodriguez"
+                ]
+                logger.info("Using sample instructor names for guides initialization")
+            
+            for instructor_name in unique_instructors:
+                guide = Guide(
+                    name=instructor_name,
+                    visible=True
+                )
+                await db.guides.insert_one(guide.dict())
+            logger.info(f"Initialized {len(unique_instructors)} guides")
+        
+    except Exception as e:
+        logger.error(f"Error initializing filter collections: {e}")
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize collections on startup"""
+    await initialize_filter_collections()
+
+@app.on_event("shutdown")
+async def shutdown_db_client():
+    client.close()
