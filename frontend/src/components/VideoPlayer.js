@@ -3,6 +3,8 @@ import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import MarkAsWatchedModal from './MarkAsWatchedModal';
 import CommentList from './CommentList';
+import VideoSidebar from './VideoSidebar';
+import ProgressTrackingToast from './ProgressTrackingToast';
 import {
   Player,
   Video,
