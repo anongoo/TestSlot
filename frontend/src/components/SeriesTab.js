@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import VideoPlayer from './VideoPlayer';
+import NewVideoPlayer from './NewVideoPlayer';
 import WatchVideoCard from './WatchVideoCard';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
