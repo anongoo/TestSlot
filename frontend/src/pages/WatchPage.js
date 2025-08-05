@@ -14,6 +14,7 @@ const WatchPage = () => {
 
   // Callback to receive debug functionality from WatchTab
   const handleDebugVideoSelect = (videos, setSelectedVideoFn) => {
+    console.log('🔧 Debug callback received:', videos.length, 'videos');
     setDebugVideos(videos);
     setDebugSetSelectedVideo(() => setSelectedVideoFn);
   };
