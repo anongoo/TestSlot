@@ -9,6 +9,8 @@ import DailyGoalProgressBar from '../components/DailyGoalProgressBar';
 const WatchPage = () => {
   const { isAuthenticated, user } = useAuth();
   const [activeTab, setActiveTab] = useState('watch');
+  const [debugVideos, setDebugVideos] = useState([]);
+  const [debugSetSelectedVideo, setDebugSetSelectedVideo] = useState(null);
 
   // Tabs configuration
   const tabs = [
