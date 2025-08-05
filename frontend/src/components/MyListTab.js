@@ -160,7 +160,7 @@ const MyListTab = () => {
 
   if (selectedVideo) {
     return (
-      <VideoPlayer
+      <NewVideoPlayer
         video={selectedVideo}
         onClose={handleClosePlayer}
         onVideoEnd={() => setSelectedVideo(null)}
