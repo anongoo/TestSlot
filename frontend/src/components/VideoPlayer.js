@@ -23,7 +23,7 @@ const getSessionId = () => {
   return sessionId;
 };
 
-const VideoPlayer = ({ video, onClose, onVideoEnd, relatedVideos = [] }) => {
+const VideoPlayer = ({ video, onClose, onVideoEnd, relatedVideos = [], onVideoSelect }) => {
   const { isAuthenticated, sessionToken, isStudent } = useAuth();
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
