@@ -183,6 +183,7 @@ const CommentList = ({ videoId }) => {
                   comment={comment} 
                   onCommentDeleted={handleCommentDeleted}
                   onCommentPinToggled={handleCommentPinToggled}
+                  onCommentUpdated={handleCommentUpdated}
                 />
               </motion.div>
             ))}
