@@ -173,9 +173,13 @@ const VideoPlayer = ({ video, onClose, onVideoEnd, relatedVideos = [], onVideoSe
   const handleNextVideo = (nextVideo) => {
     if (nextVideo && typeof nextVideo === 'object') {
       console.log('➡️ Loading next video:', nextVideo.title);
-      // We'll call onClose to return to video grid and let parent handle video switching
-      onClose();
-      // In a real implementation, you might want to pass the selected video back to parent
+      // If onVideoSelect is provided, use it to switch videos
+      if (onVideoSelect) {
+        onVideoSelect(nextVideo);
+      } else {
+        // Fallback: close player and let parent handle
+        onClose();
+      }
     }
   };
 
