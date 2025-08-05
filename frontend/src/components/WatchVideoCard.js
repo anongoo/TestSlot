@@ -154,11 +154,58 @@ const WatchVideoCard = ({ video, onVideoSelect }) => {
       {/* Thumbnail */}
       <div className="relative" onClick={handlePlay}>
         <img 
-          src={video.thumbnail_url} 
+          src={video.thumbnail_url ? `${BACKEND_URL}${video.thumbnail_url}` : `data:image/svg+xml;base64,${btoa(`
+            <svg width="320" height="180" viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg">
+              <rect width="320" height="180" fill="#f3f4f6"/>
+              <rect width="320" height="180" fill="url(#gradient)" opacity="0.1"/>
+              <defs>
+                <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style="stop-color:#3b82f6"/>
+                  <stop offset="50%" style="stop-color:#8b5cf6"/>
+                  <stop offset="100%" style="stop-color:#ec4899"/>
+                </linearGradient>
+              </defs>
+              <g transform="translate(160, 90)">
+                <circle r="20" fill="#e5e7eb"/>
+                <polygon points="-8,-12 -8,12 16,0" fill="#6b7280"/>
+              </g>
+              <text x="160" y="130" text-anchor="middle" fill="#6b7280" font-family="Arial, sans-serif" font-size="12" font-weight="600">
+                ${video.level || 'English Fiesta'}
+              </text>
+              <text x="160" y="150" text-anchor="middle" fill="#6b7280" font-family="Arial, sans-serif" font-size="10">
+                ${video.duration_minutes || '0'}min • ${video.country || 'Video'}
+              </text>
+            </svg>
+          `)}`}
           alt={video.title}
           className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
           onError={(e) => {
-            e.target.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="320" height="180" viewBox="0 0 320 180"><rect width="320" height="180" fill="%23f3f4f6"/><text x="160" y="90" text-anchor="middle" fill="%236b7280" font-family="Arial" font-size="16">Video</text></svg>';
+            // Enhanced fallback with branded placeholder
+            e.target.src = `data:image/svg+xml;base64,${btoa(`
+              <svg width="320" height="180" viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg">
+                <rect width="320" height="180" fill="#f8fafc"/>
+                <rect width="320" height="180" fill="url(#fiesta-gradient)" opacity="0.15"/>
+                <defs>
+                  <linearGradient id="fiesta-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#fbbf24"/>
+                    <stop offset="25%" style="stop-color:#f59e0b"/>
+                    <stop offset="50%" style="stop-color:#3b82f6"/>
+                    <stop offset="75%" style="stop-color:#8b5cf6"/>
+                    <stop offset="100%" style="stop-color:#ec4899"/>
+                  </linearGradient>
+                </defs>
+                <g transform="translate(160, 90)">
+                  <circle r="24" fill="white" stroke="#e5e7eb" stroke-width="2"/>
+                  <polygon points="-10,-14 -10,14 20,0" fill="#3b82f6"/>
+                </g>
+                <text x="160" y="130" text-anchor="middle" fill="#374151" font-family="Arial, sans-serif" font-size="14" font-weight="700">
+                  🎉 English Fiesta
+                </text>
+                <text x="160" y="150" text-anchor="middle" fill="#6b7280" font-family="Arial, sans-serif" font-size="11">
+                  ${video.level || 'Learn English'} • ${video.duration_minutes || '0'}min
+                </text>
+              </svg>
+            `)}`;
           }}
         />
         
