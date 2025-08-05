@@ -1369,6 +1369,86 @@ async def unpin_comment(
         "comment": comment
     }
 
+@api_router.post("/comments/{comment_id}/like")
+async def like_comment(
+    comment_id: str,
+    current_user: User = Depends(require_role(UserRole.STUDENT))
+):
+    """Like a comment (authenticated users only)"""
+    # Check if comment exists
+    comment = await db.comments.find_one({"id": comment_id}, {"_id": 0})
+    if not comment:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    
+    # Check if user already liked this comment
+    existing_like = await db.user_comment_likes.find_one({
+        "user_id": current_user.id,
+        "comment_id": comment_id
+    })
+    
+    if existing_like:
+        return {"message": "Comment already liked", "already_liked": True}
+    
+    # Add like
+    like_data = {
+        "id": str(uuid.uuid4()),
+        "user_id": current_user.id,
+        "comment_id": comment_id,
+        "created_at": datetime.utcnow()
+    }
+    
+    await db.user_comment_likes.insert_one(like_data)
+    
+    # Update comment like count
+    await db.comments.update_one(
+        {"id": comment_id},
+        {"$inc": {"like_count": 1}}
+    )
+    
+    # Get updated comment
+    updated_comment = await db.comments.find_one({"id": comment_id}, {"_id": 0})
+    
+    return {
+        "message": "Comment liked successfully",
+        "comment": updated_comment,
+        "already_liked": False
+    }
+
+@api_router.delete("/comments/{comment_id}/like")
+async def unlike_comment(
+    comment_id: str,
+    current_user: User = Depends(require_role(UserRole.STUDENT))
+):
+    """Unlike a comment (authenticated users only)"""
+    # Check if comment exists
+    comment = await db.comments.find_one({"id": comment_id}, {"_id": 0})
+    if not comment:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    
+    # Find and remove like
+    result = await db.user_comment_likes.delete_one({
+        "user_id": current_user.id,
+        "comment_id": comment_id
+    })
+    
+    if result.deleted_count == 0:
+        return {"message": "Comment was not liked", "was_liked": False}
+    
+    # Update comment like count
+    await db.comments.update_one(
+        {"id": comment_id},
+        {"$inc": {"like_count": -1}}
+    )
+    
+    # Get updated comment
+    updated_comment = await db.comments.find_one({"id": comment_id}, {"_id": 0})
+    
+    return {
+        "message": "Comment unliked successfully",
+        "comment": updated_comment,
+        "was_liked": True
+    }
+
 # ==========================================
 # ADMIN VIDEO UPLOAD ENDPOINTS
 # ==========================================
