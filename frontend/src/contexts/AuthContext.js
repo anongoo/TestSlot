@@ -104,6 +104,12 @@ export const AuthProvider = ({ children }) => {
   };
 
   const login = () => {
+    // Store current path for redirect after login (but not auth pages)
+    const currentPath = window.location.pathname;
+    if (currentPath !== '/' && currentPath !== '/profile') {
+      localStorage.setItem('auth_redirect_path', currentPath);
+    }
+    
     const redirectUrl = encodeURIComponent(window.location.origin + '/profile');
     window.location.href = `https://auth.emergentagent.com/?redirect=${redirectUrl}`;
   };
