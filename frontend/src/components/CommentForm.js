@@ -113,7 +113,7 @@ const CommentForm = ({
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="Share your thoughts about this video... 💭"
+            placeholder={placeholder}
             className="w-full p-4 border-2 border-gray-200 rounded-lg resize-none focus:border-fiesta-blue focus:outline-none font-poppins"
             rows={3}
             maxLength={500}
