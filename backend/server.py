@@ -1370,6 +1370,10 @@ async def delete_guide(
 async def health_check():
     return {"status": "healthy", "timestamp": datetime.utcnow()}
 
+@app.get("/api/health")
+async def api_health_check():
+    return {"status": "healthy", "timestamp": datetime.utcnow()}
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8001)
