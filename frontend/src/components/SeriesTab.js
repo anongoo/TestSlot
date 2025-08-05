@@ -97,7 +97,7 @@ const SeriesTab = () => {
 
   if (selectedVideo) {
     return (
-      <VideoPlayer
+      <NewVideoPlayer
         video={selectedVideo}
         onClose={handleClosePlayer}
         onVideoEnd={() => {
