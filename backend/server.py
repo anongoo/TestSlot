@@ -1365,6 +1365,157 @@ async def delete_guide(
     
     return {"message": "Guide deleted successfully"}
 
+async def init_sample_data():
+    """Initialize sample data for testing"""
+    try:
+        # Check if we already have videos
+        existing_videos = await db.videos.count_documents({})
+        if existing_videos > 0:
+            return
+        
+        # Initialize sample topics
+        sample_topics = [
+            {"id": str(uuid.uuid4()), "name": "Conversation", "slug": "conversation", "visible": True, "created_at": datetime.utcnow()},
+            {"id": str(uuid.uuid4()), "name": "Grammar", "slug": "grammar", "visible": True, "created_at": datetime.utcnow()},
+            {"id": str(uuid.uuid4()), "name": "Pronunciation", "slug": "pronunciation", "visible": True, "created_at": datetime.utcnow()},
+            {"id": str(uuid.uuid4()), "name": "Business English", "slug": "business", "visible": True, "created_at": datetime.utcnow()},
+            {"id": str(uuid.uuid4()), "name": "Culture", "slug": "culture", "visible": True, "created_at": datetime.utcnow()}
+        ]
+        
+        await db.topics.insert_many(sample_topics)
+        
+        # Initialize sample countries
+        sample_countries = [
+            {"id": str(uuid.uuid4()), "name": "United States", "slug": "usa", "visible": True, "created_at": datetime.utcnow()},
+            {"id": str(uuid.uuid4()), "name": "United Kingdom", "slug": "uk", "visible": True, "created_at": datetime.utcnow()},
+            {"id": str(uuid.uuid4()), "name": "Canada", "slug": "canada", "visible": True, "created_at": datetime.utcnow()},
+            {"id": str(uuid.uuid4()), "name": "Australia", "slug": "australia", "visible": True, "created_at": datetime.utcnow()}
+        ]
+        
+        await db.countries.insert_many(sample_countries)
+        
+        # Initialize sample guides
+        sample_guides = [
+            {"id": str(uuid.uuid4()), "name": "Native Speaker", "slug": "native", "visible": True, "created_at": datetime.utcnow()},
+            {"id": str(uuid.uuid4()), "name": "Language Teacher", "slug": "teacher", "visible": True, "created_at": datetime.utcnow()},
+            {"id": str(uuid.uuid4()), "name": "Conversation Partner", "slug": "partner", "visible": True, "created_at": datetime.utcnow()}
+        ]
+        
+        await db.guides.insert_many(sample_guides)
+        
+        # Create sample videos with topics field
+        sample_videos = [
+            {
+                "id": str(uuid.uuid4()),
+                "title": "English Conversation for Beginners",
+                "description": "Learn basic English conversation skills with native speakers",
+                "duration_minutes": 15,
+                "level": "New Beginner",
+                "accents": ["American"],
+                "tags": ["conversation", "beginner", "basics"],
+                "instructor_name": "Sarah Johnson",
+                "country": "USA",
+                "topics": ["conversation", "grammar"],  # Using topics instead of category
+                "thumbnail_url": "https://img.youtube.com/vi/sample1/maxresdefault.jpg",
+                "is_premium": False,
+                "video_type": "youtube",
+                "video_url": None,
+                "youtube_video_id": "sample1",
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow()
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "title": "Advanced Grammar Patterns",
+                "description": "Master complex English grammar structures",
+                "duration_minutes": 25,
+                "level": "Advanced",
+                "accents": ["British"],
+                "tags": ["grammar", "advanced", "patterns"],
+                "instructor_name": "Dr. Michael Thompson",
+                "country": "UK",
+                "topics": ["grammar"],  # Using topics instead of category
+                "thumbnail_url": "https://img.youtube.com/vi/sample2/maxresdefault.jpg",
+                "is_premium": True,
+                "video_type": "youtube",
+                "video_url": None,
+                "youtube_video_id": "sample2",
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow()
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "title": "Business English Essentials",
+                "description": "Professional English for workplace communication",
+                "duration_minutes": 30,
+                "level": "Intermediate",
+                "accents": ["Canadian"],
+                "tags": ["business", "professional", "workplace"],
+                "instructor_name": "Jennifer Chen",
+                "country": "Canada",
+                "topics": ["business", "conversation"],  # Using topics instead of category
+                "thumbnail_url": "https://img.youtube.com/vi/sample3/maxresdefault.jpg",
+                "is_premium": True,
+                "video_type": "youtube",
+                "video_url": None,
+                "youtube_video_id": "sample3",
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow()
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "title": "Pronunciation Practice",
+                "description": "Improve your English pronunciation with targeted exercises",
+                "duration_minutes": 20,
+                "level": "Beginner",
+                "accents": ["Australian"],
+                "tags": ["pronunciation", "practice", "exercises"],
+                "instructor_name": "Mark Wilson",
+                "country": "Australia",
+                "topics": ["pronunciation"],  # Using topics instead of category
+                "thumbnail_url": "https://img.youtube.com/vi/sample4/maxresdefault.jpg",
+                "is_premium": False,
+                "video_type": "youtube",
+                "video_url": None,
+                "youtube_video_id": "sample4",
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow()
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "title": "American Culture and Language",
+                "description": "Understanding American culture through language learning",
+                "duration_minutes": 35,
+                "level": "Intermediate",
+                "accents": ["American"],
+                "tags": ["culture", "american", "language"],
+                "instructor_name": "Lisa Rodriguez",
+                "country": "USA",
+                "topics": ["culture", "conversation"],  # Using topics instead of category
+                "thumbnail_url": "https://img.youtube.com/vi/sample5/maxresdefault.jpg",
+                "is_premium": False,
+                "video_type": "youtube",
+                "video_url": None,
+                "youtube_video_id": "sample5",
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow()
+            }
+        ]
+        
+        await db.videos.insert_many(sample_videos)
+        print(f"✅ Initialized {len(sample_videos)} sample videos with topics field")
+        print(f"✅ Initialized {len(sample_topics)} topics")
+        print(f"✅ Initialized {len(sample_countries)} countries")
+        print(f"✅ Initialized {len(sample_guides)} guides")
+        
+    except Exception as e:
+        print(f"❌ Error initializing sample data: {e}")
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize sample data on startup"""
+    await init_sample_data()
+
 # Health check endpoint
 @app.get("/health")
 async def health_check():
