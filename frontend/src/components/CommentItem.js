@@ -84,7 +84,48 @@ const CommentItem = ({ comment, onCommentDeleted, onCommentPinToggled, onComment
     }
   };
 
-  const canDelete = isAuthenticated && user.role === 'admin';
+  const handleLike = async () => {
+    if (!isAuthenticated) return;
+    
+    setIsLiking(true);
+    try {
+      const method = comment.user_liked ? 'DELETE' : 'POST';
+      const response = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/api/comments/${comment.id}/like`,
+        {
+          method,
+          headers: {
+            'Authorization': `Bearer ${sessionToken}`
+          }
+        }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+        onCommentUpdated(result.comment);
+      } else {
+        console.error('Failed to toggle like');
+      }
+    } catch (error) {
+      console.error('Error toggling like:', error);
+    } finally {
+      setIsLiking(false);
+    }
+  };
+
+  const handleReplySubmitted = (newReply) => {
+    // Add reply to this comment's replies
+    const updatedComment = {
+      ...comment,
+      replies: [...(comment.replies || []), newReply]
+    };
+    onCommentUpdated(updatedComment);
+    setShowReplyForm(false);
+  };
+
+  const canDelete = isAuthenticated && user?.role === 'admin';
+  const canPin = isAuthenticated && user?.role === 'admin';
+  const isTopLevel = level === 0;
 
   return (
     <motion.div 
