@@ -145,6 +145,30 @@ backend:
           comment: "All admin content management endpoints properly secured and functional: GET /admin/content (requires auth), POST /admin/content (create), PUT /admin/content/{type}/{key} (update), DELETE /admin/content/{type}/{key} (delete). Authentication working correctly with 401 for unauthenticated requests."
 
 frontend:
+  - task: "MOBILE LOGIN BUG FIX - Authentication State Persistence"
+    implemented: false
+    working: false
+    file: "/app/frontend/src/contexts/AuthContext.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: false
+          agent: "main"
+          comment: "Initial analysis: Mobile login issue where users are redirected to homepage but remain logged out. Need to fix authentication state persistence and ensure proper token storage."
+
+  - task: "EMAIL MODAL BUG FIX - Prevent Double Display & Fix X Button"
+    implemented: false
+    working: false
+    file: "/app/frontend/src/components/EmailCaptureModal.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: false
+          agent: "main"
+          comment: "Initial analysis: Email modal appears twice even after dismissal and X button doesn't properly close modal. Need to fix localStorage logic and ensure proper modal dismissal behavior."
+
   - task: "Content Management Admin Interface"
     implemented: true
     working: true
