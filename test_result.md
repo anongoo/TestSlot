@@ -920,10 +920,10 @@ metadata:
   run_ui: false
 
 test_plan:
-  current_focus: ["LAUNCH Phase 1 - Visual Theme Overhaul", "LAUNCH Phase 2 - Join the Fiesta Button", "LAUNCH Phase 3 - Donate Button Integration", "LAUNCH Phase 4 - Join the Team Page", "LAUNCH Phase 5 - Video Commenting System Backend", "LAUNCH Phase 5 - Video Commenting System Frontend"]
+  current_focus: ["MOBILE LOGIN BUG FIX - Authentication State Persistence", "EMAIL MODAL BUG FIX - Prevent Double Display & Fix X Button"]
   stuck_tasks: []
   test_all: false
-  test_priority: "sequential"
+  test_priority: "high_first"
 
 agent_communication:
     - agent: "testing"
