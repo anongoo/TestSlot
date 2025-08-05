@@ -168,31 +168,78 @@ const VideoPlayer = ({ video, onClose, onVideoEnd, relatedVideos = [], onVideoSe
               </div>
             )}
 
-            {/* Vime Video Player for Local Videos - Clean Interface */}
+            {/* Vime Video Player for Local Videos - FIXED VERSION */}
             {video.video_type !== 'youtube' && (
-              <Player
-                ref={playerRef}
-                autoplay={false}
-                controls={true}
-                playsInline={true}
-                onVmTimeUpdate={handleTimeUpdate}
-                onVmPlay={handleVimePlay}
-                onVmPause={handleVimePause}
-                onVmEnded={handleVimeEnd}
-                onVmDurationChange={handleVimeDurationChange}
-                className="aspect-video"
-              >
-                <Video 
-                  crossOrigin="" 
-                  poster={video.thumbnail_url ? `${BACKEND_URL}${video.thumbnail_url}` : undefined}
+              <div className="aspect-video relative bg-black">
+                {/* Debug Overlay */}
+                {debug && (
+                  <div className="absolute top-4 left-4 z-50 bg-black bg-opacity-75 text-white p-2 rounded text-xs">
+                    <div>🎯 Player Ready: {playerReady ? '✅' : '❌'}</div>
+                    <div>⏰ Time: {Math.floor(currentTime / 60)}:{String(Math.floor(currentTime % 60)).padStart(2, '0')}</div>
+                    <div>📏 Duration: {Math.floor(duration / 60)}:{String(Math.floor(duration % 60)).padStart(2, '0')}</div>
+                    <div>▶️ Playing: {playing ? '✅' : '❌'}</div>
+                    <div>📹 URL: {video.video_url || `/api/files/videos/${video.id}.mp4`}</div>
+                    {videoError && <div>❌ Error: {videoError}</div>}
+                  </div>
+                )}
+
+                <Player
+                  ref={playerRef}
+                  autoplay={false}
+                  controls={true}
+                  playsInline={true}
+                  onVmTimeUpdate={handleTimeUpdate}
+                  onVmPlay={handleVimePlay}
+                  onVmPause={handleVimePause}
+                  onVmEnded={handleVimeEnd}
+                  onVmDurationChange={handleVimeDurationChange}
+                  onVmReady={handleVimeReady}
+                  onVmLoadStart={() => debug && console.log('🔄 Load start')}
+                  onVmCanPlay={() => debug && console.log('✅ Can play')}
+                  onVmError={handleVimeError}
+                  className="w-full h-full"
                 >
-                  <source 
-                    data-src={`${BACKEND_URL}${video.video_url || `/api/files/videos/${video.id}.mp4`}`}
-                    type="video/mp4" 
-                  />
-                </Video>
-                <DefaultUi />
-              </Player>
+                  <Video 
+                    crossOrigin=""
+                    preload="metadata"
+                    poster={video.thumbnail_url ? `${BACKEND_URL}${video.thumbnail_url}` : undefined}
+                  >
+                    {/* CRITICAL FIX: Use src instead of data-src */}
+                    <source 
+                      src={`${BACKEND_URL}${video.video_url || `/api/files/videos/${video.id}.mp4`}`}
+                      type="video/mp4" 
+                    />
+                    <track kind="captions" />
+                  </Video>
+                  <DefaultUi />
+                </Player>
+
+                {/* Loading State */}
+                {!playerReady && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
+                    <div className="text-white text-center">
+                      <div className="animate-spin w-8 h-8 border-2 border-white border-t-transparent rounded-full mx-auto mb-2"></div>
+                      <div className="text-sm">Loading video...</div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Error State */}
+                {videoError && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-red-900 bg-opacity-50">
+                    <div className="text-white text-center p-4">
+                      <div className="text-2xl mb-2">⚠️</div>
+                      <div className="text-sm">Video failed to load</div>
+                      <button 
+                        onClick={() => window.location.reload()}
+                        className="mt-2 px-4 py-2 bg-white text-black rounded text-sm"
+                      >
+                        Retry
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
           </div>
 
