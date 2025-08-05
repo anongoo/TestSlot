@@ -55,6 +55,15 @@ const App = () => {
                   <WatchPage />
                 </motion.div>
               } />
+              <Route path="/watch-new" element={
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.6, ease: "easeOut" }}
+                >
+                  <NewWatchPage />
+                </motion.div>
+              } />
               <Route path="/about" element={
                 <motion.div
                   initial={{ y: 20, opacity: 0 }}
