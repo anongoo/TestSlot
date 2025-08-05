@@ -29,9 +29,12 @@ const CommentForm = ({
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${user.sessionToken}`
+            'Authorization': `Bearer ${sessionToken}`
           },
-          body: JSON.stringify({ text: text.trim() })
+          body: JSON.stringify({ 
+            text: text.trim(),
+            parent_comment_id: parentCommentId 
+          })
         }
       );
 
