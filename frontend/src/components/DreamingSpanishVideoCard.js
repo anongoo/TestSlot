@@ -338,10 +338,12 @@ const DreamingSpanishVideoCard = ({ video, onVideoSelect }) => {
               <span>{video.level}</span>
             </span>
 
-            {/* Category Badge */}
-            <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs font-medium">
-              📂 {video.category}
-            </span>
+            {/* Topics Badge */}
+            {video.topics && Array.isArray(video.topics) && video.topics.length > 0 && (
+              <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-medium">
+                🏷️ {video.topics.slice(0, 2).join(', ')}{video.topics.length > 2 ? '...' : ''}
+              </span>
+            )}
           </div>
 
           {/* Instructor and Country */}
