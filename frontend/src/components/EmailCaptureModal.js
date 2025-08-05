@@ -104,7 +104,12 @@ const EmailCaptureModal = () => {
     }
   };
 
-  const handleClose = () => {
+  const handleClose = (e) => {
+    // Prevent event bubbling if triggered from click
+    if (e) {
+      e.stopPropagation();
+    }
+    
     setIsVisible(false);
     localStorage.setItem('email_capture_dismissed', 'true');
   };
