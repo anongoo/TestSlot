@@ -10,8 +10,6 @@
     "@tiptap/pm": "^3.0.7",
     "@tiptap/react": "^3.0.7",
     "@tiptap/starter-kit": "^3.0.7",
-    "@vime/core": "^5.4.1",
-    "@vime/react": "^5.4.1",
     "axios": "^1.8.4",
     "cra-template": "1.2.0",
     "framer-motion": "^12.23.12",
