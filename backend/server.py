@@ -418,6 +418,13 @@ class Comment(BaseModel):
 
 class CommentRequest(BaseModel):
     text: str = Field(min_length=1, max_length=500)  # Limit comment length
+    parent_comment_id: Optional[str] = None  # For replies
+
+class UserCommentLike(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    comment_id: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
 
 # Filter Collections Request Models
 class TopicRequest(BaseModel):
