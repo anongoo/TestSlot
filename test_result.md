@@ -628,6 +628,9 @@ backend:
     status_history:
         - working: true
           agent: "testing"
+          comment: "MOBILE LOGIN BUG REVIEW COMPLETED: Comprehensive authentication testing shows GET /api/auth/profile endpoint is working perfectly for mobile login scenarios. ✅ Correctly rejects requests without auth token (401). ✅ Properly validates all token formats including empty, invalid, malformed, and wrong authorization schemes (all return 401). ✅ Handles UUID format tokens correctly. ✅ Authentication middleware working properly across all test scenarios (6/6 passed). Profile endpoint authentication is robust and mobile login bug fixes haven't affected existing functionality."
+        - working: true
+          agent: "testing"
           comment: "Profile endpoint correctly requires authentication. Returns 401 for requests without auth token and invalid tokens. Authentication middleware working properly."
 
   - task: "User Logout - POST /api/auth/logout"
