@@ -79,6 +79,7 @@ const WatchTab = () => {
           setSelectedVideo(null);
         }}
         relatedVideos={relatedVideos}
+        onVideoSelect={handleVideoSelect}
       />
     );
   }
