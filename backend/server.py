@@ -45,8 +45,8 @@ MONGO_URL = os.environ.get('MONGO_URL', 'mongodb://localhost:27017/english_fiest
 client = AsyncIOMotorClient(MONGO_URL)
 db = client.english_fiesta
 
-# Initialize Emergent Auth
-auth = emergent_auth.auth()
+# Initialize Mock Auth
+auth = emergent_auth
 
 # Enums
 class UserRole(str, Enum):
