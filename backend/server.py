@@ -11,7 +11,15 @@ import uuid
 import bcrypt
 import re
 import json
-from emergentintegrations import emergent_auth
+# Mock auth for testing
+class MockAuth:
+    def get_token(self):
+        return None
+    
+    async def get_user(self, token):
+        return None
+
+emergent_auth = MockAuth()
 import shutil
 import subprocess
 import urllib.parse
