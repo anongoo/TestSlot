@@ -123,7 +123,7 @@ class Video(BaseModel):
     tags: List[str] = []  # Comma-separated tags
     instructor_name: str
     country: CountryType
-    category: VideoCategory
+    topics: List[str] = []  # Topics instead of category - list of topic IDs or slugs
     thumbnail_url: Optional[str] = None  # Optional for uploads, auto-generated
     is_premium: bool = False
     
