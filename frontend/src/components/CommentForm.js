@@ -56,7 +56,7 @@ const CommentForm = ({
     }
   };
 
-  if (!isAuthenticated || (user.role === 'guest')) {
+  if (!isAuthenticated) {
     return (
       <motion.div 
         className="bg-gradient-to-r from-fiesta-blue to-fiesta-purple rounded-xl p-6 text-center text-white"
